@@ -11,7 +11,8 @@ if not exist build mkdir build
 if not exist dist  mkdir dist
 rc /nologo /fo build\nexa-coffee.res res\nexa-coffee.rc
 if errorlevel 1 exit /b 1
-cl /nologo /utf-8 /O1 /GS- /Oi- /DUNICODE /D_UNICODE ^
+set /p VERSION=<VERSION
+cl /nologo /utf-8 /O1 /GS- /Oi- /DUNICODE /D_UNICODE /DCF_VERSION=\"%VERSION%\" ^
    src\plat\win.c src\core\app.c src\core\draw.c src\core\font.c src\core\icon_active.c ^
    src\core\icon_idle.c src\core\timer.c src\core\util.c build\nexa-coffee.res ^
    /Fo:build\ /Fe:dist\nexa-coffee-x64.exe ^

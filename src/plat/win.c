@@ -9,15 +9,17 @@
  *   ⚠️ 덮개 닫힘 동작은 전원 정책(powercfg LIDACTION · 관리자)이라 앱이 바꾸지 않는다.
  * - 작업 종료 시: 실행 상태 해제 · 타이머 제거 · 동작 아이콘 파괴 · SetProcessWorkingSetSize(-1,-1)로
  *   작업 집합을 OS에 돌려준다(사용자 요청 09-12 "모든 메모리 회수").
+ * - 입력 창(일·시·분 + 시작/저장) = 리소스 DIALOGEX(IDD_DHM) · DialogBoxParamW. About = MessageBoxW.
  */
 #include <windows.h>
 #include <shellapi.h>
 #include "../core/coffee.h"
+#include "../../res/resource.h"
 
 #define WM_TRAYICON (WM_USER + 1)
 #define TIMER_TICK  1
+#define TIMER_MENU  2 /* 메뉴가 열린 동안 남은 시간 1초 갱신 */
 #define ICON_UID    1
-#define IDI_APP     1 /* res/nexa-coffee.rc */
 
 #ifndef DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
 #define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ((HANDLE)-4)
@@ -42,6 +44,9 @@ static HICON           g_icon;     /* 현재 트레이 아이콘 */
 static HICON           g_idle;     /* 대기 아이콘(재사용) */
 static int             g_idle_size;
 static WCHAR           g_conf[MAX_PATH];
+static HMENU           g_menu;     /* 열려 있는 팝업 메뉴(없으면 NULL) */
+
+static void to_wide(const char *utf8, WCHAR *out, int cap);
 
 /* ── 메모리 ── */
 static void *xalloc(u32 n) { return HeapAlloc(GetProcessHeap(), 0, n); }
@@ -143,7 +148,7 @@ static void show_idle(BOOL add)
     int s = icon_size();
     if (!g_idle || g_idle_size != s) {
         CfColor gray = {154, 154, 158, 255};
-        u8 *buf = xalloc(CF_ICON_BYTES);
+        u8 *buf = xalloc((u32)(s * s * 4));
         if (g_idle) DestroyIcon(g_idle);
         cf_icon_idle(buf, s, gray);
         g_idle = icon_from_rgba(buf, s);
@@ -174,7 +179,7 @@ static void job_tick(void)
     i64 rem_ms = g_deadline ? g_deadline - (i64)GetTickCount64() : 0;
     if (g_deadline && rem_ms <= 0) { job_stop(); return; }
     cf_display(g_deadline ? (rem_ms + 999) / 1000 : 0, g_total, &d);
-    buf = xalloc(CF_ICON_BYTES);
+    buf = xalloc((u32)(s * s * 4));
     cf_icon_active(buf, s, &d);
     cf_tooltip(&g_app, &d, tip, sizeof tip);
     tray_set(icon_from_rgba(buf, s), tip, FALSE);
@@ -203,7 +208,7 @@ static HMENU build_menu(int parent)
         UINT fl;
         if (!cf_menu_item(&g_app, ids[i], &it)) continue;
         if (it.kind == CF_KIND_SEPARATOR) { AppendMenuW(m, MF_SEPARATOR, 0, NULL); continue; }
-        MultiByteToWideChar(CP_UTF8, 0, it.label, -1, w, 64);
+        to_wide(it.label, w, 64);
         fl = MF_STRING | (it.checked ? MF_CHECKED : 0) | (it.enabled ? 0 : MF_GRAYED);
         if (it.kind == CF_KIND_SUBMENU) AppendMenuW(m, fl | MF_POPUP, (UINT_PTR)build_menu(ids[i]), w);
         else {
@@ -215,27 +220,128 @@ static HMENU build_menu(int parent)
     return m;
 }
 
+static void refresh_remaining(void)
+{
+    g_app.remaining_s = g_deadline ? (g_deadline - (i64)GetTickCount64() + 999) / 1000 : 0;
+}
+
+/* 열린 메뉴의 맨 위 항목 글자를 바꾸고 팝업 창(#32768)을 다시 그린다 */
+static void menu_tick(void)
+{
+    char label[96];
+    WCHAR w[96];
+    MENUITEMINFOW mii;
+    HWND popup;
+    if (!g_menu) return;
+    refresh_remaining();
+    cf_remaining_label(&g_app, label, sizeof label);
+    to_wide(label, w, 96);
+    cf_memset(&mii, 0, sizeof mii);
+    mii.cbSize = sizeof mii;
+    mii.fMask = MIIM_STRING;
+    mii.dwTypeData = w;
+    SetMenuItemInfoW(g_menu, CF_ID_STATUS, FALSE, &mii);
+    popup = FindWindowW(L"#32768", NULL);
+    if (popup) RedrawWindow(popup, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW);
+}
+
 static void show_menu(void)
 {
     POINT pt;
-    HMENU m = build_menu(CF_ID_ROOT);
+    HMENU m;
+    refresh_remaining();
+    m = build_menu(CF_ID_ROOT);
+    g_menu = m;
+    SetTimer(g_hwnd, TIMER_MENU, 1000, NULL);
     GetCursorPos(&pt);
     SetForegroundWindow(g_hwnd);
     TrackPopupMenu(m, TPM_RIGHTBUTTON | TPM_BOTTOMALIGN, pt.x, pt.y, 0, g_hwnd, NULL);
     PostMessageW(g_hwnd, WM_NULL, 0, 0);
+    KillTimer(g_hwnd, TIMER_MENU);
+    g_menu = NULL;
     DestroyMenu(m);
 }
 
-static void on_command(int id)
+static void to_wide(const char *utf8, WCHAR *out, int cap) { MultiByteToWideChar(CP_UTF8, 0, utf8, -1, out, cap); }
+
+static void act(int action);
+
+/* ── 입력 창 ── */
+static int g_dlg_mode;
+static i64 g_dlg_v[3];
+
+static INT_PTR CALLBACK dlg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 {
-    switch (cf_app_click(&g_app, id)) {
+    WCHAR w[64];
+    int v[3];
+    switch (msg) {
+    case WM_INITDIALOG:
+        g_dlg_mode = (int)lp;
+        cf_dialog_values(&g_app, g_dlg_mode, &v[0], &v[1], &v[2]);
+        to_wide(cf_str(g_app.lang, g_dlg_mode == CF_DLG_AUTO ? CF_STR_DLG_AUTO : CF_STR_DLG_CUSTOM), w, 64); SetWindowTextW(h, w);
+        to_wide(cf_str(g_app.lang, CF_STR_DAYS), w, 64);    SetDlgItemTextW(h, IDC_LD, w);
+        to_wide(cf_str(g_app.lang, CF_STR_HOURS), w, 64);   SetDlgItemTextW(h, IDC_LH, w);
+        to_wide(cf_str(g_app.lang, CF_STR_MINUTES), w, 64); SetDlgItemTextW(h, IDC_LM, w);
+        to_wide(cf_str(g_app.lang, g_dlg_mode == CF_DLG_AUTO ? CF_STR_SAVE : CF_STR_START), w, 64); SetDlgItemTextW(h, IDOK, w);
+        to_wide(cf_str(g_app.lang, CF_STR_CANCEL), w, 64);  SetDlgItemTextW(h, IDCANCEL, w);
+        SetDlgItemInt(h, IDC_D, (UINT)v[0], FALSE);
+        SetDlgItemInt(h, IDC_H, (UINT)v[1], FALSE);
+        SetDlgItemInt(h, IDC_M, (UINT)v[2], FALSE);
+        SendDlgItemMessageW(h, IDC_D, EM_LIMITTEXT, 3, 0);
+        SendDlgItemMessageW(h, IDC_H, EM_LIMITTEXT, 2, 0);
+        SendDlgItemMessageW(h, IDC_M, EM_LIMITTEXT, 2, 0);
+        SendMessageW(h, WM_SETICON, ICON_SMALL, (LPARAM)g_wc.hIcon);
+        SetForegroundWindow(h);
+        return TRUE; /* 첫 필드에 포커스 */
+    case WM_COMMAND:
+        if (LOWORD(wp) == IDOK) {
+            g_dlg_v[0] = GetDlgItemInt(h, IDC_D, NULL, FALSE);
+            g_dlg_v[1] = GetDlgItemInt(h, IDC_H, NULL, FALSE);
+            g_dlg_v[2] = GetDlgItemInt(h, IDC_M, NULL, FALSE);
+            EndDialog(h, 1);
+            return TRUE;
+        }
+        if (LOWORD(wp) == IDCANCEL) { EndDialog(h, 0); return TRUE; }
+        return FALSE;
+    case WM_CLOSE:
+        EndDialog(h, 0);
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static void show_dialog(int mode)
+{
+    if (DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_DHM), g_hwnd, dlg_proc, (LPARAM)mode) == 1)
+        act(cf_dialog_submit(&g_app, mode, g_dlg_v[0], g_dlg_v[1], g_dlg_v[2]));
+}
+
+static void show_about(void)
+{
+    char body[512];
+    WCHAR wb[512], wt[64];
+    cf_about(g_app.lang, body, sizeof body);
+    to_wide(body, wb, 512);
+    to_wide(cf_str(g_app.lang, CF_STR_APP), wt, 64);
+    MessageBoxW(g_hwnd, wb, wt, MB_OK | MB_ICONINFORMATION | MB_SETFOREGROUND);
+}
+
+static void act(int action)
+{
+    switch (action) {
     case CF_ACT_START: conf_save(); job_start(); break;
     case CF_ACT_STOP:  conf_save(); job_stop();  break;
     case CF_ACT_MENU:  conf_save(); break;
     case CF_ACT_QUIT:  DestroyWindow(g_hwnd); break;
+    case CF_ACT_DIALOG_CUSTOM: show_dialog(CF_DLG_CUSTOM); break;
+    case CF_ACT_DIALOG_AUTO:   show_dialog(CF_DLG_AUTO); break;
+    case CF_ACT_ABOUT: show_about(); break;
     default: break;
     }
 }
+
+static void on_command(int id) { act(cf_app_click(&g_app, id)); }
 
 static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -251,12 +357,14 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         return 0;
     case WM_TIMER:
         if (wp == TIMER_TICK && g_app.running) job_tick();
+        else if (wp == TIMER_MENU) menu_tick();
         return 0;
     case WM_COMMAND:
         on_command((int)LOWORD(wp));
         return 0;
     case WM_DESTROY:
         KillTimer(hwnd, TIMER_TICK);
+        KillTimer(hwnd, TIMER_MENU);
         SetThreadExecutionState(ES_CONTINUOUS);
         Shell_NotifyIconW(NIM_DELETE, &g_nid);
         PostQuitMessage(0);
@@ -302,8 +410,13 @@ void start(void)
     g_hwnd = CreateWindowExW(0, L"NexaCoffee", L"Nexa Coffee", 0, 0, 0, 0, 0, NULL, NULL, hinst, NULL);
 
     show_idle(TRUE);
+    /* 초기화가 끌어온 페이지를 OS에 돌려준다 — 대기 상태의 작업 집합 최소화 */
+    SetProcessWorkingSetSize(GetCurrentProcess(), (SIZE_T)-1, (SIZE_T)-1);
     /* 첫 실행 자동 시작(사용자 확정): 옵션 켜짐 + 시간 지정 */
-    if (g_app.auto_start && g_app.sel != CF_SEL_OFF) { g_app.running = 1; job_start(); }
+    if (cf_auto_secs(&g_app) > 0) {
+        g_app.cust_d = g_app.auto_d; g_app.cust_h = g_app.auto_h; g_app.cust_m = g_app.auto_m;
+        g_app.sel = CF_SEL_CUSTOM; g_app.running = 1; job_start();
+    }
 
     while (GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);

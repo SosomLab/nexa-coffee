@@ -54,16 +54,16 @@ CC64 := x86_64-w64-mingw32-gcc
 CC32 := i686-w64-mingw32-gcc
 RES64 := x86_64-w64-mingw32-windres
 RES32 := i686-w64-mingw32-windres
-WCFLAGS := -std=c99 $(CFLAGS_MIN) -s -mwindows -nostdlib -DUNICODE -D_UNICODE \
+WCFLAGS := -std=c99 $(CFLAGS_MIN) -s -mwindows -nostdlib -DUNICODE -D_UNICODE -DCF_VERSION=\"$(VERSION)\" \
            -fno-stack-check -fno-builtin -fno-tree-loop-distribute-patterns -finput-charset=UTF-8 $(WARN)
 WLIBS := -lkernel32 -luser32 -lshell32 -lgdi32
 WSRC := src/plat/win.c $(CORE)
 
 win: dist/nexa-coffee-x64.exe dist/nexa-coffee-x86.exe
 
-build/rsrc-x64.o: res/nexa-coffee.rc res/nexa-coffee.ico | build
+build/rsrc-x64.o: res/nexa-coffee.rc res/resource.h res/nexa-coffee.ico | build
 	$(RES64) --include-dir res $< -O coff -o $@
-build/rsrc-x86.o: res/nexa-coffee.rc res/nexa-coffee.ico | build
+build/rsrc-x86.o: res/nexa-coffee.rc res/resource.h res/nexa-coffee.ico | build
 	$(RES32) --include-dir res $< -O coff -o $@
 dist/nexa-coffee-x64.exe: $(WSRC) build/rsrc-x64.o | dist
 	$(CC64) $(WCFLAGS) -Wl,-e,start -Wl,--gc-sections $(WSRC) build/rsrc-x64.o -o $@ $(WLIBS)

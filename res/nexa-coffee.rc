@@ -1,1 +1,21 @@
-1 ICON "nexa-coffee.ico"
+#include <windows.h>
+#include "resource.h"
+
+IDI_APP ICON "nexa-coffee.ico"
+
+// 입력 창: [ 0 ] day(s) [ 12 ] hour(s) [ 50 ] minute(s)   [Cancel] [Start]
+// 글자는 실행 시 SetDlgItemTextW로 ko/en을 채운다(리소스는 영문 자리표시).
+IDD_DHM DIALOGEX 0, 0, 236, 58
+STYLE DS_MODALFRAME | DS_CENTER | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Custom duration"
+FONT 9, "Segoe UI"
+BEGIN
+    EDITTEXT        IDC_D,   10, 10, 26, 13, ES_NUMBER | ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "day(s)",    IDC_LD,  39, 12, 34, 10
+    EDITTEXT        IDC_H,   76, 10, 26, 13, ES_NUMBER | ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "hour(s)",   IDC_LH, 105, 12, 36, 10
+    EDITTEXT        IDC_M,  144, 10, 26, 13, ES_NUMBER | ES_RIGHT | ES_AUTOHSCROLL
+    LTEXT           "minute(s)", IDC_LM, 173, 12, 56, 10
+    PUSHBUTTON      "Cancel", IDCANCEL, 124, 34, 50, 14
+    DEFPUSHBUTTON   "Start",  IDOK,     178, 34, 50, 14
+END
