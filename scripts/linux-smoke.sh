@@ -11,8 +11,10 @@ PIDF=$(mktemp)
 ADDR=$(dbus-daemon --config-file=scripts/dbus-test.conf --fork --print-address=1 --print-pid=3 3>"$PIDF")
 export DBUS_SESSION_BUS_ADDRESS="$ADDR"
 DBUS_PID=$(cat "$PIDF"); rm -f "$PIDF"
-trap 'kill $APP_PID 2>/dev/null; kill $DBUS_PID 2>/dev/null' EXIT
+# 종료 시 정리 — 이미 끝난 프로세스에 kill이 실패해도 원래 종료 상태를 유지한다(bash -e에서 exit 1로 바뀌던 문제)
+trap 'st=$?; kill $APP_PID 2>/dev/null || true; kill $DBUS_PID 2>/dev/null || true; exit $st' EXIT
 
+APP_PID=; DBUS_PID=${DBUS_PID:-}
 LANG=ko_KR.UTF-8 "$BIN" & APP_PID=$!
 NAME="org.kde.StatusNotifierItem-$APP_PID-1"
 # 이름이 버스에 뜰 때까지(최대 5초) 기다린다
