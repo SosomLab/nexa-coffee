@@ -1,0 +1,57 @@
+# CI — "main은 항상 green"(docs/16). 3-OS 빌드 + 코어 테스트 + Linux D-Bus 스모크 + 크기 예산.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 도구
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq musl-tools dbus gcc-mingw-w64
+      - name: 코어 테스트
+        run: make test
+      - name: Linux 정적(musl) 빌드
+        run: make static
+      - name: Linux D-Bus 스모크(세션 버스 · SNI · dbusmenu · 클릭)
+        run: sh scripts/linux-smoke.sh dist/nexa-coffee
+      - name: Windows 크로스 빌드(mingw · CRT 미링크)
+        run: make win
+      - name: 크기 예산(초경량 회귀 검사)
+        run: |
+          set -e
+          ls -la dist/
+          for f in dist/nexa-coffee-x64.exe dist/nexa-coffee-x86.exe; do
+            s=$(stat -c%s "$f"); [ "$s" -le 65536 ] || { echo "::error::$f = $s bytes > 64KB"; exit 1; }
+          done
+          s=$(stat -c%s dist/nexa-coffee); [ "$s" -le 131072 ] || { echo "::error::linux static = $s bytes > 128KB"; exit 1; }
+      - uses: actions/upload-artifact@v4
+        with: { name: linux-and-windows, path: dist/* }
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 코어 테스트
+        run: make test
+      - name: 유니버설 빌드 + .app
+        run: make && make app
+      - name: 크기 예산
+        run: |
+          s=$(stat -f%z dist/nexa-coffee); [ "$s" -le 262144 ] || { echo "::error::macOS universal = $s bytes > 256KB"; exit 1; }
+      - uses: actions/upload-artifact@v4
+        with: { name: macos, path: "dist/Nexa Coffee.app" }
+
+  windows-msvc:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: MSVC 네이티브 빌드(CRT 미링크)
+        shell: cmd
+        run: build.bat
+      - uses: actions/upload-artifact@v4
+        with: { name: windows-msvc, path: dist/nexa-coffee-x64.exe }
