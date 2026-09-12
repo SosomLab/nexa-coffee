@@ -1,0 +1,3 @@
+# Linux 빌드·검증용 컨테이너(로컬 macOS에서 `scripts/linux-docker.sh`) — 배포물 아님
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev musl-tools make dbus procps && rm -rf /var/lib/apt/lists/*

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>nexa-coffee</id>
+    <version>__VERSION__</version>
+    <title>Nexa Coffee</title>
+    <authors>SosomLab</authors>
+    <owners>SosomLab</owners>
+    <projectUrl>https://github.com/SosomLab/nexa-coffee</projectUrl>
+    <licenseUrl>https://github.com/SosomLab/nexa-coffee/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <tags>caffeine keep-awake tray portable</tags>
+    <summary>Tiny tray timer that keeps the PC awake</summary>
+    <description>Nexa Coffee sits in the tray and prevents sleep, hibernation and the screen saver for a chosen duration (30 min – 12 h, custom, or unlimited). No CRT, ~20 KB, zero dependencies.</description>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

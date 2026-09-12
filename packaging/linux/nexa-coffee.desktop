@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Nexa Coffee
+Name[ko]=Nexa Coffee
+Comment=Keep the computer awake from the tray
+Comment[ko]=트레이에서 절전·화면보호기 진입을 막는다
+Exec=nexa-coffee
+Icon=nexa-coffee
+Terminal=false
+Categories=Utility;
+StartupNotify=false

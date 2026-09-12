@@ -1,0 +1,20 @@
+# winget 매니페스트(포터블) — 릴리스 시 wingetcreate가 버전·URL·해시를 갱신한다. nexa-shortcut 선례.
+PackageIdentifier: SosomLab.NexaCoffee
+PackageVersion: __VERSION__
+InstallerType: zip
+NestedInstallerType: portable
+NestedInstallerFiles:
+  - RelativeFilePath: nexa-coffee-x64.exe
+    PortableCommandAlias: nexa-coffee
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/SosomLab/nexa-coffee/releases/download/v__VERSION__/nexa-coffee-__VERSION__-windows-x64.zip
+    InstallerSha256: __SHA256_X64__
+  - Architecture: x86
+    InstallerUrl: https://github.com/SosomLab/nexa-coffee/releases/download/v__VERSION__/nexa-coffee-__VERSION__-windows-x86.zip
+    InstallerSha256: __SHA256_X86__
+    NestedInstallerFiles:
+      - RelativeFilePath: nexa-coffee-x86.exe
+        PortableCommandAlias: nexa-coffee
+ManifestType: installer
+ManifestVersion: 1.6.0

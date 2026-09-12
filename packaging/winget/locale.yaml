@@ -1,0 +1,16 @@
+PackageIdentifier: SosomLab.NexaCoffee
+PackageVersion: __VERSION__
+PackageLocale: en-US
+Publisher: SosomLab
+PublisherUrl: https://sosomlab.com
+PackageName: Nexa Coffee
+PackageUrl: https://github.com/SosomLab/nexa-coffee
+License: MIT
+LicenseUrl: https://github.com/SosomLab/nexa-coffee/blob/main/LICENSE
+ShortDescription: Tiny tray timer that keeps the PC awake (no sleep, no screen saver)
+Tags:
+  - caffeine
+  - keep-awake
+  - tray
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0
