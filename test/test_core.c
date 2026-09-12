@@ -18,7 +18,6 @@ static void t_util(void)
     CHECK(cf_atoi("12,3", &e) == 12 && *e == ',');
     CHECK(cf_atoi("x", &e) == 0 && *e == 'x');
     b[0] = 0; cf_strcat(b, 4, "abcdef"); CHECK(!strcmp(b, "abc"));
-    CHECK(cf_streq("ab", "ab") && !cf_streq("ab", "abc"));
 }
 
 static void t_timer(void)
@@ -46,63 +45,92 @@ static void t_app(void)
 {
     CfApp a;
     CfMenuItem it;
-    int ids[CF_MENU_MAX_CHILDREN], n;
+    int ids[CF_MENU_MAX_CHILDREN], n, d, h, m;
     char buf[256];
     cf_app_init(&a, CF_LANG_KO);
-    CHECK(a.sel == CF_SEL_OFF && !a.running);
-    n = cf_menu_children(&a, CF_ID_ROOT, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 12 && ids[0] == CF_ID_INF && ids[11] == CF_ID_QUIT);
-    n = cf_menu_children(&a, CF_ID_CUSTOM_HOURS, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 24);
-    n = cf_menu_children(&a, CF_ID_CUSTOM_MINS, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 12);
-    n = cf_menu_children(&a, CF_ID_CUSTOM_DAYS, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 8);
+    CHECK(a.sel == CF_SEL_OFF && !a.running && cf_auto_secs(&a) == 0);
+    n = cf_menu_children(&a, CF_ID_ROOT, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 15 && ids[0] == CF_ID_STATUS && ids[1] == CF_ID_SEP0 && ids[2] == CF_ID_INF && ids[14] == CF_ID_QUIT);
+    CHECK(cf_menu_item(&a, CF_ID_STATUS, &it) && !it.enabled && !strcmp(it.label, "대기 중"));
+    n = cf_menu_children(&a, CF_ID_AUTO, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 2 && ids[0] == CF_ID_AUTO_OFF);
+    n = cf_menu_children(&a, CF_ID_CUSTOM, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 0);
     CHECK(cf_menu_item(&a, CF_ID_OFF, &it) && it.kind == CF_KIND_RADIO && it.checked);
     CHECK(cf_menu_item(&a, CF_ID_12H, &it) && !it.checked && !strcmp(it.label, "12시간"));
+    CHECK(cf_menu_item(&a, CF_ID_CUSTOM, &it) && it.kind == CF_KIND_RADIO && !it.checked && !strcmp(it.label, "사용자 지정…"));
+    CHECK(cf_menu_item(&a, CF_ID_AUTO, &it) && it.kind == CF_KIND_SUBMENU && !it.checked && !strcmp(it.label, "실행 시 자동 시작"));
+    CHECK(cf_menu_item(&a, CF_ID_AUTO_OFF, &it) && it.checked);
+    CHECK(cf_menu_item(&a, CF_ID_ABOUT, &it) && it.kind == CF_KIND_NORMAL);
     CHECK(cf_app_click(&a, CF_ID_12H) == CF_ACT_START && a.running && cf_sel_secs(&a) == 43200);
     CHECK(cf_menu_item(&a, CF_ID_12H, &it) && it.checked);
     CHECK(cf_menu_item(&a, CF_ID_OFF, &it) && !it.checked);
     CHECK(cf_app_click(&a, CF_ID_INF) == CF_ACT_START && cf_sel_secs(&a) == -1);
     CHECK(cf_app_click(&a, CF_ID_OFF) == CF_ACT_STOP && !a.running && a.sel == CF_SEL_OFF);
-    /* 사용자 지정 */
-    CHECK(cf_app_click(&a, CF_ID_DAY0 + 1) == CF_ACT_MENU && a.cust_d == 1);
-    CHECK(cf_app_click(&a, CF_ID_HOUR0 + 2) == CF_ACT_MENU && a.cust_h == 2);
-    CHECK(cf_app_click(&a, CF_ID_MIN0 + 6) == CF_ACT_MENU && a.cust_m == 30);
-    CHECK(cf_menu_item(&a, CF_ID_CUSTOM_START, &it) && it.enabled && !strcmp(it.label, "시작 — 1일 2시간 30분"));
-    CHECK(cf_menu_item(&a, CF_ID_CUSTOM, &it) && it.kind == CF_KIND_SUBMENU && !strcmp(it.label, "사용자 지정 (1일 2시간 30분)"));
-    CHECK(cf_app_click(&a, CF_ID_CUSTOM_START) == CF_ACT_START && cf_sel_secs(&a) == 86400 + 7200 + 1800);
-    CHECK(cf_menu_item(&a, CF_ID_CUSTOM, &it) && it.checked);
-    a.cust_d = a.cust_h = a.cust_m = 0;
-    CHECK(cf_menu_item(&a, CF_ID_CUSTOM_START, &it) && !it.enabled && !strcmp(it.label, "시작 — 0분"));
-    CHECK(cf_app_click(&a, CF_ID_CUSTOM_START) == CF_ACT_NONE);
-    CHECK(cf_app_click(&a, CF_ID_AUTO) == CF_ACT_MENU && a.auto_start);
+    /* 입력 창 — 사용자 지정 */
+    CHECK(cf_app_click(&a, CF_ID_CUSTOM) == CF_ACT_DIALOG_CUSTOM);
+    cf_dialog_values(&a, CF_DLG_CUSTOM, &d, &h, &m); CHECK(d == 0 && h == 1 && m == 0);
+    CHECK(cf_dialog_submit(&a, CF_DLG_CUSTOM, 0, 0, 0) == CF_ACT_NONE && !a.running);
+    CHECK(cf_dialog_submit(&a, CF_DLG_CUSTOM, 0, 12, 50) == CF_ACT_START && a.running && a.sel == CF_SEL_CUSTOM);
+    CHECK(cf_sel_secs(&a) == 12 * 3600 + 50 * 60);
+    CHECK(cf_menu_item(&a, CF_ID_CUSTOM, &it) && it.checked && !strcmp(it.label, "사용자 지정… (12시간 50분)"));
+    CHECK(cf_dialog_submit(&a, CF_DLG_CUSTOM, 500, 99, -3) == CF_ACT_START && a.cust_d == 99 && a.cust_h == 23 && a.cust_m == 0);
+    /* 입력 창 — 자동 시작 */
+    CHECK(cf_app_click(&a, CF_ID_AUTO_CUSTOM) == CF_ACT_DIALOG_AUTO);
+    cf_dialog_values(&a, CF_DLG_AUTO, &d, &h, &m); CHECK(d == 99 && h == 23 && m == 0); /* 자동이 비면 사용자 지정 값 */
+    CHECK(cf_dialog_submit(&a, CF_DLG_AUTO, 0, 12, 50) == CF_ACT_MENU && cf_auto_secs(&a) == 12 * 3600 + 50 * 60);
+    cf_dialog_values(&a, CF_DLG_AUTO, &d, &h, &m); CHECK(d == 0 && h == 12 && m == 50);
+    CHECK(cf_menu_item(&a, CF_ID_AUTO, &it) && it.checked && !strcmp(it.label, "실행 시 자동 시작 (12시간 50분)"));
+    CHECK(cf_menu_item(&a, CF_ID_AUTO_CUSTOM, &it) && it.checked && !strcmp(it.label, "사용자 지정… (12시간 50분)"));
+    CHECK(cf_menu_item(&a, CF_ID_AUTO_OFF, &it) && !it.checked);
+    CHECK(cf_app_click(&a, CF_ID_AUTO_OFF) == CF_ACT_MENU && cf_auto_secs(&a) == 0);
+    CHECK(cf_app_click(&a, CF_ID_ABOUT) == CF_ACT_ABOUT);
     CHECK(cf_app_click(&a, CF_ID_QUIT) == CF_ACT_QUIT);
     CHECK(cf_app_click(&a, 999) == CF_ACT_NONE);
     CHECK(cf_menu_item(&a, 999, &it) == 0);
     /* 설정 왕복 */
-    a.cust_d = 1; a.cust_h = 2; a.cust_m = 30; a.sel = CF_SEL_CUSTOM;
+    a.cust_d = 1; a.cust_h = 2; a.cust_m = 30; a.auto_d = 0; a.auto_h = 12; a.auto_m = 50;
     cf_conf_format(&a, buf, sizeof buf);
-    CHECK(!strcmp(buf, "auto=1\nsel=7\ncustom=1,2,30\n"));
+    CHECK(!strcmp(buf, "auto=0,12,50\ncustom=1,2,30\n"));
     {
         CfApp b; cf_app_init(&b, CF_LANG_EN);
         cf_conf_parse(&b, buf, (u32)strlen(buf));
-        CHECK(b.auto_start == 1 && b.sel == CF_SEL_CUSTOM && b.cust_d == 1 && b.cust_h == 2 && b.cust_m == 30);
-        cf_conf_parse(&b, "sel=99\ncustom=9,77,61\njunk\n", 27);
-        CHECK(b.sel == CF_SEL_OFF && b.cust_d == 0 && b.cust_h == 0 && b.cust_m == 0);
-        cf_conf_parse(&b, "auto=0\ncustom=2,3,7", 19); /* 마지막 줄 개행 없음 · 분은 5단위로 내림 */
-        CHECK(b.auto_start == 0 && b.cust_d == 2 && b.cust_h == 3 && b.cust_m == 5);
+        CHECK(b.auto_d == 0 && b.auto_h == 12 && b.auto_m == 50 && b.cust_d == 1 && b.cust_h == 2 && b.cust_m == 30);
+        cf_conf_parse(&b, "auto=9,77,61\njunk\n", 17);
+        CHECK(b.auto_d == 9 && b.auto_h == 23 && b.auto_m == 59); /* 클램프 */
+        cf_conf_parse(&b, "auto=0\ncustom=2,3,7", 19); /* 마지막 줄 개행 없음 */
+        CHECK(cf_auto_secs(&b) == 0 && b.cust_d == 2 && b.cust_h == 3 && b.cust_m == 7);
     }
-    /* 툴팁 */
+    /* 툴팁 · About */
     {
-        CfDisplay d;
+        CfDisplay dd;
         a.running = 1;
-        cf_display(2 * 3600 + 5, 7200 * 2, &d);
-        cf_tooltip(&a, &d, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — 2시간 남음"));
+        cf_display(2 * 3600 + 5, 7200 * 2, &dd);
+        cf_tooltip(&a, &dd, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — 2시간 남음"));
         a.lang = CF_LANG_EN;
-        cf_tooltip(&a, &d, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — 2 hours left"));
-        cf_display(3600, 7200, &d);
-        cf_tooltip(&a, &d, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — 1 hour left"));
-        cf_display(0, -1, &d);
-        cf_tooltip(&a, &d, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — Unlimited · keeping awake"));
+        cf_tooltip(&a, &dd, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — 2 hours left"));
+        cf_display(3600, 7200, &dd);
+        cf_tooltip(&a, &dd, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — 1 hour left"));
+        cf_display(0, -1, &dd);
+        cf_tooltip(&a, &dd, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — Unlimited · keeping awake"));
         a.running = 0;
         cf_tooltip(&a, NULL, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — Idle"));
+        CHECK(cf_about(CF_LANG_EN, buf, sizeof buf) > 40 && strstr(buf, "MIT") && strstr(buf, "github.com/SosomLab/nexa-coffee"));
+        CHECK(!strcmp(cf_str(CF_LANG_KO, CF_STR_START), "시작") && !strcmp(cf_str(CF_LANG_EN, CF_STR_SAVE), "Save"));
+    }
+    /* 남은 시간 라벨 */
+    {
+        a.running = 1; a.sel = CF_SEL_CUSTOM; a.lang = CF_LANG_EN;
+        a.remaining_s = 0;
+        cf_remaining_label(&a, buf, sizeof buf); CHECK(!strcmp(buf, "0 day 0 hour 0 minute 0 second"));
+        a.remaining_s = 2 * 86400 + 3600 + 5 * 60 + 30;
+        cf_remaining_label(&a, buf, sizeof buf); CHECK(!strcmp(buf, "2 days 1 hour 5 minutes 30 seconds"));
+        a.remaining_s = 1;
+        cf_remaining_label(&a, buf, sizeof buf); CHECK(!strcmp(buf, "0 day 0 hour 0 minute 1 second"));
+        a.lang = CF_LANG_KO; a.remaining_s = 12 * 3600 + 50 * 60 + 3;
+        cf_remaining_label(&a, buf, sizeof buf); CHECK(!strcmp(buf, "0일 12시간 50분 3초"));
+        CHECK(cf_menu_item(&a, CF_ID_STATUS, &it) && !strcmp(it.label, "0일 12시간 50분 3초") && !it.enabled);
+        a.sel = CF_SEL_INF;
+        cf_remaining_label(&a, buf, sizeof buf); CHECK(!strcmp(buf, "무제한 · 절전 방지 중"));
+        a.running = 0;
+        cf_remaining_label(&a, buf, sizeof buf); CHECK(!strcmp(buf, "대기 중"));
     }
 }
 

@@ -21,12 +21,6 @@ u32 cf_strlen(const char *s)
     return n;
 }
 
-int cf_streq(const char *a, const char *b)
-{
-    while (*a && *a == *b) { a++; b++; }
-    return *a == *b;
-}
-
 u32 cf_itoa(i64 v, char *out, u32 cap)
 {
     char tmp[24];

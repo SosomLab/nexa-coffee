@@ -1,34 +1,60 @@
-/* app.c — 앱 상태 · 메뉴 모델(3-OS 공통 트리) · 클릭 처리 · 설정 직렬화 · 문구(ko/en).
+/* app.c — 앱 상태 · 메뉴 모델(3-OS 공통 트리) · 클릭/입력 창 처리 · 설정 직렬화 · 문구(ko/en) · About.
  *
- * 메뉴(사용자 확정 09-12): 무제한 · 12시간 · 6시간 · 2시간 · 1시간 · 30분 · 사용자 지정 ▸ · 끄기
- *                          ─ 실행 시 자동 시작 ─ 종료
- * 사용자 지정 ▸ : 시작(요약) ─ 일 ▸(0~7) · 시간 ▸(0~23) · 분 ▸(0~55 · 5분 단위)
- * 창을 띄우지 않는다 — 메뉴만으로 값을 정한다(극단적 최소화 · UI 코드 0).
+ * 메뉴(사용자 확정 09-12 2차):
+ *   무제한 · 12시간 · 6시간 · 2시간 · 1시간 · 30분 · 사용자 지정… · 끄기
+ *   ─ 실행 시 자동 시작 ▸ (끄기 / 사용자 지정…) ─ 정보 · 종료
+ * "사용자 지정…"과 "자동 시작 ▸ 사용자 지정…"은 같은 입력 창(일·시·분 숫자 + 시작/저장 버튼)을 쓴다.
+ * 창을 그리는 것은 플랫폼 몫 — 여기서는 초기값·검증·결과 반영만.
  */
 #include "coffee.h"
+
+#ifndef CF_VERSION
+#define CF_VERSION "dev"
+#endif
 
 /* ── 문구 ─────────────────────────────────────────────────── */
 enum {
     S_APP = 0, S_IDLE, S_QUIT, S_AUTO, S_INF, S_12H, S_6H, S_2H, S_1H, S_30M, S_CUSTOM, S_OFF,
-    S_START, S_DAYS, S_HOURS, S_MINS, S_D, S_H, S_M, S_S, S_LEFT, S_KEEPING, S_COUNT
+    S_D, S_H, S_M, S_S, S_LEFT, S_KEEPING,
+    S_DLG_CUSTOM, S_DLG_AUTO, S_DAYS, S_HOURS, S_MINUTES, S_START, S_SAVE, S_CANCEL, S_ABOUT,
+    S_ABOUT_DESC, S_ABOUT_LICENSE,
+    S_DAY1, S_DAYN, S_HOUR1, S_HOURN, S_MIN1, S_MINN, S_SEC1, S_SECN, S_COUNT
 };
 static const char *const STR[2][S_COUNT] = {
     { "Nexa Coffee", "Idle", "Quit", "Start automatically at launch",
-      "Unlimited", "12 hours", "6 hours", "2 hours", "1 hour", "30 minutes", "Custom", "Off",
-      "Start", "Days", "Hours", "Minutes", "d", "h", "m", "s", "left", "keeping awake" },
+      "Unlimited", "12 hours", "6 hours", "2 hours", "1 hour", "30 minutes", "Custom\xE2\x80\xA6", "Off",
+      "d", "h", "m", "s", "left", "keeping awake",
+      "Custom duration", "Auto-start duration", "day(s)", "hour(s)", "minute(s)", "Start", "Save", "Cancel",
+      "About Nexa Coffee\xE2\x80\xA6",
+      "Keeps the computer awake from the tray.", "\xC2\xA9 2026 SosomLab \xC2\xB7 MIT License",
+      " day", " days", " hour", " hours", " minute", " minutes", " second", " seconds" },
     { "Nexa Coffee", "대기 중", "종료", "실행 시 자동 시작",
-      "무제한", "12시간", "6시간", "2시간", "1시간", "30분", "사용자 지정", "끄기",
-      "시작", "일", "시간", "분", "일", "시간", "분", "초", "남음", "절전 방지 중" },
+      "무제한", "12시간", "6시간", "2시간", "1시간", "30분", "사용자 지정…", "끄기",
+      "일", "시간", "분", "초", "남음", "절전 방지 중",
+      "사용자 지정 시간", "자동 시작 시간", "일", "시간", "분", "시작", "저장", "취소",
+      "Nexa Coffee 정보…",
+      "트레이에서 PC가 잠들지 않게 합니다.", "© 2026 SosomLab · MIT 라이선스",
+      "일", "일", "시간", "시간", "분", "분", "초", "초" },
 };
 static const char *s_(int lang, int id) { return STR[lang == CF_LANG_KO ? 1 : 0][id]; }
 
 const char *cf_str(int lang, int id)
 {
     switch (id) {
-    case CF_STR_APP:  return s_(lang, S_APP);
-    case CF_STR_IDLE: return s_(lang, S_IDLE);
-    case CF_STR_QUIT: return s_(lang, S_QUIT);
-    case CF_STR_AUTO: return s_(lang, S_AUTO);
+    case CF_STR_APP:        return s_(lang, S_APP);
+    case CF_STR_IDLE:       return s_(lang, S_IDLE);
+    case CF_STR_QUIT:       return s_(lang, S_QUIT);
+    case CF_STR_AUTO:       return s_(lang, S_AUTO);
+    case CF_STR_DLG_CUSTOM: return s_(lang, S_DLG_CUSTOM);
+    case CF_STR_DLG_AUTO:   return s_(lang, S_DLG_AUTO);
+    case CF_STR_DAYS:       return s_(lang, S_DAYS);
+    case CF_STR_HOURS:      return s_(lang, S_HOURS);
+    case CF_STR_MINUTES:    return s_(lang, S_MINUTES);
+    case CF_STR_START:      return s_(lang, S_START);
+    case CF_STR_SAVE:       return s_(lang, S_SAVE);
+    case CF_STR_CANCEL:     return s_(lang, S_CANCEL);
+    case CF_STR_ABOUT:      return s_(lang, S_ABOUT);
+    case CF_STR_VERSION:    return CF_VERSION;
     default: return "";
     }
 }
@@ -39,13 +65,12 @@ void cf_app_init(CfApp *a, int lang)
     cf_memset(a, 0, sizeof *a);
     a->lang = lang;
     a->sel = CF_SEL_OFF;
-    a->cust_d = 0; a->cust_h = 1; a->cust_m = 0;
+    a->cust_h = 1;
 }
 
-static i64 custom_secs(const CfApp *a)
-{
-    return (i64)a->cust_d * 86400 + (i64)a->cust_h * 3600 + (i64)a->cust_m * 60;
-}
+static i64 dhm_secs(int d, int h, int m) { return (i64)d * 86400 + (i64)h * 3600 + (i64)m * 60; }
+static i64 custom_secs(const CfApp *a) { return dhm_secs(a->cust_d, a->cust_h, a->cust_m); }
+i64 cf_auto_secs(const CfApp *a) { return dhm_secs(a->auto_d, a->auto_h, a->auto_m); }
 
 i64 cf_sel_secs(const CfApp *a)
 {
@@ -75,54 +100,62 @@ int cf_app_click(CfApp *a, int id)
 {
     int s = sel_of_id(id);
     if (s >= 0) { a->sel = s; a->running = 1; return CF_ACT_START; }
-    if (id == CF_ID_CUSTOM_START) {
-        if (custom_secs(a) <= 0) return CF_ACT_NONE;
-        a->sel = CF_SEL_CUSTOM; a->running = 1; return CF_ACT_START;
+    switch (id) {
+    case CF_ID_CUSTOM:      return CF_ACT_DIALOG_CUSTOM;
+    case CF_ID_OFF:         a->running = 0; a->sel = CF_SEL_OFF; return CF_ACT_STOP;
+    case CF_ID_AUTO_OFF:    a->auto_d = a->auto_h = a->auto_m = 0; return CF_ACT_MENU;
+    case CF_ID_AUTO_CUSTOM: return CF_ACT_DIALOG_AUTO;
+    case CF_ID_ABOUT:       return CF_ACT_ABOUT;
+    case CF_ID_QUIT:        return CF_ACT_QUIT;
+    default:                return CF_ACT_NONE;
     }
-    if (id == CF_ID_OFF)  { a->running = 0; a->sel = CF_SEL_OFF; return CF_ACT_STOP; }
-    if (id == CF_ID_AUTO) { a->auto_start = !a->auto_start; return CF_ACT_MENU; }
-    if (id == CF_ID_QUIT) return CF_ACT_QUIT;
-    if (id >= CF_ID_DAY0 && id <= CF_ID_DAY0 + CF_MAX_DAYS) { a->cust_d = id - CF_ID_DAY0; return CF_ACT_MENU; }
-    if (id >= CF_ID_HOUR0 && id < CF_ID_HOUR0 + 24)          { a->cust_h = id - CF_ID_HOUR0; return CF_ACT_MENU; }
-    if (id >= CF_ID_MIN0 && id < CF_ID_MIN0 + 60 / CF_MIN_STEP) { a->cust_m = (id - CF_ID_MIN0) * CF_MIN_STEP; return CF_ACT_MENU; }
-    return CF_ACT_NONE;
+}
+
+void cf_dialog_values(const CfApp *a, int mode, int *d, int *h, int *m)
+{
+    if (mode == CF_DLG_AUTO && cf_auto_secs(a) > 0) { *d = a->auto_d; *h = a->auto_h; *m = a->auto_m; }
+    else { *d = a->cust_d; *h = a->cust_h; *m = a->cust_m; }
+}
+
+static int clampi(i64 v, int lo, int hi) { return v < lo ? lo : v > hi ? hi : (int)v; }
+
+int cf_dialog_submit(CfApp *a, int mode, i64 d, i64 h, i64 m)
+{
+    int cd = clampi(d, 0, CF_MAX_DAYS), ch = clampi(h, 0, 23), cm = clampi(m, 0, 59);
+    if (mode == CF_DLG_AUTO) {
+        a->auto_d = cd; a->auto_h = ch; a->auto_m = cm;
+        return CF_ACT_MENU;
+    }
+    if (dhm_secs(cd, ch, cm) <= 0) return CF_ACT_NONE;
+    a->cust_d = cd; a->cust_h = ch; a->cust_m = cm;
+    a->sel = CF_SEL_CUSTOM; a->running = 1;
+    return CF_ACT_START;
 }
 
 /* ── 메뉴 트리 ─────────────────────────────────────────────── */
 int cf_menu_children(const CfApp *a, int parent, int *ids, int max)
 {
-    static const int root[] = { CF_ID_INF, CF_ID_12H, CF_ID_6H, CF_ID_2H, CF_ID_1H, CF_ID_30M,
-                                CF_ID_CUSTOM, CF_ID_OFF, CF_ID_SEP1, CF_ID_AUTO, CF_ID_SEP2, CF_ID_QUIT };
-    static const int cust[] = { CF_ID_CUSTOM_START, CF_ID_CUSTOM_SEP, CF_ID_CUSTOM_DAYS,
-                                CF_ID_CUSTOM_HOURS, CF_ID_CUSTOM_MINS };
-    int n = 0, i, base = 0, count = 0;
+    static const int root[] = { CF_ID_STATUS, CF_ID_SEP0, CF_ID_INF, CF_ID_12H, CF_ID_6H, CF_ID_2H, CF_ID_1H, CF_ID_30M,
+                                CF_ID_CUSTOM, CF_ID_OFF, CF_ID_SEP1, CF_ID_AUTO, CF_ID_SEP2, CF_ID_ABOUT, CF_ID_QUIT };
+    static const int autom[] = { CF_ID_AUTO_OFF, CF_ID_AUTO_CUSTOM };
+    const int *src = 0;
+    int n = 0, count = 0, i;
     (void)a;
-    if (parent == CF_ID_ROOT) {
-        for (i = 0; i < (int)(sizeof root / sizeof root[0]) && n < max; i++) ids[n++] = root[i];
-        return n;
-    }
-    if (parent == CF_ID_CUSTOM) {
-        for (i = 0; i < (int)(sizeof cust / sizeof cust[0]) && n < max; i++) ids[n++] = cust[i];
-        return n;
-    }
-    if (parent == CF_ID_CUSTOM_DAYS)  { base = CF_ID_DAY0;  count = CF_MAX_DAYS + 1; }
-    if (parent == CF_ID_CUSTOM_HOURS) { base = CF_ID_HOUR0; count = 24; }
-    if (parent == CF_ID_CUSTOM_MINS)  { base = CF_ID_MIN0;  count = 60 / CF_MIN_STEP; }
-    for (i = 0; i < count && n < max; i++) ids[n++] = base + i;
+    if (parent == CF_ID_ROOT) { src = root;  count = (int)(sizeof root / sizeof root[0]); }
+    if (parent == CF_ID_AUTO) { src = autom; count = (int)(sizeof autom / sizeof autom[0]); }
+    for (i = 0; i < count && n < max; i++) ids[n++] = src[i];
     return n;
 }
 
 /* "1일 2시간 30분" / "1d 2h 30m" — 0인 단위는 생략(전부 0이면 "0분") */
-static void custom_summary(const CfApp *a, char *out, u32 cap)
+static void dhm_summary(int lang, int d, int h, int m, char *out, u32 cap)
 {
-    const int ko = a->lang == CF_LANG_KO;
     char num[8];
     int any = 0;
     out[0] = 0;
-    if (a->cust_d) { cf_itoa(a->cust_d, num, sizeof num); cf_strcat(out, cap, num); cf_strcat(out, cap, s_(a->lang, S_D)); any = 1; }
-    if (a->cust_h) { if (any) cf_strcat(out, cap, " "); cf_itoa(a->cust_h, num, sizeof num); cf_strcat(out, cap, num); cf_strcat(out, cap, s_(a->lang, S_H)); any = 1; }
-    if (a->cust_m || !any) { if (any) cf_strcat(out, cap, " "); cf_itoa(a->cust_m, num, sizeof num); cf_strcat(out, cap, num); cf_strcat(out, cap, s_(a->lang, S_M)); }
-    (void)ko;
+    if (d) { cf_itoa(d, num, sizeof num); cf_strcat(out, cap, num); cf_strcat(out, cap, s_(lang, S_D)); any = 1; }
+    if (h) { if (any) cf_strcat(out, cap, " "); cf_itoa(h, num, sizeof num); cf_strcat(out, cap, num); cf_strcat(out, cap, s_(lang, S_H)); any = 1; }
+    if (m || !any) { if (any) cf_strcat(out, cap, " "); cf_itoa(m, num, sizeof num); cf_strcat(out, cap, num); cf_strcat(out, cap, s_(lang, S_M)); }
 }
 
 static void set(CfMenuItem *o, int kind, int checked, const char *label)
@@ -131,11 +164,17 @@ static void set(CfMenuItem *o, int kind, int checked, const char *label)
     o->label[0] = 0;
     cf_strcat(o->label, sizeof o->label, label);
 }
+static void paren(CfMenuItem *o, const char *inner)
+{
+    cf_strcat(o->label, sizeof o->label, " (");
+    cf_strcat(o->label, sizeof o->label, inner);
+    cf_strcat(o->label, sizeof o->label, ")");
+}
 
 int cf_menu_item(const CfApp *a, int id, CfMenuItem *out)
 {
     const int L = a->lang;
-    char num[8], tmp[48];
+    char tmp[48];
     int s = sel_of_id(id);
     cf_memset(out, 0, sizeof *out);
     out->enabled = 1;
@@ -146,75 +185,44 @@ int cf_menu_item(const CfApp *a, int id, CfMenuItem *out)
     }
     switch (id) {
     case CF_ID_CUSTOM:
-        custom_summary(a, tmp, sizeof tmp);
-        set(out, CF_KIND_SUBMENU, a->running && a->sel == CF_SEL_CUSTOM, s_(L, S_CUSTOM));
-        cf_strcat(out->label, sizeof out->label, " (");
-        cf_strcat(out->label, sizeof out->label, tmp);
-        cf_strcat(out->label, sizeof out->label, ")");
+        set(out, CF_KIND_RADIO, a->running && a->sel == CF_SEL_CUSTOM, s_(L, S_CUSTOM));
+        if (a->running && a->sel == CF_SEL_CUSTOM) { dhm_summary(L, a->cust_d, a->cust_h, a->cust_m, tmp, sizeof tmp); paren(out, tmp); }
         return 1;
     case CF_ID_OFF:  set(out, CF_KIND_RADIO, !a->running, s_(L, S_OFF)); return 1;
-    case CF_ID_SEP1: case CF_ID_SEP2: case CF_ID_CUSTOM_SEP:
-        set(out, CF_KIND_SEPARATOR, 0, ""); return 1;
-    case CF_ID_AUTO: set(out, CF_KIND_CHECK, a->auto_start, s_(L, S_AUTO)); return 1;
-    case CF_ID_QUIT: set(out, CF_KIND_NORMAL, 0, s_(L, S_QUIT)); return 1;
-    case CF_ID_CUSTOM_START:
-        custom_summary(a, tmp, sizeof tmp);
-        set(out, CF_KIND_NORMAL, 0, s_(L, S_START));
-        cf_strcat(out->label, sizeof out->label, " — ");
-        cf_strcat(out->label, sizeof out->label, tmp);
-        out->enabled = custom_secs(a) > 0;
+    case CF_ID_SEP0: case CF_ID_SEP1: case CF_ID_SEP2: set(out, CF_KIND_SEPARATOR, 0, ""); return 1;
+    case CF_ID_STATUS:
+        set(out, CF_KIND_NORMAL, 0, "");
+        cf_remaining_label(a, out->label, sizeof out->label);
+        out->enabled = 0;
         return 1;
-    case CF_ID_CUSTOM_DAYS:
-        cf_itoa(a->cust_d, num, sizeof num);
-        set(out, CF_KIND_SUBMENU, 0, s_(L, S_DAYS));
-        cf_strcat(out->label, sizeof out->label, " ("); cf_strcat(out->label, sizeof out->label, num); cf_strcat(out->label, sizeof out->label, ")");
+    case CF_ID_AUTO:
+        set(out, CF_KIND_SUBMENU, cf_auto_secs(a) > 0, s_(L, S_AUTO));
+        if (cf_auto_secs(a) > 0) { dhm_summary(L, a->auto_d, a->auto_h, a->auto_m, tmp, sizeof tmp); paren(out, tmp); }
         return 1;
-    case CF_ID_CUSTOM_HOURS:
-        cf_itoa(a->cust_h, num, sizeof num);
-        set(out, CF_KIND_SUBMENU, 0, s_(L, S_HOURS));
-        cf_strcat(out->label, sizeof out->label, " ("); cf_strcat(out->label, sizeof out->label, num); cf_strcat(out->label, sizeof out->label, ")");
+    case CF_ID_AUTO_OFF:    set(out, CF_KIND_RADIO, cf_auto_secs(a) <= 0, s_(L, S_OFF)); return 1;
+    case CF_ID_AUTO_CUSTOM:
+        set(out, CF_KIND_RADIO, cf_auto_secs(a) > 0, s_(L, S_CUSTOM));
+        if (cf_auto_secs(a) > 0) { dhm_summary(L, a->auto_d, a->auto_h, a->auto_m, tmp, sizeof tmp); paren(out, tmp); }
         return 1;
-    case CF_ID_CUSTOM_MINS:
-        cf_itoa(a->cust_m, num, sizeof num);
-        set(out, CF_KIND_SUBMENU, 0, s_(L, S_MINS));
-        cf_strcat(out->label, sizeof out->label, " ("); cf_strcat(out->label, sizeof out->label, num); cf_strcat(out->label, sizeof out->label, ")");
-        return 1;
-    default: break;
+    case CF_ID_ABOUT: set(out, CF_KIND_NORMAL, 0, s_(L, S_ABOUT)); return 1;
+    case CF_ID_QUIT:  set(out, CF_KIND_NORMAL, 0, s_(L, S_QUIT)); return 1;
+    default: return 0;
     }
-    if (id >= CF_ID_DAY0 && id <= CF_ID_DAY0 + CF_MAX_DAYS) {
-        int d = id - CF_ID_DAY0;
-        cf_itoa(d, num, sizeof num);
-        set(out, CF_KIND_RADIO, a->cust_d == d, num);
-        cf_strcat(out->label, sizeof out->label, L == CF_LANG_KO ? "일" : " d");
-        return 1;
-    }
-    if (id >= CF_ID_HOUR0 && id < CF_ID_HOUR0 + 24) {
-        int h = id - CF_ID_HOUR0;
-        cf_itoa(h, num, sizeof num);
-        set(out, CF_KIND_RADIO, a->cust_h == h, num);
-        cf_strcat(out->label, sizeof out->label, L == CF_LANG_KO ? "시간" : " h");
-        return 1;
-    }
-    if (id >= CF_ID_MIN0 && id < CF_ID_MIN0 + 60 / CF_MIN_STEP) {
-        int m = (id - CF_ID_MIN0) * CF_MIN_STEP;
-        cf_itoa(m, num, sizeof num);
-        set(out, CF_KIND_RADIO, a->cust_m == m, num);
-        cf_strcat(out->label, sizeof out->label, L == CF_LANG_KO ? "분" : " min");
-        return 1;
-    }
-    return 0;
 }
 
 /* ── 설정 ─────────────────────────────────────────────────── */
-u32 cf_conf_format(const CfApp *a, char *out, u32 cap)
+static void put_dhm(char *out, u32 cap, int d, int h, int m)
 {
     char num[8];
+    cf_itoa(d, num, sizeof num); cf_strcat(out, cap, num); cf_strcat(out, cap, ",");
+    cf_itoa(h, num, sizeof num); cf_strcat(out, cap, num); cf_strcat(out, cap, ",");
+    cf_itoa(m, num, sizeof num); cf_strcat(out, cap, num);
+}
+u32 cf_conf_format(const CfApp *a, char *out, u32 cap)
+{
     out[0] = 0;
-    cf_strcat(out, cap, "auto=");   cf_itoa(a->auto_start, num, sizeof num); cf_strcat(out, cap, num);
-    cf_strcat(out, cap, "\nsel=");  cf_itoa(a->sel, num, sizeof num);        cf_strcat(out, cap, num);
-    cf_strcat(out, cap, "\ncustom="); cf_itoa(a->cust_d, num, sizeof num);   cf_strcat(out, cap, num);
-    cf_strcat(out, cap, ",");       cf_itoa(a->cust_h, num, sizeof num);     cf_strcat(out, cap, num);
-    cf_strcat(out, cap, ",");       cf_itoa(a->cust_m, num, sizeof num);     cf_strcat(out, cap, num);
+    cf_strcat(out, cap, "auto=");   put_dhm(out, cap, a->auto_d, a->auto_h, a->auto_m);
+    cf_strcat(out, cap, "\ncustom="); put_dhm(out, cap, a->cust_d, a->cust_h, a->cust_m);
     return cf_strcat(out, cap, "\n");
 }
 
@@ -224,30 +232,27 @@ static int starts(const char *p, const char *end, const char *key, const char **
     *rest = p;
     return 1;
 }
+static void parse_dhm(const char *v, int *d, int *h, int *m)
+{
+    const char *e;
+    i64 dd = cf_atoi(v, &e), hh = 0, mm = 0;
+    if (*e == ',') { hh = cf_atoi(e + 1, &e); if (*e == ',') mm = cf_atoi(e + 1, &e); }
+    *d = clampi(dd, 0, CF_MAX_DAYS); *h = clampi(hh, 0, 23); *m = clampi(mm, 0, 59);
+}
 
 void cf_conf_parse(CfApp *a, const char *buf, u32 len)
 {
-    const char *p = buf, *end = buf + len, *v, *e;
+    const char *p = buf, *end = buf + len, *v;
     while (p < end) {
         const char *nl = p;
         while (nl < end && *nl != '\n') nl++;
-        if (starts(p, nl, "auto=", &v))      a->auto_start = cf_atoi(v, 0) ? 1 : 0;
-        else if (starts(p, nl, "sel=", &v)) {
-            i64 s = cf_atoi(v, 0);
-            a->sel = (s >= 0 && s < CF_SEL_COUNT) ? (int)s : CF_SEL_OFF;
-        } else if (starts(p, nl, "custom=", &v)) {
-            i64 d = cf_atoi(v, &e), h = 0, m = 0;
-            if (*e == ',') { h = cf_atoi(e + 1, &e); if (*e == ',') m = cf_atoi(e + 1, &e); }
-            if (d < 0 || d > CF_MAX_DAYS) d = 0;
-            if (h < 0 || h > 23) h = 0;
-            if (m < 0 || m > 59) m = 0;
-            a->cust_d = (int)d; a->cust_h = (int)h; a->cust_m = (int)(m / CF_MIN_STEP) * CF_MIN_STEP;
-        }
+        if (starts(p, nl, "auto=", &v))        parse_dhm(v, &a->auto_d, &a->auto_h, &a->auto_m);
+        else if (starts(p, nl, "custom=", &v)) parse_dhm(v, &a->cust_d, &a->cust_h, &a->cust_m);
         p = nl + 1;
     }
 }
 
-/* ── 툴팁 ─────────────────────────────────────────────────── */
+/* ── 툴팁 · About ─────────────────────────────────────────── */
 u32 cf_tooltip(const CfApp *a, const CfDisplay *d, char *out, u32 cap)
 {
     const int L = a->lang;
@@ -273,4 +278,44 @@ u32 cf_tooltip(const CfApp *a, const CfDisplay *d, char *out, u32 cap)
         if (d->unit >= CF_UNIT_HOUR) cf_strcat(out, cap, d->value == 1 ? " " : "s ");
     }
     return cf_strcat(out, cap, s_(L, S_LEFT));
+}
+
+static void unit(char *out, u32 cap, int lang, i64 v, int one, int many)
+{
+    char num[24];
+    cf_itoa(v, num, sizeof num);
+    cf_strcat(out, cap, num);
+    cf_strcat(out, cap, s_(lang, v > 1 ? many : one)); /* 1보다 크면 복수형(사용자 확정) */
+}
+
+u32 cf_remaining_label(const CfApp *a, char *out, u32 cap)
+{
+    const int L = a->lang;
+    i64 r = a->remaining_s < 0 ? 0 : a->remaining_s;
+    out[0] = 0;
+    if (!a->running) return cf_strcat(out, cap, s_(L, S_IDLE));
+    if (a->sel == CF_SEL_INF) {
+        cf_strcat(out, cap, s_(L, S_INF));
+        cf_strcat(out, cap, " · ");
+        return cf_strcat(out, cap, s_(L, S_KEEPING));
+    }
+    unit(out, cap, L, r / 86400, S_DAY1, S_DAYN);          cf_strcat(out, cap, " ");
+    unit(out, cap, L, (r / 3600) % 24, S_HOUR1, S_HOURN);  cf_strcat(out, cap, " ");
+    unit(out, cap, L, (r / 60) % 60, S_MIN1, S_MINN);      cf_strcat(out, cap, " ");
+    unit(out, cap, L, r % 60, S_SEC1, S_SECN);
+    return cf_strlen(out);
+}
+
+u32 cf_about(int lang, char *out, u32 cap)
+{
+    out[0] = 0;
+    cf_strcat(out, cap, s_(lang, S_APP));
+    cf_strcat(out, cap, " v");
+    cf_strcat(out, cap, CF_VERSION);
+    cf_strcat(out, cap, "\n");
+    cf_strcat(out, cap, s_(lang, S_ABOUT_DESC));
+    cf_strcat(out, cap, "\n\n");
+    cf_strcat(out, cap, s_(lang, S_ABOUT_LICENSE));
+    cf_strcat(out, cap, "\nhttps://github.com/SosomLab/nexa-coffee");
+    return cf_strlen(out);
 }

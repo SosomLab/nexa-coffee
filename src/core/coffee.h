@@ -23,7 +23,6 @@ typedef long long      i64;
 void  cf_memset(void *dst, int c, u32 n);
 void  cf_memcpy(void *dst, const void *src, u32 n);
 u32   cf_strlen(const char *s);
-int   cf_streq(const char *a, const char *b);
 /* 10진 정수 → 문자열. 반환 = 쓴 길이(NUL 제외). cap 부족 시 0. */
 u32   cf_itoa(i64 v, char *out, u32 cap);
 /* 문자열 이어붙이기(NUL 보장). 반환 = 새 길이. */
@@ -79,8 +78,6 @@ void cf_icon_idle(u8 *rgba, int size, CfColor color);
 /* ───────────────────────── icon_active.c ───────────────────────── */
 /* 동작 아이콘 — 얇은 외곽선 + 굵은 잔여 호(꼬리가 그라데이션으로 사라짐) + 단위색 정수. */
 void cf_icon_active(u8 *rgba, int size, const CfDisplay *d);
-/* 단위별 색(호·글자). */
-CfColor cf_unit_color(int unit);
 
 /* ───────────────────────── app.c ───────────────────────── */
 enum { CF_LANG_EN = 0, CF_LANG_KO = 1 };
@@ -95,17 +92,17 @@ enum {
 enum {
     CF_ID_ROOT = 0,
     CF_ID_INF = 1, CF_ID_12H, CF_ID_6H, CF_ID_2H, CF_ID_1H, CF_ID_30M,
-    CF_ID_CUSTOM,            /* 서브메뉴 */
+    CF_ID_CUSTOM,            /* "Custom…" → 입력 창 */
     CF_ID_OFF,
-    CF_ID_SEP1, CF_ID_AUTO, CF_ID_SEP2, CF_ID_QUIT,
-    CF_ID_CUSTOM_START = 20, CF_ID_CUSTOM_SEP, CF_ID_CUSTOM_DAYS, CF_ID_CUSTOM_HOURS, CF_ID_CUSTOM_MINS,
-    CF_ID_DAY0  = 100,       /* 100+d · d=0..CF_MAX_DAYS */
-    CF_ID_HOUR0 = 200,       /* 200+h · h=0..23 */
-    CF_ID_MIN0  = 300        /* 300+m/5 · m=0,5,..,55 */
+    CF_ID_SEP1,
+    CF_ID_AUTO,              /* 서브메뉴: Off / Custom… */
+    CF_ID_SEP2, CF_ID_ABOUT, CF_ID_QUIT,
+    CF_ID_STATUS,            /* 맨 위: 남은 시간(비활성 · 1초 갱신) */
+    CF_ID_SEP0,
+    CF_ID_AUTO_OFF = 20, CF_ID_AUTO_CUSTOM
 };
-#define CF_MAX_DAYS 7
-#define CF_MIN_STEP 5
-#define CF_MENU_MAX_CHILDREN 24
+#define CF_MAX_DAYS 99
+#define CF_MENU_MAX_CHILDREN 16
 
 enum { CF_KIND_NORMAL = 0, CF_KIND_SEPARATOR, CF_KIND_RADIO, CF_KIND_CHECK, CF_KIND_SUBMENU };
 
@@ -120,38 +117,59 @@ typedef struct {
     int lang;        /* CF_LANG_* */
     int sel;         /* 현재 선택(CF_SEL_*) — running이 0이면 OFF */
     int running;     /* 작업 진행 중 */
-    int auto_start;  /* 실행 시 자동 시작(설정) */
-    int cust_d, cust_h, cust_m; /* 사용자 지정 일·시·분(설정) */
+    int cust_d, cust_h, cust_m; /* 사용자 지정 일·시·분(마지막 입력) */
+    int auto_d, auto_h, auto_m; /* 실행 시 자동 시작 시간(전부 0 = 끔) */
+    i64 remaining_s; /* 플랫폼이 메뉴를 만들기 전에 채운다(초 · 올림) */
 } CfApp;
 
 /* 클릭 결과 — 플랫폼이 수행. */
 enum {
     CF_ACT_NONE = 0,
-    CF_ACT_START,   /* app->sel로 시작 · 초 = cf_sel_secs(app) (≤0 = 무제한) */
+    CF_ACT_START,         /* app->sel로 시작 · 초 = cf_sel_secs(app) (≤0 = 무제한) */
     CF_ACT_STOP,
     CF_ACT_QUIT,
-    CF_ACT_MENU     /* 설정만 바뀜(메뉴 라벨·체크 갱신 + 저장) */
+    CF_ACT_MENU,          /* 설정만 바뀜(메뉴 갱신 + 저장) */
+    CF_ACT_DIALOG_CUSTOM, /* 입력 창(CF_DLG_CUSTOM) 열기 */
+    CF_ACT_DIALOG_AUTO,   /* 입력 창(CF_DLG_AUTO) 열기 */
+    CF_ACT_ABOUT          /* About 화면 */
 };
+/* 입력 창 모드 */
+enum { CF_DLG_CUSTOM = 0, CF_DLG_AUTO = 1 };
 
 void cf_app_init(CfApp *a, int lang);
 /* 선택의 초. INF = -1 · OFF = 0. */
 i64  cf_sel_secs(const CfApp *a);
-/* 메뉴 클릭 → 상태 갱신 + 행동 반환. START/STOP/MENU는 모두 저장 대상. */
+/* 자동 시작 초(0 = 끔). */
+i64  cf_auto_secs(const CfApp *a);
+/* 메뉴 클릭 → 상태 갱신 + 행동 반환. START/STOP/MENU는 저장 대상. */
 int  cf_app_click(CfApp *a, int id);
+/* 입력 창 초기값. */
+void cf_dialog_values(const CfApp *a, int mode, int *d, int *h, int *m);
+/* 입력 창 확정 — 범위로 클램프. CUSTOM: START(전부 0이면 NONE) · AUTO: MENU(저장). */
+int  cf_dialog_submit(CfApp *a, int mode, i64 d, i64 h, i64 m);
 /* parent의 자식 id 목록. 반환 = 개수. */
 int  cf_menu_children(const CfApp *a, int parent, int *ids, int max);
 /* 항목 속성. 반환 0 = 없는 id. */
 int  cf_menu_item(const CfApp *a, int id, CfMenuItem *out);
 
-/* 설정 직렬화 — "auto=1\nsel=3\ncustom=1,2,30\n". 반환 = 길이. */
+/* 설정 직렬화 — "auto=0,12,50\ncustom=1,2,30\n". 반환 = 길이. */
 u32  cf_conf_format(const CfApp *a, char *out, u32 cap);
 /* 설정 파싱(관대함 — 모르는 줄 무시). */
 void cf_conf_parse(CfApp *a, const char *buf, u32 len);
 
 /* 툴팁 문구 — "Nexa Coffee — 2시간 남음" 등. 반환 = 길이. */
 u32  cf_tooltip(const CfApp *a, const CfDisplay *d, char *out, u32 cap);
+/* 메뉴 맨 위 남은 시간 — "0 days 12 hours 50 minutes 3 seconds"(1보다 크면 복수형) / "0일 12시간 50분 3초".
+ * 대기 중이면 "Idle", 무제한이면 "Unlimited · keeping awake". 반환 = 길이. */
+u32  cf_remaining_label(const CfApp *a, char *out, u32 cap);
+/* About 본문(여러 줄). 반환 = 길이. */
+u32  cf_about(int lang, char *out, u32 cap);
 /* 고정 문구. */
-enum { CF_STR_APP = 0, CF_STR_IDLE, CF_STR_QUIT, CF_STR_AUTO, CF_STR_COUNT };
+enum {
+    CF_STR_APP = 0, CF_STR_IDLE, CF_STR_QUIT, CF_STR_AUTO,
+    CF_STR_DLG_CUSTOM, CF_STR_DLG_AUTO, CF_STR_DAYS, CF_STR_HOURS, CF_STR_MINUTES,
+    CF_STR_START, CF_STR_SAVE, CF_STR_CANCEL, CF_STR_ABOUT, CF_STR_VERSION, CF_STR_COUNT
+};
 const char *cf_str(int lang, int id);
 
 #endif /* NEXA_COFFEE_H */

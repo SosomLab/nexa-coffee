@@ -12,7 +12,8 @@
 
 #define FADE (CF_TURN * 17 / 100)
 
-CfColor cf_unit_color(int unit)
+/* 단위별 색(호·글자) */
+static CfColor unit_color(int unit)
 {
     CfColor c = {10, 132, 255, 255};           /* INF · 파랑 */
     switch (unit) {
@@ -87,7 +88,7 @@ void cf_icon_active(u8 *rgba, int size, const CfDisplay *d)
     const i32 r_i2 = r_o2 - T2;                      /* 호 안쪽 */
     const i32 r_l2 = r_o2 - t2;                      /* 외곽선 안쪽 */
     const u32 R_O = (u32)(r_o2 * r_o2), R_I = (u32)(r_i2 * r_i2), R_L = (u32)(r_l2 * r_l2);
-    const CfColor col = cf_unit_color(d->unit);
+    const CfColor col = unit_color(d->unit);
     const CfColor outline = {142, 142, 147, 150};
     const u32 frac = d->frac < 0 ? 0 : (u32)d->frac;
     Glyphs g;
