@@ -4,7 +4,8 @@
 
 - `feat/dialog-ui-memory` 6커밋(core → win → mac → linux → 브랜딩/도구 → docs) → main ff 병합 → push. push 전 test·3-OS 빌드·smoke green 재확인.
 - 포함: 09-12 3차(입력 창·About·자동 시작 2택) + 09-13 1차(메뉴 남은 시간) + 09-13 2차(메모리·자원).
-- **다음**: CI 결과 확인 → Windows/Linux 실기(T-2·T-3).
+- **CI(run 34706566010)**: linux ✓ · macos ✓ · windows-msvc ✓ — main green.
+- **다음**: Windows/Linux 실기(T-2·T-3).
 
 ## 09-13 2차 — 상주 메모리 최소화 · 불필요 자원 검토 (사용자 요청)
 
