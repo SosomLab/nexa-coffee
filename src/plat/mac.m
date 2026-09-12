@@ -8,6 +8,8 @@
  *   30초마다 IOPMAssertionDeclareUserActivity(화면보호기 유휴 타이머 재설정).
  *   ⚠️ 덮개 닫힘 절전은 OS 강제 절전이라 어설션으로 막을 수 없다(root `pmset disablesleep` 영역).
  * - 작업 종료 시: 어설션 해제 · 타이머 무효화 · 동작 아이콘 해제 · malloc_zone_pressure_relief.
+ * - 입력 창(일·시·분 + 시작/저장) = 코드로 만든 NSPanel을 모달로. About = 표준 About 패널.
+ *   타이머는 NSRunLoopCommonModes에 넣어 모달 중에도 아이콘이 갱신된다.
  */
 #import <AppKit/AppKit.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
@@ -31,7 +33,7 @@ static i64 now_ms(void)
     return (i64)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
-@interface Coffee : NSObject <NSApplicationDelegate, NSMenuDelegate>
+@interface Coffee : NSObject <NSApplicationDelegate, NSMenuDelegate, NSWindowDelegate>
 @end
 
 @implementation Coffee {
@@ -46,6 +48,8 @@ static i64 now_ms(void)
     IOPMAssertionID assertSys, assertDisp;
     char confPath[1024];
     int lockFd;
+    NSTextField *dlgField[3]; /* 입력 창 필드(일·시·분) */
+    NSTimer *menuTimer;       /* 메뉴가 열린 동안 1초마다 남은 시간 갱신 */
 }
 
 /* ── 설정 파일 ── */
@@ -134,9 +138,10 @@ static NSBitmapImageRep *repFromRGBA(const u8 *rgba, int px, CGFloat pt)
             IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleDisplaySleep, kIOPMAssertionLevelOn,
                                         CFSTR("Nexa Coffee"), &assertDisp);
         if (!activity) {
-            activity = [NSTimer scheduledTimerWithTimeInterval:ACTIVITY_SEC target:self
-                                                      selector:@selector(declareActivity) userInfo:nil repeats:YES];
+            activity = [NSTimer timerWithTimeInterval:ACTIVITY_SEC target:self
+                                             selector:@selector(declareActivity) userInfo:nil repeats:YES];
             activity.tolerance = 5;
+            [[NSRunLoop mainRunLoop] addTimer:activity forMode:NSRunLoopCommonModes];
             [self declareActivity];
         }
     } else {
@@ -181,9 +186,10 @@ static NSBitmapImageRep *repFromRGBA(const u8 *rgba, int px, CGFloat pt)
     item.button.toolTip = [NSString stringWithUTF8String:tip];
     [tick invalidate];
     i64 next = cf_next_change_ms(rem_ms, total);
-    tick = [NSTimer scheduledTimerWithTimeInterval:(NSTimeInterval)next / 1000.0 target:self
-                                          selector:@selector(tickNow) userInfo:nil repeats:NO];
+    tick = [NSTimer timerWithTimeInterval:(NSTimeInterval)next / 1000.0 target:self
+                                 selector:@selector(tickNow) userInfo:nil repeats:NO];
     tick.tolerance = 0.05;
+    [[NSRunLoop mainRunLoop] addTimer:tick forMode:NSRunLoopCommonModes]; /* 모달 입력 창 중에도 갱신 */
 }
 
 /* ── 메뉴(코어 트리를 그대로 옮긴다 · 열릴 때마다 새로 만든다) ── */
@@ -212,17 +218,130 @@ static NSBitmapImageRep *repFromRGBA(const u8 *rgba, int px, CGFloat pt)
         [m addItem:mi];
     }
 }
-- (void)menuNeedsUpdate:(NSMenu *)m { [self fill:m parent:CF_ID_ROOT]; }
-
-- (void)click:(NSMenuItem *)mi
+- (void)refreshRemaining { app.remaining_s = deadline ? (deadline - now_ms() + 999) / 1000 : 0; }
+- (void)menuNeedsUpdate:(NSMenu *)m { [self refreshRemaining]; [self fill:m parent:CF_ID_ROOT]; }
+/* 메뉴가 열린 동안 맨 위 항목을 1초마다 갱신(사용자 요청 09-13) — 메뉴 추적 모드에서도 도는 common-modes 타이머 */
+- (void)menuWillOpen:(NSMenu *)m
 {
-    switch (cf_app_click(&app, (int)mi.tag)) {
+    if (m != menu) return;
+    [menuTimer invalidate];
+    menuTimer = [NSTimer timerWithTimeInterval:1.0 target:self selector:@selector(menuTick) userInfo:nil repeats:YES];
+    [[NSRunLoop mainRunLoop] addTimer:menuTimer forMode:NSRunLoopCommonModes];
+}
+- (void)menuDidClose:(NSMenu *)m { if (m == menu) { [menuTimer invalidate]; menuTimer = nil; } }
+- (void)menuTick
+{
+    char label[96];
+    NSMenuItem *st = [menu itemWithTag:CF_ID_STATUS];
+    if (!st) return;
+    [self refreshRemaining];
+    cf_remaining_label(&app, label, sizeof label);
+    st.title = [NSString stringWithUTF8String:label];
+}
+
+- (void)act:(int)action
+{
+    switch (action) {
     case CF_ACT_START: [self confSave]; [self startJob]; break;
     case CF_ACT_STOP:  [self confSave]; [self stopJob];  break;
     case CF_ACT_MENU:  [self confSave]; break;
     case CF_ACT_QUIT:  [self stopJob]; [NSApp terminate:nil]; break;
+    case CF_ACT_DIALOG_CUSTOM: [self showDialog:CF_DLG_CUSTOM]; break;
+    case CF_ACT_DIALOG_AUTO:   [self showDialog:CF_DLG_AUTO]; break;
+    case CF_ACT_ABOUT: [self showAbout]; break;
     default: break;
     }
+}
+- (void)click:(NSMenuItem *)mi { [self act:cf_app_click(&app, (int)mi.tag)]; }
+- (void)actBoxed:(NSNumber *)n { [self act:n.intValue]; }
+
+/* ── 입력 창: [ 0 ] day(s) [ 12 ] hour(s) [ 50 ] minute(s)   [Cancel] [Start] ── */
+static NSString *S(int lang, int id) { return [NSString stringWithUTF8String:cf_str(lang, id)]; }
+
+- (void)showDialog:(int)mode
+{
+    int v[3];
+    static const int labelId[3] = { CF_STR_DAYS, CF_STR_HOURS, CF_STR_MINUTES };
+    cf_dialog_values(&app, mode, &v[0], &v[1], &v[2]);
+
+    NSPanel *p = [[NSPanel alloc] initWithContentRect:NSMakeRect(0, 0, 360, 92)
+                                            styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable)
+                                              backing:NSBackingStoreBuffered defer:NO];
+    p.title = S(app.lang, mode == CF_DLG_AUTO ? CF_STR_DLG_AUTO : CF_STR_DLG_CUSTOM);
+    p.delegate = self;
+    NSView *cv = p.contentView;
+    CGFloat x = 18;
+    for (int i = 0; i < 3; i++) {
+        NSTextField *tf = [NSTextField textFieldWithString:[NSString stringWithFormat:@"%d", v[i]]];
+        tf.frame = NSMakeRect(x, 50, 46, 24);
+        tf.alignment = NSTextAlignmentRight;
+        tf.nextKeyView = nil;
+        NSNumberFormatter *nf = [NSNumberFormatter new];
+        nf.numberStyle = NSNumberFormatterNoStyle;
+        nf.minimum = @0; nf.maximum = @(i == 0 ? CF_MAX_DAYS : i == 1 ? 23 : 59);
+        tf.formatter = nf;
+        [cv addSubview:tf];
+        dlgField[i] = tf;
+        x += 52;
+        NSTextField *lb = [NSTextField labelWithString:S(app.lang, labelId[i])];
+        [lb sizeToFit];
+        lb.frame = NSMakeRect(x, 54, lb.frame.size.width, lb.frame.size.height);
+        [cv addSubview:lb];
+        x += lb.frame.size.width + 14;
+    }
+    for (int i = 0; i < 3; i++) dlgField[i].nextKeyView = dlgField[(i + 1) % 3];
+    CGFloat width = x + 4 > 360 ? x + 4 : 360;
+
+    NSButton *ok = [NSButton buttonWithTitle:S(app.lang, mode == CF_DLG_AUTO ? CF_STR_SAVE : CF_STR_START)
+                                      target:self action:@selector(dlgOK:)];
+    ok.keyEquivalent = @"\r";
+    [ok sizeToFit];
+    CGFloat okw = ok.frame.size.width < 84 ? 84 : ok.frame.size.width;
+    ok.frame = NSMakeRect(width - 14 - okw, 10, okw, 30);
+    NSButton *cancel = [NSButton buttonWithTitle:S(app.lang, CF_STR_CANCEL) target:self action:@selector(dlgCancel:)];
+    cancel.keyEquivalent = @"\033";
+    [cancel sizeToFit];
+    CGFloat cw = cancel.frame.size.width < 84 ? 84 : cancel.frame.size.width;
+    cancel.frame = NSMakeRect(ok.frame.origin.x - 6 - cw, 10, cw, 30);
+    [cv addSubview:cancel];
+    [cv addSubview:ok];
+    [p setContentSize:NSMakeSize(width, 92)];
+    [p center];
+    [p makeFirstResponder:dlgField[0]];
+
+    [NSApp activateIgnoringOtherApps:YES];
+    NSModalResponse r = [NSApp runModalForWindow:p];
+    [p orderOut:nil];
+    if (r == NSModalResponseOK) {
+        [self act:cf_dialog_submit(&app, mode, dlgField[0].integerValue, dlgField[1].integerValue, dlgField[2].integerValue)];
+    }
+    for (int i = 0; i < 3; i++) dlgField[i] = nil;
+}
+- (void)dlgOK:(id)sender     { [NSApp stopModalWithCode:NSModalResponseOK]; }
+- (void)dlgCancel:(id)sender { [NSApp stopModalWithCode:NSModalResponseCancel]; }
+- (void)windowWillClose:(NSNotification *)note
+{
+    if ([NSApp modalWindow] == note.object) [NSApp stopModalWithCode:NSModalResponseCancel];
+}
+
+- (void)showAbout
+{
+    char body[512];
+    cf_about(app.lang, body, sizeof body);
+    NSString *text = [NSString stringWithUTF8String:body];
+    NSRange nl = [text rangeOfString:@"\n"];
+    NSString *credits = nl.location == NSNotFound ? text : [text substringFromIndex:nl.location + 1];
+    NSMutableParagraphStyle *ps = [NSMutableParagraphStyle new];
+    ps.alignment = NSTextAlignmentCenter;
+    NSAttributedString *cr = [[NSAttributedString alloc] initWithString:credits attributes:@{
+        NSFontAttributeName: [NSFont systemFontOfSize:11], NSParagraphStyleAttributeName: ps,
+        NSForegroundColorAttributeName: [NSColor labelColor] }];
+    [NSApp activateIgnoringOtherApps:YES];
+    [NSApp orderFrontStandardAboutPanelWithOptions:@{
+        NSAboutPanelOptionApplicationName: @"Nexa Coffee",
+        NSAboutPanelOptionApplicationVersion: [NSString stringWithUTF8String:cf_str(app.lang, CF_STR_VERSION)],
+        NSAboutPanelOptionVersion: @"",
+        NSAboutPanelOptionCredits: cr }];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)note
@@ -239,15 +358,32 @@ static NSBitmapImageRep *repFromRGBA(const u8 *rgba, int px, CGFloat pt)
     menu.delegate = self;
     item.menu = menu;
     [self showIdle];
+    malloc_zone_pressure_relief(NULL, 0); /* 초기화가 남긴 여유 페이지 반납 */
 
+    /* 디버그: NEXA_COFFEE_SHOW=custom|auto|about|menu 이면 해당 창을 바로 띄운다(스크린샷 검증용 · 비용 0) */
+    const char *show = getenv("NEXA_COFFEE_SHOW");
+    if (show) {
+        if (!strcmp(show, "menu")) [item.button performSelector:@selector(performClick:) withObject:nil afterDelay:0.3];
+        else {
+            int a = !strcmp(show, "about") ? CF_ACT_ABOUT : !strcmp(show, "auto") ? CF_ACT_DIALOG_AUTO : CF_ACT_DIALOG_CUSTOM;
+            [self performSelector:@selector(actBoxed:) withObject:@(a) afterDelay:0.3];
+        }
+    }
     /* 첫 실행 자동 시작(사용자 확정): 옵션 켜짐 + 시간 지정 */
-    if (app.auto_start && app.sel != CF_SEL_OFF) { app.running = 1; [self startJob]; }
+    if (cf_auto_secs(&app) > 0) { app.cust_d = app.auto_d; app.cust_h = app.auto_h; app.cust_m = app.auto_m; app.sel = CF_SEL_CUSTOM; app.running = 1; [self startJob]; }
 }
 - (void)applicationWillTerminate:(NSNotification *)note { [self inhibit:NO]; }
 @end
 
-int main(void)
+int main(int argc, char **argv)
 {
+    /* 상주 메모리 최소화(09-13 실측): libmalloc의 MallocSpaceEfficient=1이 고유 메모리를 7.4 → 5.9 MB로 줄인다.
+     * 환경변수는 프로세스 시작 전에 읽히므로, 없으면 세팅하고 자신을 한 번 다시 실행한다(번들은 Info.plist
+     * LSEnvironment로도 넣어 두어 보통은 재실행이 일어나지 않는다). */
+    if (!getenv("MallocSpaceEfficient") && argc > 0) {
+        setenv("MallocSpaceEfficient", "1", 1);
+        execv(argv[0], argv); /* 실패하면 그냥 계속 */
+    }
     @autoreleasepool {
         NSApplication *nsapp = [NSApplication sharedApplication];
         [nsapp setActivationPolicy:NSApplicationActivationPolicyAccessory];

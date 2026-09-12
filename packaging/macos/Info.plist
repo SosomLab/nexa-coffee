@@ -14,6 +14,8 @@
   <!-- 메뉴바 전용 — Dock·앱 전환기에 나타나지 않는다 -->
   <key>LSUIElement</key>              <true/>
   <key>NSHighResolutionCapable</key>  <true/>
-  <key>NSHumanReadableCopyright</key> <string>© 2026 SosomLab · MIT License</string>
+  <!-- 상주 메모리 −1.5 MB(09-13 실측) — 바이너리도 같은 값을 스스로 세팅한다 -->
+  <key>LSEnvironment</key>
+  <dict><key>MallocSpaceEfficient</key><string>1</string></dict>
 </dict>
 </plist>
