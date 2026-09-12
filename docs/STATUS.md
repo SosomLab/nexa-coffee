@@ -5,7 +5,8 @@
 - **무엇**: `feat/scaffold` 브랜치에 수직 슬라이스 9커밋(저장소 골격 → 코어 → 테스트 → Windows → macOS → Linux → 빌드/패키징 → CI → 문서) → main 병합(fast-forward) → `origin/main` push → 브랜치 삭제.
 - **검증**: push 직전 `make test` green · `make` · `make app` · `make win` · `scripts/linux-smoke.sh` green(09-12 1차 실측과 동일).
 - **CI 첫 실행(run 34699256593)**: macos ✓ · windows-msvc ✓(MSVC로도 CRT 없이 링크됨) · linux ✗ — 스모크는 실제 Linux(ubuntu · musl 정적 바이너리)에서 all green이었으나 EXIT 트랩의 kill 실패가 bash -e에서 exit 1로 번짐 → 트랩 수정 커밋으로 재실행.
-- **다음**: 재실행 green 확인 → Windows/Linux 실기(T-2·T-3). 상세: [journal/2026-09-12](journal/2026-09-12.md).
+- **재실행(run 34699355800)**: linux ✓ · macos ✓ · windows-msvc ✓ — **main green**.
+- **다음**: Windows/Linux 실기(T-2·T-3). 상세: [journal/2026-09-12](journal/2026-09-12.md).
 
 ## 직전(09-12 1차) — v0.1.0 골격 완성
 
