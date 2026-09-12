@@ -34,11 +34,21 @@
 - 종료 = 잔여 ≤ 0 → 억제 해제 · 대기 아이콘 · 버퍼 free · OS 메모리 반납. `sel`은 유지(자동 시작이 같은 시간을 다시 쓴다).
 
 ## 4. 메뉴 id(3-OS 공통)
-`1 ∞ · 2 12h · 3 6h · 4 2h · 5 1h · 6 30m · 7 사용자 지정▸ · 8 끄기 · 9 ─ · 10 자동 시작 · 11 ─ · 12 종료`
-`20 시작 · 21 ─ · 22 일▸(100+d) · 23 시간▸(200+h) · 24 분▸(300+m/5)`
+`14 남은 시간(비활성) · 15 ─ · 1 ∞ · 2 12h · 3 6h · 4 2h · 5 1h · 6 30m · 7 사용자 지정… · 8 끄기 · 9 ─ · 10 자동 시작▸ · 11 ─ · 12 정보… · 13 종료`
+
+맨 위 항목(14)은 `cf_remaining_label`(일·시·분·초 · 영어는 1보다 크면 복수형)로 채우고 **메뉴가 열린 동안만 1초마다 갱신**한다:
+macOS `menuWillOpen/DidClose` 사이 common-modes 타이머 · Windows `TrackPopupMenu` 중 `WM_TIMER`로 `SetMenuItemInfoW` + 팝업 창(`#32768`) 다시 그리기 ·
+Linux는 `AboutToShow/GetLayout` 후 30초 동안 `ItemsPropertiesUpdated` 신호. 플랫폼은 메뉴를 만들기 전 `app.remaining_s`를 채운다.
+`20 자동 시작▸끄기 · 21 자동 시작▸사용자 지정…`
+
+클릭 → `cf_app_click` → 행동. `CF_ACT_DIALOG_CUSTOM/AUTO`는 플랫폼이 입력 창(일·시·분 + 시작/저장)을 띄우고
+결과를 `cf_dialog_submit(mode, d, h, m)`에 넣는다(클램프 0~99일 · 0~23시 · 0~59분). CUSTOM은 START, AUTO는 저장(MENU).
+입력 창 구현: Windows `IDD_DHM` DIALOGEX + `DialogBoxParamW` · macOS `NSPanel` + `runModalForWindow`(타이머는 common modes) ·
+Linux는 툴킷이 없어 `yad --form` → `zenity --forms` → `kdialog --inputbox`를 자식으로 띄우고 stdout 파이프를 poll 루프에서 읽는다.
+About: `cf_about()` 본문 → MessageBoxW / 표준 About 패널 / zenity·kdialog·알림.
 
 ## 5. 설정 파일
-`auto=0|1` · `sel=N` · `custom=d,h,m` — Windows `%APPDATA%\nexa-coffee\config` · macOS `~/Library/Application Support/nexa-coffee/config` · Linux `$XDG_CONFIG_HOME/nexa-coffee/config`. 같은 폴더의 `lock`(flock) / 뮤텍스로 중복 실행 방지.
+`auto=d,h,m`(전부 0 = 끔) · `custom=d,h,m`(마지막 입력) — Windows `%APPDATA%\nexa-coffee\config` · macOS `~/Library/Application Support/nexa-coffee/config` · Linux `$XDG_CONFIG_HOME/nexa-coffee/config`. 같은 폴더의 `lock`(flock) / 뮤텍스로 중복 실행 방지.
 
 ## 6. OS별 절전 억제
 | OS | 켜기 | 끄기 |

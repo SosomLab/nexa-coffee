@@ -8,6 +8,6 @@
 | T-4 | P1 | 소 | macOS 화면보호기 실측(30초 사용자 활동 선언으로 충분한지) — 부족하면 `IOPMAssertionCreateWithProperties` 검토 | ☐ |
 | T-5 | P1 | 소 | 시작 프로그램 등록 안내/옵션(Windows shell:startup · macOS 로그인 항목 · Linux ~/.config/autostart) | ☐ |
 | T-6 | P1 | 중 | 채널 등록 — brew tap cask · winget · choco(templates → 실제 제출 · release.yml 확장) | ☐ |
-| T-7 | P2 | 소 | Windows 256px PNG 아이콘 프레임 여부 결정(exe +12 KB) | ☐ |
+| T-7 | P2 | 소 | Windows 256px PNG 아이콘 프레임 여부 — ICO를 PNG 프레임으로 바꿔 16·32·48이 3.7 KB. 256은 +10 KB라 보류 | ✅ 09-13 |
 | T-8 | P2 | 소 | 툴팁에 종료 예정 시각 추가 여부 | ☐ |
 | T-9 | P2 | 소 | Docker 기반 Linux 검증(`scripts/linux-docker.sh`)을 실제로 한 번 돌리기(이 세션은 Docker 데몬 미가동) | ☐ |

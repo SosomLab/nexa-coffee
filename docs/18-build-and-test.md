@@ -21,11 +21,14 @@ x86은 64비트 나눗셈 헬퍼 때문에 `-lgcc`를 정적으로 붙인다.
 | 코어 단위 | `make test` | util · 표시 규칙 · 다음 변화 시각 · 메뉴 트리/클릭 · 설정 왕복 · 툴팁 · 아이콘 결정성/경계 |
 | 아이콘 육안 | `make test` → `build/icons/*.pam` | `magick x.pam -background '#1e1e1e' -flatten -filter point -resize 800% x.png` |
 | Linux D-Bus 계약 | `sh scripts/linux-smoke.sh dist/nexa-coffee` | 세션 버스 위에서 SNI 속성 · dbusmenu 레이아웃/속성 · Event 클릭 → 작업/설정 · 종료 |
-| macOS 실기 | `make app && open "dist/Nexa Coffee.app"` | 메뉴바 아이콘 · `pmset -g assertions \| grep Coffee` · `ps -o rss` |
+| macOS 실기 | `make app && open "dist/Nexa Coffee.app"` | 메뉴바 아이콘 · `pmset -g assertions \| grep Coffee` · `ps -o rss` · 창 확인은 `NEXA_COFFEE_SHOW=custom\|auto\|about dist/nexa-coffee` |
 | Windows 실기 | exe 실행 | 트레이 · 우클릭 메뉴 · `powercfg /requests`(SYSTEM/DISPLAY에 nexa-coffee) |
 
 `linux-smoke.sh`는 시스템 세션 버스를 쓰지 않고 `scripts/dbus-test.conf`로 전용 dbus-daemon을 띄운다(macOS launchd·CI 컨테이너 공통). macOS는 `brew install dbus`.
 Docker가 있으면 `scripts/linux-docker.sh`가 Linux 컨테이너에서 빌드+정적+스모크를 한 번에 돌린다.
+
+## 메모리 실측(macOS)
+`footprint --pid <pid>`의 `phys_footprint`가 기준(RSS는 공유 캐시 포함). 실험 절차는 journal 09-13 2차. 아이콘·리소스 크기는 `ls -la res/ packaging/branding/`.
 
 ## CI(.github/workflows)
 

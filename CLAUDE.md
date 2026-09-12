@@ -8,7 +8,7 @@
 
 - 조직: SosomLab · 개발자: Sangyong Bae · kiros33@gmail.com · 저장소: <https://github.com/SosomLab/nexa-coffee>
 - 라이선스: **MIT**(누구나 무료 — nexa-shortcut과 동일. beep/clip/dir2의 PolyForm NC와 **다르다**).
-- 현 단계: **v0.1.0 골격 완성 · main push됨(09-12)** — 3-OS 빌드 green · 코어 테스트 green · macOS 실기 확인 · Linux는 D-Bus 스모크로 계약 검증(실기 미확인) · Windows는 빌드만(실기 미확인).
+- 현 단계: **v0.1.0 — 입력 창/About/남은 시간 메뉴/메모리 최적화까지 main push됨(09-13)** — 3-OS 빌드 green · 코어 테스트 green · macOS 실기 확인 · Linux는 D-Bus 스모크로 계약 검증(실기 미확인) · Windows는 빌드만(실기 미확인).
 
 ### 참조 원천(재발명 금지)
 
@@ -25,7 +25,7 @@
 | DR-1 | **C**로 쓴다(맥은 .m 한 파일). Rust std만으로도 수백 KB라 "극단적 최소화"에 안 맞는다 |
 | DR-2 | 코어(`src/core`)는 **libc·부동소수점·힙 금지** — 정수 래스터라이저 · 3-OS 동일 픽셀 · Windows CRT 미링크 가능 |
 | DR-3 | Linux는 **libdbus 없이 D-Bus를 직접 구현**(`src/plat/dbus.c`) → musl 정적 · libc 하나 |
-| DR-4 | UI = **메뉴만**(창 0). 사용자 지정 시간도 서브메뉴(일·시·분)로 |
+| DR-4′ | UI = 메뉴 + **입력 창 1개**(일·시·분 숫자 + 시작/저장) + About. 서브메뉴 방식은 사용자 QA로 폐기(09-12) |
 | DR-5 | 대기 아이콘(`icon_idle.c`)과 동작 아이콘(`icon_active.c`)은 **별도 모듈** · 대기 = 앱 아이콘 모티프 단색 |
 | DR-6 | 메뉴 트리는 코어(`app.c`)에 한 번만 두고 각 OS가 그대로 네이티브 메뉴로 옮긴다 |
 | DR-7 | 작업 종료 시 메모리 회수 — 아이콘 버퍼 free + OS별 반납(`SetProcessWorkingSetSize` / `malloc_zone_pressure_relief` / `malloc_trim`) |
