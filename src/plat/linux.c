@@ -8,6 +8,9 @@
  * - logind Inhibit "sleep:idle:handle-lid-switch"(block) → 유휴 절전·최대 절전·**덮개 닫힘 절전**까지 막는다
  *   (polkit 기본 정책은 활성 세션에 허용 · 거부되면 "sleep:idle"로 재시도). ScreenSaver.Inhibit → 화면보호기·화면 끄기.
  * - 작업 종료 시: 억제 해제(fd close · UnInhibit) · 동작 아이콘 버퍼 free · malloc_trim(glibc).
+ * - 입력 창(일·시·분)은 툴킷 없이 **외부 대화창 도구**를 자식 프로세스로 띄운다: yad → zenity → kdialog 순.
+ *   결과는 파이프로 받아 메인 poll 루프에서 비동기 처리(D-Bus 응답이 막히지 않는다). 도구가 없으면 알림으로 안내.
+ *   About = zenity/kdialog 메시지 창, 없으면 org.freedesktop.Notifications 알림.
  * - 이식 참고: nexa-clip `nclip-plat/src/tray.rs::sni`(zbus 구현)의 속성·메뉴 계약을 C로 옮겼다.
  */
 #define _GNU_SOURCE
@@ -19,6 +22,7 @@
 #include <signal.h>
 #include <poll.h>
 #include <time.h>
+#include <sys/wait.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,8 +47,14 @@ static u8 *idle_px[2], *active_px[2];
 static u32 ss_cookie, ss_serial;
 static int login_fd = -1;
 static u32 menu_rev = 1;
+static i64 menu_open_until, menu_next; /* 메뉴가 열려 있다고 보는 동안(AboutToShow/GetLayout 후 30초) 1초마다 남은 시간 갱신 */
 static char busname[64], conf_path[1024];
 static volatile sig_atomic_t quit;
+/* 입력 창 자식 프로세스 */
+static pid_t dlg_pid;
+static int dlg_fd = -1, dlg_mode;
+static char dlg_buf[128];
+static u32 dlg_len;
 
 static i64 now_ms(void)
 {
@@ -95,7 +105,7 @@ static void render_idle(void)
     CfColor gray = {154, 154, 158, 255};
     int i;
     for (i = 0; i < 2; i++) {
-        if (!idle_px[i]) idle_px[i] = malloc(CF_ICON_BYTES);
+        if (!idle_px[i]) idle_px[i] = malloc((size_t)ICON_SIZES[i] * ICON_SIZES[i] * 4); /* 정확한 크기(1.9 KB · 7.7 KB) */
         cf_icon_idle(idle_px[i], ICON_SIZES[i], gray);
     }
 }
@@ -103,7 +113,7 @@ static void render_active(const CfDisplay *d)
 {
     int i;
     for (i = 0; i < 2; i++) {
-        if (!active_px[i]) active_px[i] = malloc(CF_ICON_BYTES);
+        if (!active_px[i]) active_px[i] = malloc((size_t)ICON_SIZES[i] * ICON_SIZES[i] * 4);
         cf_icon_active(active_px[i], ICON_SIZES[i], d);
     }
 }
@@ -144,6 +154,23 @@ static void emit_layout_updated(void)
     db_w_u32(&m, menu_rev); db_w_i32(&m, 0);
     db_send(&ses, &m);
 }
+static void refresh_remaining(void) { app.remaining_s = deadline ? (deadline - now_ms() + 999) / 1000 : 0; }
+/* dbusmenu ItemsPropertiesUpdated — 맨 위 항목 label만 */
+static void emit_status_label(void)
+{
+    DbMsg m; DbArr a, d;
+    char label[96];
+    refresh_remaining();
+    cf_remaining_label(&app, label, sizeof label);
+    db_signal_init(&m, MENU_PATH, MENU_IFACE, "ItemsPropertiesUpdated", "a(ia{sv})a(ias)");
+    db_w_arr_open(&m, 8, &a);
+    db_w_struct(&m); db_w_i32(&m, CF_ID_STATUS);
+    db_w_arr_open(&m, 8, &d); db_w_struct(&m); db_w_str(&m, "label"); db_w_variant(&m, "s"); db_w_str(&m, label); db_w_arr_close(&m, &d);
+    db_w_arr_close(&m, &a);
+    db_w_arr_open(&m, 8, &a); db_w_arr_close(&m, &a);
+    db_send(&ses, &m);
+}
+static void menu_seen(void) { menu_open_until = now_ms() + 30000; if (!menu_next) menu_next = now_ms() + 1000; }
 static void emit_icon(void)
 {
     emit0(ITEM_PATH, SNI_IFACE, "NewIcon");
@@ -243,6 +270,7 @@ static void write_item_props(DbMsg *m, int id)
     u32 i, n = 0;
     db_w_arr_open(m, 8, &a);
     if (id == CF_ID_ROOT) { dict_s(m, "children-display", "submenu"); db_w_arr_close(m, &a); return; }
+    if (id == CF_ID_STATUS) refresh_remaining();
     if (!cf_menu_item(&app, id, &it)) { db_w_arr_close(m, &a); return; }
     if (it.kind == CF_KIND_SEPARATOR) { dict_s(m, "type", "separator"); db_w_arr_close(m, &a); return; }
     for (i = 0; it.label[i] && n < sizeof label - 3; i++) { /* dbusmenu는 '_'를 니모닉으로 먹는다 */
@@ -375,16 +403,164 @@ static const char INTROSPECT_MENU[] =
     "</node>";
 
 /* ── 클릭 ── */
-static void on_click(int id)
+/* ── 외부 대화창 도구 ── */
+static int has_tool(const char *name)
 {
-    switch (cf_app_click(&app, id)) {
+    const char *path = getenv("PATH");
+    char buf[512];
+    if (!path) path = "/usr/local/bin:/usr/bin:/bin";
+    while (*path) {
+        const char *e = strchr(path, ':');
+        size_t n = e ? (size_t)(e - path) : strlen(path);
+        if (n && n + strlen(name) + 2 < sizeof buf) {
+            memcpy(buf, path, n); buf[n] = '/'; strcpy(buf + n + 1, name);
+            if (access(buf, X_OK) == 0) return 1;
+        }
+        if (!e) break;
+        path = e + 1;
+    }
+    return 0;
+}
+
+static void notify(const char *summary, const char *body)
+{
+    DbMsg m; DbArr a;
+    db_call_init(&m, "org.freedesktop.Notifications", "/org/freedesktop/Notifications",
+                 "org.freedesktop.Notifications", "Notify", "susssasa{sv}i");
+    m.buf[2] |= DB_FLAG_NO_REPLY;
+    db_w_str(&m, "nexa-coffee"); db_w_u32(&m, 0); db_w_str(&m, "");
+    db_w_str(&m, summary); db_w_str(&m, body);
+    db_w_arr_open(&m, 4, &a); db_w_arr_close(&m, &a);   /* actions */
+    db_w_arr_open(&m, 8, &a); db_w_arr_close(&m, &a);   /* hints */
+    db_w_i32(&m, -1);
+    db_send(&ses, &m);
+}
+
+/* 자식으로 실행 · stdout을 파이프로. 반환 = 읽기 fd(-1 = 실패). detach면 이중 fork(기다리지 않음). */
+static int spawn(char *const argv[], pid_t *pid, int detach)
+{
+    int p[2] = { -1, -1 };
+    pid_t c;
+    if (!detach && pipe(p) != 0) return -1;
+    c = fork();
+    if (c < 0) { if (p[0] >= 0) { close(p[0]); close(p[1]); } return -1; }
+    if (c == 0) {
+        if (detach) { if (fork() != 0) _exit(0); }
+        else { dup2(p[1], 1); close(p[0]); close(p[1]); }
+        execvp(argv[0], argv);
+        _exit(127);
+    }
+    if (detach) { waitpid(c, NULL, 0); return 0; }
+    close(p[1]);
+    *pid = c;
+    return p[0];
+}
+
+static void dhm_arg(char *out, size_t cap, int v, int max)
+{
+    /* yad NUM 필드: "값!최소..최대!단계" */
+    snprintf(out, cap, "%d!0..%d!1", v, max);
+}
+
+static void show_dialog(int mode)
+{
+    int d, h, m;
+    char title[64], text[80], fd_[32], fh[32], fm[32], def[32], bstart[48], bcancel[48];
+    const int L = app.lang;
+    if (dlg_fd >= 0) return; /* 이미 열려 있음 */
+    cf_dialog_values(&app, mode, &d, &h, &m);
+    snprintf(title, sizeof title, "%s", cf_str(L, mode == CF_DLG_AUTO ? CF_STR_DLG_AUTO : CF_STR_DLG_CUSTOM));
+    snprintf(text, sizeof text, "%s — %s", cf_str(L, CF_STR_APP), title);
+    snprintf(bstart, sizeof bstart, "%s:0", cf_str(L, mode == CF_DLG_AUTO ? CF_STR_SAVE : CF_STR_START));
+    snprintf(bcancel, sizeof bcancel, "%s:1", cf_str(L, CF_STR_CANCEL));
+    dlg_mode = mode;
+    if (has_tool("yad")) {
+        char ld[40], lh[40], lm[40];
+        snprintf(ld, sizeof ld, "%s:NUM", cf_str(L, CF_STR_DAYS));
+        snprintf(lh, sizeof lh, "%s:NUM", cf_str(L, CF_STR_HOURS));
+        snprintf(lm, sizeof lm, "%s:NUM", cf_str(L, CF_STR_MINUTES));
+        dhm_arg(fd_, sizeof fd_, d, CF_MAX_DAYS); dhm_arg(fh, sizeof fh, h, 23); dhm_arg(fm, sizeof fm, m, 59);
+        char *argv[] = { "yad", "--form", "--title", title, "--text", text, "--columns=3", "--separator= ",
+                         "--field", ld, fd_, "--field", lh, fh, "--field", lm, fm,
+                         "--button", bcancel, "--button", bstart, "--center", "--fixed", NULL };
+        dlg_fd = spawn(argv, &dlg_pid, 0);
+    } else if (has_tool("zenity")) {
+        char ld[40], lh[40], lm[40], ok[48], cancel[48];
+        snprintf(ld, sizeof ld, "--add-entry=%s", cf_str(L, CF_STR_DAYS));
+        snprintf(lh, sizeof lh, "--add-entry=%s", cf_str(L, CF_STR_HOURS));
+        snprintf(lm, sizeof lm, "--add-entry=%s", cf_str(L, CF_STR_MINUTES));
+        snprintf(ok, sizeof ok, "--ok-label=%s", cf_str(L, mode == CF_DLG_AUTO ? CF_STR_SAVE : CF_STR_START));
+        snprintf(cancel, sizeof cancel, "--cancel-label=%s", cf_str(L, CF_STR_CANCEL));
+        char *argv[] = { "zenity", "--forms", "--title", title, "--text", text, ld, lh, lm, "--separator= ", ok, cancel, NULL };
+        dlg_fd = spawn(argv, &dlg_pid, 0);
+    } else if (has_tool("kdialog")) {
+        char prompt[120];
+        snprintf(prompt, sizeof prompt, "%s %s %s", cf_str(L, CF_STR_DAYS), cf_str(L, CF_STR_HOURS), cf_str(L, CF_STR_MINUTES));
+        snprintf(def, sizeof def, "%d %d %d", d, h, m);
+        char *argv[] = { "kdialog", "--title", title, "--inputbox", prompt, def, NULL };
+        dlg_fd = spawn(argv, &dlg_pid, 0);
+    } else {
+        notify(cf_str(L, CF_STR_APP), L == CF_LANG_KO
+               ? "입력 창을 띄울 도구가 없습니다 — yad, zenity, kdialog 중 하나를 설치하세요."
+               : "No dialog tool found — install yad, zenity or kdialog.");
+        return;
+    }
+    dlg_len = 0;
+}
+
+static void act(int action);
+
+/* 파이프가 닫히면(도구 종료) 결과를 읽어 반영 */
+static void dialog_finish(void)
+{
+    int status = 0;
+    i64 v[3] = { 0, 0, 0 };
+    const char *p = dlg_buf, *e;
+    int i;
+    close(dlg_fd); dlg_fd = -1;
+    waitpid(dlg_pid, &status, 0);
+    dlg_buf[dlg_len < sizeof dlg_buf ? dlg_len : sizeof dlg_buf - 1] = 0;
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) return; /* 취소 */
+    for (i = 0; i < 3; i++) {
+        while (*p == ' ' || *p == '|' || *p == '\t') p++;
+        v[i] = cf_atoi(p, &e);
+        if (e == p) break;
+        p = e;
+        while (*p && *p != ' ' && *p != '|' && *p != '\n') p++; /* yad는 "12.000000" — 소수부 건너뜀 */
+    }
+    act(cf_dialog_submit(&app, dlg_mode, v[0], v[1], v[2]));
+}
+
+static void show_about(void)
+{
+    char body[512];
+    cf_about(app.lang, body, sizeof body);
+    if (has_tool("zenity")) {
+        char *argv[] = { "zenity", "--info", "--title", "Nexa Coffee", "--text", body, "--no-wrap", NULL };
+        spawn(argv, NULL, 1);
+    } else if (has_tool("kdialog")) {
+        char *argv[] = { "kdialog", "--title", "Nexa Coffee", "--msgbox", body, NULL };
+        spawn(argv, NULL, 1);
+    } else {
+        notify("Nexa Coffee", body);
+    }
+}
+
+static void act(int action)
+{
+    switch (action) {
     case CF_ACT_START: conf_save(); job_start(); break;
     case CF_ACT_STOP:  conf_save(); job_stop();  break;
     case CF_ACT_MENU:  conf_save(); emit_layout_updated(); break;
     case CF_ACT_QUIT:  quit = 1; break;
+    case CF_ACT_DIALOG_CUSTOM: show_dialog(CF_DLG_CUSTOM); break;
+    case CF_ACT_DIALOG_AUTO:   show_dialog(CF_DLG_AUTO); break;
+    case CF_ACT_ABOUT: show_about(); break;
     default: break;
     }
 }
+
+static void on_click(int id) { act(cf_app_click(&app, id)); }
 
 /* ── 메서드 디스패치 ── */
 static void reply_empty(DbConn *c, const DbRead *req)
@@ -427,6 +603,7 @@ static void handle_menu(DbConn *c, DbRead *r)
     DbMsg m;
     if (!strcmp(r->member, "GetLayout")) {
         i32 parent = db_r_i32(r), depth = db_r_i32(r);
+        menu_seen();
         db_reply_init(&m, r, "u(ia{sv}av)");
         db_w_u32(&m, menu_rev);
         write_node(&m, parent, depth);
@@ -476,6 +653,7 @@ static void handle_menu(DbConn *c, DbRead *r)
         db_send(c, &m);
         for (int i = 0; i < n; i++) on_click(clicked[i]);
     } else if (!strcmp(r->member, "AboutToShow")) {
+        menu_seen();
         db_reply_init(&m, r, "b"); db_w_bool(&m, 0); db_send(c, &m);
     } else if (!strcmp(r->member, "AboutToShowGroup")) {
         DbArr a;
@@ -565,18 +743,34 @@ int main(void)
     m.buf[2] |= DB_FLAG_NO_REPLY;
     db_send(&ses, &m);
     register_watcher();
+#ifdef __GLIBC__
+    malloc_trim(0); /* 초기화가 남긴 힙 여유분 반납 */
+#endif
 
-    if (app.auto_start && app.sel != CF_SEL_OFF) { app.running = 1; job_start(); }
+    if (cf_auto_secs(&app) > 0) {
+        app.cust_d = app.auto_d; app.cust_h = app.auto_h; app.cust_m = app.auto_m;
+        app.sel = CF_SEL_CUSTOM; app.running = 1; job_start();
+    }
 
     while (!quit) {
-        struct pollfd p[2] = { { ses.fd, POLLIN, 0 }, { has_sys ? sysb.fd : -1, POLLIN, 0 } };
+        struct pollfd p[3] = { { ses.fd, POLLIN, 0 }, { has_sys ? sysb.fd : -1, POLLIN, 0 }, { dlg_fd, POLLIN, 0 } };
         int timeout = -1, st;
         if (app.running && next_tick) {
             i64 d = next_tick - now_ms();
             timeout = d < 0 ? 0 : (d > 3600000 ? 3600000 : (int)d);
         }
-        st = poll(p, 2, timeout);
+        if (app.running && menu_next && now_ms() < menu_open_until) {
+            i64 d = menu_next - now_ms();
+            if (d < 0) d = 0;
+            if (timeout < 0 || d < timeout) timeout = (int)d;
+        }
+        st = poll(p, 3, timeout);
         if (st < 0) continue; /* EINTR */
+        if (dlg_fd >= 0 && p[2].revents) {
+            ssize_t n = read(dlg_fd, dlg_buf + dlg_len, sizeof dlg_buf - 1 - dlg_len);
+            if (n > 0) dlg_len += (u32)n;
+            if (n <= 0 || dlg_len >= sizeof dlg_buf - 1) dialog_finish();
+        }
         if (p[0].revents) {
             int got;
             while ((got = db_recv(&ses, &r, 0)) == 1) { handle(&ses, &r, NULL); db_consume(&ses); }
@@ -588,6 +782,10 @@ int main(void)
             else if (got < 0) { db_close(&sysb); has_sys = 0; login_fd = -1; }
         }
         if (app.running && next_tick && now_ms() >= next_tick) job_tick();
+        if (menu_next && now_ms() >= menu_next) {
+            if (now_ms() < menu_open_until) { if (app.running) emit_status_label(); menu_next += 1000; }
+            else menu_next = 0;
+        }
     }
     inhibit(0);
     db_close(&ses);

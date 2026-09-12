@@ -23,7 +23,6 @@ typedef struct {
     u32 fields_pos;  /* 헤더 필드 배열 길이 위치 */
     u32 serial_pos;
     int err;
-    int fds[4]; u32 nfds;
 } DbMsg;
 typedef struct { u32 len_pos, start; } DbArr;
 
@@ -42,7 +41,6 @@ void db_w_struct(DbMsg *m);                  /* 8 정렬 */
 void db_w_arr_open(DbMsg *m, u32 elem_align, DbArr *a);
 void db_w_arr_close(DbMsg *m, const DbArr *a);
 void db_w_bytes(DbMsg *m, const u8 *p, u32 n); /* ay 원소들(길이 포함 안 함) */
-void db_w_fd(DbMsg *m, int fd);
 void db_msg_free(DbMsg *m);
 
 /* 편의: 자주 쓰는 헤더 묶음 */
@@ -58,7 +56,6 @@ typedef struct {
 } DbRead;
 int         db_parse(DbRead *r, const u8 *buf, u32 len, u32 *total);
 u8          db_r_byte(DbRead *r);
-int         db_r_bool(DbRead *r);
 i32         db_r_i32(DbRead *r);
 u32         db_r_u32(DbRead *r);
 const char *db_r_str(DbRead *r);

@@ -84,11 +84,6 @@ void db_w_arr_open(DbMsg *m, u32 elem_align, DbArr *a)
 }
 void db_w_arr_close(DbMsg *m, const DbArr *a) { if (!m->err) put_u32_at(m, a->len_pos, m->len - a->start); }
 void db_w_bytes(DbMsg *m, const u8 *p, u32 n) { put(m, p, n); }
-void db_w_fd(DbMsg *m, int fd)
-{
-    if (m->nfds < 4) { m->fds[m->nfds] = fd; db_w_u32(m, m->nfds); m->nfds++; }
-    else m->err = 1;
-}
 void db_msg_free(DbMsg *m) { free(m->buf); memset(m, 0, sizeof *m); }
 
 void db_call_init(DbMsg *m, const char *dest, const char *path, const char *iface, const char *member, const char *sig)
@@ -139,7 +134,6 @@ int  db_r_ok(const DbRead *r) { return r->pos <= r->end; }
 u8   db_r_byte(DbRead *r) { if (!rneed(r, 1)) return 0; return r->buf[r->pos++]; }
 u32  db_r_u32(DbRead *r) { u32 v; ralign(r, 4); if (!rneed(r, 4)) return 0; memcpy(&v, r->buf + r->pos, 4); r->pos += 4; return v; }
 i32  db_r_i32(DbRead *r) { return (i32)db_r_u32(r); }
-int  db_r_bool(DbRead *r) { return db_r_u32(r) != 0; }
 const char *db_r_str(DbRead *r)
 {
     u32 n = db_r_u32(r);
@@ -353,10 +347,7 @@ u32 db_send(DbConn *c, DbMsg *m)
         serial = ++c->serial;
         put_u32_at(m, m->serial_pos, serial);
         put_u32_at(m, 4, m->len - m->body_off);
-        if (m->nfds) {
-            /* UNIX_FDS 헤더 필드는 init 시점에 없다 — fd를 쓰는 호출자는 db_hdr_u32(DB_HDR_FDS)를 직접 넣는다 */
-        }
-        if (write_all(c->fd, m->buf, m->len, m->fds, m->nfds) < 0) serial = 0;
+        if (write_all(c->fd, m->buf, m->len, NULL, 0) < 0) serial = 0; /* fd는 받기만 한다(logind Inhibit) */
     }
     db_msg_free(m);
     return serial;
