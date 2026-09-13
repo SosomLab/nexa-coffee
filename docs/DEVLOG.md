@@ -1,5 +1,6 @@
 # DEVLOG — 날짜별 요약(최신 위)
 
+- **2026-09-13 (14차)** — Windows 실기: DR-14 자식 창 ✅ · T-13 ✅(부모 모듈 37→25 · 코덱/TSF 제거 실측) · MSVC 30,720 B green. `lang=en`은 사용자 선택. → [journal](journal/2026-09-13.md#14차--windows에서-dr-14자식-프로세스-창t-13-실기-검증--v010-릴리스-확인-사용자-요청--windows-pc)
 - **2026-09-13 (13차)** — brew 설치 실사용 ✓ · 테스트 번들 정리 · winget ManifestVersion 불일치 수정(PR 갱신 · 템플릿 1.12.0).
 - **2026-09-13 (12차)** — v0.1.0 배포: Release(수동 · API 500) · brew 탭 ✓ · choco push ✓ · winget PR #433980. → [journal](journal/2026-09-13.md#12차--v010-릴리스-실행-결과-사용자-요청)
 - **2026-09-13 (11차)** — v0.1.0 릴리스 + brew/winget/choco 배포 파이프라인(render-manifests · homebrew.yml · publish-windows-packages.yml). T-14 창 자식 프로세스 포함.

@@ -3,6 +3,7 @@
 | 브랜치 | 생성 | 병합 | 커밋 수 | 요약 |
 | --- | --- | --- | --- | --- |
 | docs/win-verify | 2026-09-13 | 2026-09-13 → main(ff) | 1 | Windows 실기 첫 확인·메모리 분석 기록(8차) · T-13 |
+| docs/win-verify-2 | 2026-09-13 | 2026-09-13 → main(ff) | 1 | Windows에서 DR-14·T-13 실기 검증 기록(14차) |
 | docs/brew-verify | 2026-09-13 | 2026-09-13 → main(ff) | 1 | brew 설치 실사용 · 테스트 번들 정리 · winget ManifestVersion 1.12.0 통일 |
 | release/0.1.0 | 2026-09-13 | 2026-09-13 → main(ff) | 4 | T-14 창 자식 프로세스 · Windows T-13 · 배포 파이프라인(brew/winget/choco) · v0.1.0 태그 |
 | docs/mac-verify | 2026-09-13 | 2026-09-13 → main(ff) | 1 | Mac 로컬 검증·릴리즈 실행 기록(7차) |

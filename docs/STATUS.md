@@ -1,5 +1,11 @@
 # STATUS — 지금 상태
 
+## 09-13 14차 — Windows에서 DR-14·T-13 실기 검증 · v0.1.0 확인 (사용자 요청)
+
+- **무엇**: Windows PC에서 9~13차 pull(+태그 v0.1.0) → MSVC 빌드 30,720 B · test green → 실행. **부모 모듈 37 → 25**(코덱·텍스트 입력 DLL 전부 제거 · WS 1.26 MB) = **T-13 ✅**. `--dialog`/`--about` 자식 프로세스가 ko 제목으로 뜨고 TSF는 자식에만 로드 → T-14 Windows 창 경로 ✅(시작 버튼 → 파이프는 사용자 확인).
+- **관찰**: 설정에 `lang=en`(사용자가 언어 메뉴 선택) → 릴리스 exe 툴팁 "Idle"은 정상. winget PR 검증 01~06 SUCCESS(라벨 미갱신) · publish-windows-packages 실패는 GitHub 장애 재현 아님(12차 기록).
+- **다음**: T-2 남은 실기(DPI · 메뉴 1초 갱신 · `powercfg`) · T-11 · 채널 검수 추적(T-6). 상세: [journal/2026-09-13](journal/2026-09-13.md#14차--windows에서-dr-14자식-프로세스-창t-13-실기-검증--v010-릴리스-확인-사용자-요청--windows-pc).
+
 ## 09-13 13차 — brew 설치 실사용 확인 · winget 매니페스트 버전 불일치 수정 (사용자 QA)
 
 - brew Cask 설치 실사용 ✓(사용자). 로컬 테스트 번들(dist)이 함께 보여 제거 · 설치본만 남김 → 절차에 `make clean` 추가.
