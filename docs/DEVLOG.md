@@ -1,5 +1,6 @@
 # DEVLOG — 날짜별 요약(최신 위)
 
+- **2026-09-13 (5차)** — 언어 ▸ 메뉴(en/ko/ja/zh) · 문구 NUL 블록으로 크기 최소화 · `lang=` 설정 · ja/zh 툴팁 어순. → [journal](journal/2026-09-13.md#5차--언어-선택-메뉴english--한국어--日本語--中文--i18n-사용자-요청)
 - **2026-09-13 (4차)** — Linux 실기 첫 확인(GNOME 50). 아이콘 안 보임 = Register 응답 대기 중 `GetAll` 버림 → `handle` 연결로 수정. 대기/동작 아이콘 · 억제 ✓. → [journal](journal/2026-09-13.md#4차--linux-실기gnome-50--ubuntu-appindicators-트레이-아이콘-안-보임--등록-경쟁-수정-사용자-qa)
 - **2026-09-13 (3차)** — `feat/dialog-ui-memory` 6커밋 → main ff → push.
 - **2026-09-13 (2차)** — 상주 메모리 7.4→5.9 MB(MallocSpaceEfficient) · ICO PNG 프레임(exe 37,888→26,624 B) · icns 62 KB · 미사용 함수 제거. → [journal](journal/2026-09-13.md)

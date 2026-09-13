@@ -1,5 +1,12 @@
 # STATUS — 지금 상태
 
+## 09-13 5차 — 언어 선택 메뉴 · i18n(en/ko/ja/zh) (사용자 요청 · 브랜치 `feat/i18n-lang-menu`)
+
+- **무엇**: 자동 시작 아래 "언어 ▸ English / 한국어 / 日本語 / 中文"(라디오). 고르면 `lang=` 저장, 안 고르면 OS 로케일 자동. 툴팁 어순 ja/zh는 "残り2時間 / 剩余2小时".
+- **크기**: 문구를 언어당 NUL 구분 문자열 블록 하나로(포인터 테이블·재배치 없음). Linux 51,416 B 그대로.
+- **검증**: test green(네 언어 전 문구 검사 포함) · smoke green(ja 전환 왕복) · GNOME 실기 D-Bus 전환 ✓. **Windows·macOS는 빌드 미확인**(Linux PC) — CI 필요.
+- 상세: [journal/2026-09-13](journal/2026-09-13.md#5차--언어-선택-메뉴english--한국어--日本語--中文--i18n-사용자-요청).
+
 ## 09-13 4차 — Linux 실기 첫 확인 · GNOME 트레이 아이콘 안 보임 수정 (사용자 QA)
 
 - **증상/원인**: 등록·속성·로그 모두 정상인데 아이콘만 없음. `busctl monitor`로 보니 GNOME AppIndicator가 Register **응답 전에** `GetAll`을 보내고, 우리는 등록 응답 동기 대기 중 그 요청을 버리고 있었다(`register_watcher`의 `db_call(..., NULL)`).
