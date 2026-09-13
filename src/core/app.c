@@ -1,8 +1,9 @@
-/* app.c — 앱 상태 · 메뉴 모델(3-OS 공통 트리) · 클릭/입력 창 처리 · 설정 직렬화 · 문구(ko/en) · About.
+/* app.c — 앱 상태 · 메뉴 모델(3-OS 공통 트리) · 클릭/입력 창 처리 · 설정 직렬화 · 문구(en/ko/ja/zh) · About.
  *
- * 메뉴(사용자 확정 09-12 2차):
+ * 메뉴(사용자 확정 09-12 2차 · 09-13 언어):
  *   무제한 · 12시간 · 6시간 · 2시간 · 1시간 · 30분 · 사용자 지정… · 끄기
- *   ─ 실행 시 자동 시작 ▸ (끄기 / 사용자 지정…) ─ 정보 · 종료
+ *   ─ 실행 시 자동 시작 ▸ (끄기 / 사용자 지정…) · 언어 ▸ (English / 한국어 / 日本語 / 中文) ─ 정보 · 종료
+ * 문구는 언어당 NUL로 구분한 문자열 블록 하나(포인터 테이블·재배치 없음 · id번째까지 걸어간다 — 메뉴 열 때만 쓰므로 충분).
  * "사용자 지정…"과 "자동 시작 ▸ 사용자 지정…"은 같은 입력 창(일·시·분 숫자 + 시작/저장 버튼)을 쓴다.
  * 창을 그리는 것은 플랫폼 몫 — 여기서는 초기값·검증·결과 반영만.
  */
@@ -15,28 +16,65 @@
 /* ── 문구 ─────────────────────────────────────────────────── */
 enum {
     S_APP = 0, S_IDLE, S_QUIT, S_AUTO, S_INF, S_12H, S_6H, S_2H, S_1H, S_30M, S_CUSTOM, S_OFF,
-    S_D, S_H, S_M, S_S, S_LEFT, S_KEEPING,
+    S_D, S_H, S_M, S_LEFT, S_KEEPING,
     S_DLG_CUSTOM, S_DLG_AUTO, S_DAYS, S_HOURS, S_MINUTES, S_START, S_SAVE, S_CANCEL, S_ABOUT,
     S_ABOUT_DESC, S_ABOUT_LICENSE,
-    S_DAY1, S_DAYN, S_HOUR1, S_HOURN, S_MIN1, S_MINN, S_SEC1, S_SECN, S_COUNT
+    S_SEC1, S_SECN, S_MIN1, S_MINN, S_HOUR1, S_HOURN, S_DAY1, S_DAYN, /* CF_UNIT_* 순서 */
+    S_LANG, S_WHY, S_COUNT
 };
-static const char *const STR[2][S_COUNT] = {
-    { "Nexa Coffee", "Idle", "Quit", "Start automatically at launch",
-      "Unlimited", "12 hours", "6 hours", "2 hours", "1 hour", "30 minutes", "Custom\xE2\x80\xA6", "Off",
-      "d", "h", "m", "s", "left", "keeping awake",
-      "Custom duration", "Auto-start duration", "day(s)", "hour(s)", "minute(s)", "Start", "Save", "Cancel",
-      "About Nexa Coffee\xE2\x80\xA6",
-      "Keeps the computer awake from the tray.", "\xC2\xA9 2026 SosomLab \xC2\xB7 MIT License",
-      " day", " days", " hour", " hours", " minute", " minutes", " second", " seconds" },
-    { "Nexa Coffee", "대기 중", "종료", "실행 시 자동 시작",
-      "무제한", "12시간", "6시간", "2시간", "1시간", "30분", "사용자 지정…", "끄기",
-      "일", "시간", "분", "초", "남음", "절전 방지 중",
-      "사용자 지정 시간", "자동 시작 시간", "일", "시간", "분", "시작", "저장", "취소",
-      "Nexa Coffee 정보…",
-      "트레이에서 PC가 잠들지 않게 합니다.", "© 2026 SosomLab · MIT 라이선스",
-      "일", "일", "시간", "시간", "분", "분", "초", "초" },
-};
-static const char *s_(int lang, int id) { return STR[lang == CF_LANG_KO ? 1 : 0][id]; }
+/* 각 항목은 줄 하나 · "\0"으로 끝난다(리터럴 이어붙이기는 이스케이프 처리 뒤라 "\0" 뒤에 숫자가 와도 안전). */
+static const char STR_EN[] =
+    "Nexa Coffee\0" "Idle\0" "Quit\0" "Start automatically at launch\0"
+    "Unlimited\0" "12 hours\0" "6 hours\0" "2 hours\0" "1 hour\0" "30 minutes\0" "Custom…\0" "Off\0"
+    "d\0" "h\0" "m\0" "left\0" "keeping awake\0"
+    "Custom duration\0" "Auto-start duration\0" "day(s)\0" "hour(s)\0" "minute(s)\0" "Start\0" "Save\0" "Cancel\0"
+    "About Nexa Coffee…\0"
+    "Keeps the computer awake from the tray.\0" "© 2026 SosomLab · MIT License\0"
+    " second\0" " seconds\0" " minute\0" " minutes\0" " hour\0" " hours\0" " day\0" " days\0"
+    "Language\0" "User asked to keep the system awake";
+static const char STR_KO[] =
+    "Nexa Coffee\0" "대기 중\0" "종료\0" "실행 시 자동 시작\0"
+    "무제한\0" "12시간\0" "6시간\0" "2시간\0" "1시간\0" "30분\0" "사용자 지정…\0" "끄기\0"
+    "일\0" "시간\0" "분\0" "남음\0" "절전 방지 중\0"
+    "사용자 지정 시간\0" "자동 시작 시간\0" "일\0" "시간\0" "분\0" "시작\0" "저장\0" "취소\0"
+    "Nexa Coffee 정보…\0"
+    "트레이에서 PC가 잠들지 않게 합니다.\0" "© 2026 SosomLab · MIT 라이선스\0"
+    "초\0" "초\0" "분\0" "분\0" "시간\0" "시간\0" "일\0" "일\0"
+    "언어\0" "사용자가 절전 방지를 켰습니다";
+static const char STR_JA[] =
+    "Nexa Coffee\0" "待機中\0" "終了\0" "起動時に自動開始\0"
+    "無制限\0" "12時間\0" "6時間\0" "2時間\0" "1時間\0" "30分\0" "カスタム…\0" "オフ\0"
+    "日\0" "時間\0" "分\0" "残り\0" "スリープ防止中\0"
+    "カスタム時間\0" "自動開始時間\0" "日\0" "時間\0" "分\0" "開始\0" "保存\0" "キャンセル\0"
+    "Nexa Coffee について…\0"
+    "トレイからPCをスリープさせません。\0" "© 2026 SosomLab · MIT ライセンス\0"
+    "秒\0" "秒\0" "分\0" "分\0" "時間\0" "時間\0" "日\0" "日\0"
+    "言語\0" "ユーザーがスリープ防止を有効にしました";
+static const char STR_ZH[] =
+    "Nexa Coffee\0" "空闲\0" "退出\0" "启动时自动开始\0"
+    "无限制\0" "12小时\0" "6小时\0" "2小时\0" "1小时\0" "30分钟\0" "自定义…\0" "关闭\0"
+    "天\0" "小时\0" "分钟\0" "剩余\0" "保持唤醒中\0"
+    "自定义时长\0" "自动开始时长\0" "天\0" "小时\0" "分钟\0" "开始\0" "保存\0" "取消\0"
+    "关于 Nexa Coffee…\0"
+    "从托盘防止电脑休眠。\0" "© 2026 SosomLab · MIT 许可证\0"
+    "秒\0" "秒\0" "分钟\0" "分钟\0" "小时\0" "小时\0" "天\0" "天\0"
+    "语言\0" "用户已开启防休眠";
+static const char *const STRS[CF_LANG_COUNT] = { STR_EN, STR_KO, STR_JA, STR_ZH };
+/* 언어 이름은 늘 그 언어로 · 설정 태그는 lang*3 */
+static const char LANG_NAME[] = "English\0" "한국어\0" "日本語\0" "中文";
+static const char LANG_TAG[]  = "en\0" "ko\0" "ja\0" "zh";
+
+static const char *nth(const char *p, int id) { while (id-- > 0) while (*p++) {} return p; }
+static const char *s_(int lang, int id) { return nth(STRS[(unsigned)lang < CF_LANG_COUNT ? lang : 0], id); }
+
+int cf_lang_of(const char *tag)
+{
+    int i;
+    if (!tag) return CF_LANG_EN;
+    for (i = CF_LANG_KO; i < CF_LANG_COUNT; i++)
+        if (tag[0] == LANG_TAG[i * 3] && tag[1] == LANG_TAG[i * 3 + 1]) return i;
+    return CF_LANG_EN;
+}
 
 const char *cf_str(int lang, int id)
 {
@@ -55,6 +93,9 @@ const char *cf_str(int lang, int id)
     case CF_STR_CANCEL:     return s_(lang, S_CANCEL);
     case CF_STR_ABOUT:      return s_(lang, S_ABOUT);
     case CF_STR_VERSION:    return CF_VERSION;
+    case CF_STR_LANG:       return s_(lang, S_LANG);
+    case CF_STR_KEEPING:    return s_(lang, S_KEEPING);
+    case CF_STR_WHY:        return s_(lang, S_WHY);
     default: return "";
     }
 }
@@ -100,6 +141,7 @@ int cf_app_click(CfApp *a, int id)
 {
     int s = sel_of_id(id);
     if (s >= 0) { a->sel = s; a->running = 1; return CF_ACT_START; }
+    if (id >= CF_ID_LANG0 && id < CF_ID_LANG0 + CF_LANG_COUNT) { a->lang = id - CF_ID_LANG0; a->lang_set = 1; return CF_ACT_LANG; }
     switch (id) {
     case CF_ID_CUSTOM:      return CF_ACT_DIALOG_CUSTOM;
     case CF_ID_OFF:         a->running = 0; a->sel = CF_SEL_OFF; return CF_ACT_STOP;
@@ -136,13 +178,14 @@ int cf_dialog_submit(CfApp *a, int mode, i64 d, i64 h, i64 m)
 int cf_menu_children(const CfApp *a, int parent, int *ids, int max)
 {
     static const int root[] = { CF_ID_STATUS, CF_ID_SEP0, CF_ID_INF, CF_ID_12H, CF_ID_6H, CF_ID_2H, CF_ID_1H, CF_ID_30M,
-                                CF_ID_CUSTOM, CF_ID_OFF, CF_ID_SEP1, CF_ID_AUTO, CF_ID_SEP2, CF_ID_ABOUT, CF_ID_QUIT };
+                                CF_ID_CUSTOM, CF_ID_OFF, CF_ID_SEP1, CF_ID_AUTO, CF_ID_LANG, CF_ID_SEP2, CF_ID_ABOUT, CF_ID_QUIT };
     static const int autom[] = { CF_ID_AUTO_OFF, CF_ID_AUTO_CUSTOM };
     const int *src = 0;
     int n = 0, count = 0, i;
     (void)a;
     if (parent == CF_ID_ROOT) { src = root;  count = (int)(sizeof root / sizeof root[0]); }
     if (parent == CF_ID_AUTO) { src = autom; count = (int)(sizeof autom / sizeof autom[0]); }
+    if (parent == CF_ID_LANG) { for (i = 0; i < CF_LANG_COUNT && n < max; i++) ids[n++] = CF_ID_LANG0 + i; return n; }
     for (i = 0; i < count && n < max; i++) ids[n++] = src[i];
     return n;
 }
@@ -178,6 +221,10 @@ int cf_menu_item(const CfApp *a, int id, CfMenuItem *out)
     int s = sel_of_id(id);
     cf_memset(out, 0, sizeof *out);
     out->enabled = 1;
+    if (id >= CF_ID_LANG0 && id < CF_ID_LANG0 + CF_LANG_COUNT) {
+        set(out, CF_KIND_RADIO, a->lang == id - CF_ID_LANG0, nth(LANG_NAME, id - CF_ID_LANG0));
+        return 1;
+    }
     if (s >= 0) {
         static const int sid[] = { 0, S_INF, S_12H, S_6H, S_2H, S_1H, S_30M };
         set(out, CF_KIND_RADIO, a->running && a->sel == s, s_(L, sid[s]));
@@ -204,6 +251,7 @@ int cf_menu_item(const CfApp *a, int id, CfMenuItem *out)
         set(out, CF_KIND_RADIO, cf_auto_secs(a) > 0, s_(L, S_CUSTOM));
         if (cf_auto_secs(a) > 0) { dhm_summary(L, a->auto_d, a->auto_h, a->auto_m, tmp, sizeof tmp); paren(out, tmp); }
         return 1;
+    case CF_ID_LANG:  set(out, CF_KIND_SUBMENU, 0, s_(L, S_LANG)); return 1;
     case CF_ID_ABOUT: set(out, CF_KIND_NORMAL, 0, s_(L, S_ABOUT)); return 1;
     case CF_ID_QUIT:  set(out, CF_KIND_NORMAL, 0, s_(L, S_QUIT)); return 1;
     default: return 0;
@@ -223,6 +271,7 @@ u32 cf_conf_format(const CfApp *a, char *out, u32 cap)
     out[0] = 0;
     cf_strcat(out, cap, "auto=");   put_dhm(out, cap, a->auto_d, a->auto_h, a->auto_m);
     cf_strcat(out, cap, "\ncustom="); put_dhm(out, cap, a->cust_d, a->cust_h, a->cust_m);
+    if (a->lang_set) { cf_strcat(out, cap, "\nlang="); cf_strcat(out, cap, LANG_TAG + a->lang * 3); }
     return cf_strcat(out, cap, "\n");
 }
 
@@ -248,15 +297,24 @@ void cf_conf_parse(CfApp *a, const char *buf, u32 len)
         while (nl < end && *nl != '\n') nl++;
         if (starts(p, nl, "auto=", &v))        parse_dhm(v, &a->auto_d, &a->auto_h, &a->auto_m);
         else if (starts(p, nl, "custom=", &v)) parse_dhm(v, &a->cust_d, &a->cust_h, &a->cust_m);
+        else if (starts(p, nl, "lang=", &v) && nl - v >= 2) { a->lang = cf_lang_of(v); a->lang_set = 1; }
         p = nl + 1;
     }
 }
 
 /* ── 툴팁 · About ─────────────────────────────────────────── */
+/* 숫자 + 단위 — 1보다 크면 복수형(사용자 확정 · CJK는 단복수 동일). S_SEC1.. 순서는 CF_UNIT_*와 같다. */
+static void unit(char *out, u32 cap, int lang, i64 v, int one, int many)
+{
+    char num[24];
+    cf_itoa(v, num, sizeof num);
+    cf_strcat(out, cap, num);
+    cf_strcat(out, cap, s_(lang, v > 1 ? many : one)); /* 1보다 크면 복수형(사용자 확정) */
+}
+
 u32 cf_tooltip(const CfApp *a, const CfDisplay *d, char *out, u32 cap)
 {
     const int L = a->lang;
-    char num[8];
     out[0] = 0;
     cf_strcat(out, cap, s_(L, S_APP));
     cf_strcat(out, cap, " — ");
@@ -266,26 +324,12 @@ u32 cf_tooltip(const CfApp *a, const CfDisplay *d, char *out, u32 cap)
         cf_strcat(out, cap, " · ");
         return cf_strcat(out, cap, s_(L, S_KEEPING));
     }
-    cf_itoa(d->value, num, sizeof num);
-    cf_strcat(out, cap, num);
-    if (L == CF_LANG_KO) {
-        static const int u[] = { S_S, S_M, S_H, S_D };
-        cf_strcat(out, cap, s_(L, u[d->unit]));
-        cf_strcat(out, cap, " ");
-    } else {
-        static const char *const u[] = { " sec ", " min ", " hour", " day" };
-        cf_strcat(out, cap, u[d->unit]);
-        if (d->unit >= CF_UNIT_HOUR) cf_strcat(out, cap, d->value == 1 ? " " : "s ");
-    }
+    /* "2 hours left" · "2시간 남음" · "残り2時間" · "剩余2小时" — ja/zh는 '남음'이 앞에 온다 */
+    if (L >= CF_LANG_JA) cf_strcat(out, cap, s_(L, S_LEFT));
+    unit(out, cap, L, d->value, S_SEC1 + d->unit * 2, S_SECN + d->unit * 2);
+    if (L >= CF_LANG_JA) return cf_strlen(out);
+    cf_strcat(out, cap, " ");
     return cf_strcat(out, cap, s_(L, S_LEFT));
-}
-
-static void unit(char *out, u32 cap, int lang, i64 v, int one, int many)
-{
-    char num[24];
-    cf_itoa(v, num, sizeof num);
-    cf_strcat(out, cap, num);
-    cf_strcat(out, cap, s_(lang, v > 1 ? many : one)); /* 1보다 크면 복수형(사용자 확정) */
 }
 
 u32 cf_remaining_label(const CfApp *a, char *out, u32 cap)

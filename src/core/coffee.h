@@ -80,7 +80,9 @@ void cf_icon_idle(u8 *rgba, int size, CfColor color);
 void cf_icon_active(u8 *rgba, int size, const CfDisplay *d);
 
 /* ───────────────────────── app.c ───────────────────────── */
-enum { CF_LANG_EN = 0, CF_LANG_KO = 1 };
+enum { CF_LANG_EN = 0, CF_LANG_KO, CF_LANG_JA, CF_LANG_ZH, CF_LANG_COUNT };
+/* 로케일 태그("ko_KR.UTF-8" · "ja-JP" …) → CF_LANG_*. 모르면 EN. */
+int cf_lang_of(const char *tag);
 
 /* 선택지 — 메뉴 순서와 같다. */
 enum {
@@ -99,10 +101,12 @@ enum {
     CF_ID_SEP2, CF_ID_ABOUT, CF_ID_QUIT,
     CF_ID_STATUS,            /* 맨 위: 남은 시간(비활성 · 1초 갱신) */
     CF_ID_SEP0,
-    CF_ID_AUTO_OFF = 20, CF_ID_AUTO_CUSTOM
+    CF_ID_LANG,              /* 서브메뉴: English / 한국어 / 日本語 / 中文 */
+    CF_ID_AUTO_OFF = 20, CF_ID_AUTO_CUSTOM,
+    CF_ID_LANG0 = 30         /* 30+CF_LANG_* */
 };
 #define CF_MAX_DAYS 99
-#define CF_MENU_MAX_CHILDREN 16
+#define CF_MENU_MAX_CHILDREN 20
 
 enum { CF_KIND_NORMAL = 0, CF_KIND_SEPARATOR, CF_KIND_RADIO, CF_KIND_CHECK, CF_KIND_SUBMENU };
 
@@ -115,6 +119,7 @@ typedef struct {
 
 typedef struct {
     int lang;        /* CF_LANG_* */
+    int lang_set;    /* 사용자가 메뉴에서 골랐다(설정에 저장) — 아니면 OS 로케일 자동 */
     int sel;         /* 현재 선택(CF_SEL_*) — running이 0이면 OFF */
     int running;     /* 작업 진행 중 */
     int cust_d, cust_h, cust_m; /* 사용자 지정 일·시·분(마지막 입력) */
@@ -131,7 +136,8 @@ enum {
     CF_ACT_MENU,          /* 설정만 바뀜(메뉴 갱신 + 저장) */
     CF_ACT_DIALOG_CUSTOM, /* 입력 창(CF_DLG_CUSTOM) 열기 */
     CF_ACT_DIALOG_AUTO,   /* 입력 창(CF_DLG_AUTO) 열기 */
-    CF_ACT_ABOUT          /* About 화면 */
+    CF_ACT_ABOUT,         /* About 화면 */
+    CF_ACT_LANG           /* 언어 바뀜 — 저장 + 메뉴·툴팁 전부 다시 */
 };
 /* 입력 창 모드 */
 enum { CF_DLG_CUSTOM = 0, CF_DLG_AUTO = 1 };
@@ -168,7 +174,8 @@ u32  cf_about(int lang, char *out, u32 cap);
 enum {
     CF_STR_APP = 0, CF_STR_IDLE, CF_STR_QUIT, CF_STR_AUTO,
     CF_STR_DLG_CUSTOM, CF_STR_DLG_AUTO, CF_STR_DAYS, CF_STR_HOURS, CF_STR_MINUTES,
-    CF_STR_START, CF_STR_SAVE, CF_STR_CANCEL, CF_STR_ABOUT, CF_STR_VERSION, CF_STR_COUNT
+    CF_STR_START, CF_STR_SAVE, CF_STR_CANCEL, CF_STR_ABOUT, CF_STR_VERSION,
+    CF_STR_LANG, CF_STR_KEEPING, CF_STR_WHY, CF_STR_COUNT
 };
 const char *cf_str(int lang, int id);
 

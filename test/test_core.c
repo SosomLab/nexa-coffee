@@ -49,7 +49,7 @@ static void t_app(void)
     char buf[256];
     cf_app_init(&a, CF_LANG_KO);
     CHECK(a.sel == CF_SEL_OFF && !a.running && cf_auto_secs(&a) == 0);
-    n = cf_menu_children(&a, CF_ID_ROOT, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 15 && ids[0] == CF_ID_STATUS && ids[1] == CF_ID_SEP0 && ids[2] == CF_ID_INF && ids[14] == CF_ID_QUIT);
+    n = cf_menu_children(&a, CF_ID_ROOT, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 16 && ids[0] == CF_ID_STATUS && ids[1] == CF_ID_SEP0 && ids[2] == CF_ID_INF && ids[12] == CF_ID_LANG && ids[15] == CF_ID_QUIT);
     CHECK(cf_menu_item(&a, CF_ID_STATUS, &it) && !it.enabled && !strcmp(it.label, "대기 중"));
     n = cf_menu_children(&a, CF_ID_AUTO, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 2 && ids[0] == CF_ID_AUTO_OFF);
     n = cf_menu_children(&a, CF_ID_CUSTOM, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 0);
@@ -131,6 +131,57 @@ static void t_app(void)
         cf_remaining_label(&a, buf, sizeof buf); CHECK(!strcmp(buf, "무제한 · 절전 방지 중"));
         a.running = 0;
         cf_remaining_label(&a, buf, sizeof buf); CHECK(!strcmp(buf, "대기 중"));
+    }
+    /* 언어 메뉴 · i18n(en/ko/ja/zh) */
+    {
+        CfDisplay dd;
+        int l, id;
+        cf_app_init(&a, CF_LANG_KO);
+        n = cf_menu_children(&a, CF_ID_LANG, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 4 && ids[0] == CF_ID_LANG0 && ids[3] == CF_ID_LANG0 + CF_LANG_ZH);
+        CHECK(cf_menu_item(&a, CF_ID_LANG, &it) && it.kind == CF_KIND_SUBMENU && !strcmp(it.label, "언어"));
+        CHECK(cf_menu_item(&a, CF_ID_LANG0 + CF_LANG_KO, &it) && it.kind == CF_KIND_RADIO && it.checked && !strcmp(it.label, "한국어"));
+        CHECK(cf_menu_item(&a, CF_ID_LANG0 + CF_LANG_EN, &it) && !it.checked && !strcmp(it.label, "English"));
+        CHECK(cf_menu_item(&a, CF_ID_LANG0 + CF_LANG_JA, &it) && !strcmp(it.label, "日本語"));
+        CHECK(cf_menu_item(&a, CF_ID_LANG0 + CF_LANG_ZH, &it) && !strcmp(it.label, "中文"));
+        CHECK(!cf_menu_item(&a, CF_ID_LANG0 + CF_LANG_COUNT, &it));
+        /* 고르기 전엔 설정에 lang 없음(OS 로케일 자동) · 고르면 저장 */
+        cf_conf_format(&a, buf, sizeof buf); CHECK(!strstr(buf, "lang="));
+        CHECK(cf_app_click(&a, CF_ID_LANG0 + CF_LANG_JA) == CF_ACT_LANG && a.lang == CF_LANG_JA && a.lang_set);
+        CHECK(cf_menu_item(&a, CF_ID_QUIT, &it) && !strcmp(it.label, "終了"));
+        CHECK(cf_menu_item(&a, CF_ID_LANG, &it) && !strcmp(it.label, "言語"));
+        CHECK(cf_menu_item(&a, CF_ID_AUTO, &it) && !strcmp(it.label, "起動時に自動開始"));
+        cf_conf_format(&a, buf, sizeof buf); CHECK(strstr(buf, "\nlang=ja\n"));
+        {
+            CfApp b; cf_app_init(&b, CF_LANG_EN);
+            cf_conf_parse(&b, buf, (u32)strlen(buf)); CHECK(b.lang == CF_LANG_JA && b.lang_set);
+            cf_conf_parse(&b, "lang=zh\n", 8); CHECK(b.lang == CF_LANG_ZH);
+            cf_conf_parse(&b, "lang=xx\n", 8); CHECK(b.lang == CF_LANG_EN);
+            cf_conf_parse(&b, "lang=\n", 6);   CHECK(b.lang == CF_LANG_EN);
+        }
+        CHECK(cf_lang_of("ko_KR.UTF-8") == CF_LANG_KO && cf_lang_of("ja-JP") == CF_LANG_JA && cf_lang_of("zh_CN") == CF_LANG_ZH);
+        CHECK(cf_lang_of("en_US") == CF_LANG_EN && cf_lang_of("C") == CF_LANG_EN && cf_lang_of("") == CF_LANG_EN && cf_lang_of(0) == CF_LANG_EN);
+        /* 툴팁 어순 · 남은 시간 라벨 */
+        a.running = 1; cf_display(2 * 3600 + 5, 7200 * 2, &dd);
+        a.lang = CF_LANG_JA; cf_tooltip(&a, &dd, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — 残り2時間"));
+        a.lang = CF_LANG_ZH; cf_tooltip(&a, &dd, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — 剩余2小时"));
+        a.lang = CF_LANG_KO; cf_tooltip(&a, &dd, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — 2시간 남음"));
+        cf_display(5 * 60 + 3, 7200, &dd);
+        a.lang = CF_LANG_EN; cf_tooltip(&a, &dd, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — 5 minutes left"));
+        cf_display(1, 7200, &dd);
+        cf_tooltip(&a, &dd, buf, sizeof buf); CHECK(!strcmp(buf, "Nexa Coffee — 1 second left"));
+        a.sel = CF_SEL_CUSTOM; a.remaining_s = 12 * 3600 + 50 * 60 + 3;
+        a.lang = CF_LANG_ZH; cf_remaining_label(&a, buf, sizeof buf); CHECK(!strcmp(buf, "0天 12小时 50分钟 3秒"));
+        a.lang = CF_LANG_JA; cf_remaining_label(&a, buf, sizeof buf); CHECK(!strcmp(buf, "0日 12時間 50分 3秒"));
+        a.sel = CF_SEL_INF; cf_remaining_label(&a, buf, sizeof buf); CHECK(!strcmp(buf, "無制限 · スリープ防止中"));
+        /* 네 언어 모두 모든 고정 문구·메뉴 라벨이 비어 있지 않다(NUL 블록 개수 검증) */
+        for (l = 0; l < CF_LANG_COUNT; l++) {
+            a.lang = l; a.running = 0;
+            for (id = 0; id < CF_STR_COUNT; id++) CHECK(cf_str(l, id)[0] != 0);
+            n = cf_menu_children(&a, CF_ID_ROOT, ids, CF_MENU_MAX_CHILDREN);
+            for (id = 0; id < n; id++) { CHECK(cf_menu_item(&a, ids[id], &it)); CHECK(it.kind == CF_KIND_SEPARATOR || it.label[0] != 0); }
+            CHECK(cf_about(l, buf, sizeof buf) > 30 && strstr(buf, "SosomLab"));
+        }
+        a.lang = CF_LANG_KO; a.lang_set = 0;
     }
 }
 
