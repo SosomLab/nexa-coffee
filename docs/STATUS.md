@@ -1,5 +1,11 @@
 # STATUS — 지금 상태
 
+## 09-13 6차 — 커밋 · main 병합 · push · CI (사용자 요청)
+
+- `feat/i18n-lang-menu` 4커밋(core → plat → docs → 진행사항) → main ff → push. 앞선 0717da7(GNOME 등록 경쟁 수정)도 같이 올라감.
+- **CI(run 34736693426 · 0062ce3)**: linux ✓ 28s · windows-msvc ✓ 23s · macos ✓ 19s — **i18n 코드가 MSVC·clang에서도 컴파일·크기 예산 통과**(UTF-8 CJK 리터럴 · NUL 블록). main green.
+- **다음**: T-11(Windows·macOS 언어 메뉴 실기) · T-12(ja/zh 원어민 검토) · T-2 · T-3 남은 항목 · T-10.
+
 ## 09-13 5차 — 언어 선택 메뉴 · i18n(en/ko/ja/zh) (사용자 요청) — `feat/i18n-lang-menu` 4커밋 → main ff → push
 
 - **무엇**: 자동 시작 아래 "언어 ▸ English / 한국어 / 日本語 / 中文"(라디오). 고르면 `lang=` 저장, 안 고르면 OS 로케일 자동. 툴팁 어순 ja/zh는 "残り2時間 / 剩余2小时".
