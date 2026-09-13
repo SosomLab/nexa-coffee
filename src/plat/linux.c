@@ -666,12 +666,16 @@ static void handle_menu(DbConn *c, DbRead *r)
     }
 }
 
+static void handle(DbConn *c, DbRead *r, void *ud);
+
 static void register_watcher(void)
 {
     DbMsg m; DbRead r;
     db_call_init(&m, WATCHER, "/StatusNotifierWatcher", WATCHER, "RegisterStatusNotifierItem", "s");
     db_w_str(&m, busname);
-    if (db_call(&ses, &m, &r, 3000, NULL, NULL)) {
+    /* GNOME AppIndicator는 Register 응답을 주기 전에 GetAll을 먼저 보낸다(09-13 실기).
+     * 응답을 기다리는 동안 온 요청을 버리면 셸의 프록시 초기화가 끝나지 않아 아이콘이 안 보인다 → handle로 처리. */
+    if (db_call(&ses, &m, &r, 3000, handle, NULL)) {
         if (r.type == DB_ERROR) fprintf(stderr, "nexa-coffee: no StatusNotifierWatcher (%s) — tray hidden until a host appears\n", r.error ? r.error : "?");
         db_consume(&ses);
     }

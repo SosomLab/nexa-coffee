@@ -4,7 +4,8 @@
 | --- | --- | --- | --- | --- |
 | T-1 | P0 | 소 | 첫 커밋 · main 병합 · push | ✅ 09-12 |
 | T-2 | P0 | 중 | Windows 실기 — 트레이 아이콘 DPI(100/150/200%) · 메뉴 라디오/체크 · `powercfg /requests`로 억제 확인 · TaskbarCreated | ☐ |
-| T-3 | P0 | 중 | Linux 실기 — KDE Plasma · GNOME(AppIndicator) · 서브메뉴 · logind polkit 거부 시 fallback · 워처 재등장 재등록 | ☐ |
+| T-3 | P0 | 중 | Linux 실기 — GNOME(AppIndicator) ✅ 09-13(등록 경쟁 수정) · **남음**: KDE Plasma · 입력 창 클릭 확인 · logind polkit 거부 시 fallback · 워처 재등장 재등록 | ◐ |
+| T-10 | P1 | 소 | Linux 16px 픽스맵 프레임 추가 — GNOME 패널이 22→16 축소해 두 자리 숫자 흐릿(09-13 실기) · 스모크에 "Register 응답 전 GetAll" 순서 재현 | ☐ |
 | T-4 | P1 | 소 | macOS 화면보호기 실측(30초 사용자 활동 선언으로 충분한지) — 부족하면 `IOPMAssertionCreateWithProperties` 검토 | ☐ |
 | T-5 | P1 | 소 | 시작 프로그램 등록 안내/옵션(Windows shell:startup · macOS 로그인 항목 · Linux ~/.config/autostart) | ☐ |
 | T-6 | P1 | 중 | 채널 등록 — brew tap cask · winget · choco(templates → 실제 제출 · release.yml 확장) | ☐ |

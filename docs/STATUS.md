@@ -1,5 +1,11 @@
 # STATUS — 지금 상태
 
+## 09-13 4차 — Linux 실기 첫 확인 · GNOME 트레이 아이콘 안 보임 수정 (사용자 QA)
+
+- **증상/원인**: 등록·속성·로그 모두 정상인데 아이콘만 없음. `busctl monitor`로 보니 GNOME AppIndicator가 Register **응답 전에** `GetAll`을 보내고, 우리는 등록 응답 동기 대기 중 그 요청을 버리고 있었다(`register_watcher`의 `db_call(..., NULL)`).
+- **수정**: 대기 중 요청도 `handle`로 처리(1줄). 재실행 후 대기/동작 아이콘 · 메뉴 라벨 · logind 억제 · 설정 저장까지 GNOME(Wayland) 실기 ✓.
+- **남음**: 16px 픽스맵 프레임 추가(패널 16px 축소로 숫자 흐릿) · KDE Plasma · 입력 창(zenity 경로)은 사람이 클릭해서 확인. 상세: [journal/2026-09-13](journal/2026-09-13.md#4차--linux-실기gnome-50--ubuntu-appindicators-트레이-아이콘-안-보임--등록-경쟁-수정-사용자-qa).
+
 ## 09-13 3차 — 커밋 · main 병합 · push (사용자 요청)
 
 - `feat/dialog-ui-memory` 6커밋(core → win → mac → linux → 브랜딩/도구 → docs) → main ff 병합 → push. push 전 test·3-OS 빌드·smoke green 재확인.
