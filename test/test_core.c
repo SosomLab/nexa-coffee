@@ -115,6 +115,15 @@ static void t_app(void)
         CHECK(cf_about(CF_LANG_EN, buf, sizeof buf) > 40 && strstr(buf, "MIT") && strstr(buf, "github.com/SosomLab/nexa-coffee"));
         CHECK(!strcmp(cf_str(CF_LANG_KO, CF_STR_START), "시작") && !strcmp(cf_str(CF_LANG_EN, CF_STR_SAVE), "Save"));
     }
+    /* 자식 프로세스 결과 파싱 */
+    {
+        i64 d, h, m;
+        CHECK(cf_parse_dhm("0 12 50\n", &d, &h, &m) == 3 && d == 0 && h == 12 && m == 50);
+        CHECK(cf_parse_dhm("1.000000 2.000000 30.000000\n", &d, &h, &m) == 3 && d == 1 && h == 2 && m == 30);
+        CHECK(cf_parse_dhm("0|1|5", &d, &h, &m) == 3 && h == 1 && m == 5);
+        CHECK(cf_parse_dhm("7 x", &d, &h, &m) == 1);
+        CHECK(cf_parse_dhm("", &d, &h, &m) == 0);
+    }
     /* 남은 시간 라벨 */
     {
         a.running = 1; a.sel = CF_SEL_CUSTOM; a.lang = CF_LANG_EN;

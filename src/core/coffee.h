@@ -151,6 +151,9 @@ i64  cf_auto_secs(const CfApp *a);
 int  cf_app_click(CfApp *a, int id);
 /* 입력 창 초기값. */
 void cf_dialog_values(const CfApp *a, int mode, int *d, int *h, int *m);
+/* 자식 프로세스(입력 창)가 stdout으로 돌려준 "d h m"(공백·'|' 구분 · "12.000000" 같은 소수부 허용) 파싱.
+ * 반환 = 읽은 개수(3이면 성공). */
+int  cf_parse_dhm(const char *s, i64 *d, i64 *h, i64 *m);
 /* 입력 창 확정 — 범위로 클램프. CUSTOM: START(전부 0이면 NONE) · AUTO: MENU(저장). */
 int  cf_dialog_submit(CfApp *a, int mode, i64 d, i64 h, i64 m);
 /* parent의 자식 id 목록. 반환 = 개수. */

@@ -159,6 +159,21 @@ void cf_dialog_values(const CfApp *a, int mode, int *d, int *h, int *m)
     else { *d = a->cust_d; *h = a->cust_h; *m = a->cust_m; }
 }
 
+int cf_parse_dhm(const char *s, i64 *d, i64 *h, i64 *m)
+{
+    i64 *out[3] = { d, h, m };
+    const char *e;
+    int i;
+    for (i = 0; i < 3; i++) {
+        while (*s == ' ' || *s == '|' || *s == '\t') s++;
+        *out[i] = cf_atoi(s, &e);
+        if (e == s) return i;
+        s = e;
+        while (*s && *s != ' ' && *s != '|' && *s != '\n' && *s != '\t') s++; /* 소수부 등 건너뜀 */
+    }
+    return 3;
+}
+
 static int clampi(i64 v, int lo, int hi) { return v < lo ? lo : v > hi ? hi : (int)v; }
 
 int cf_dialog_submit(CfApp *a, int mode, i64 d, i64 h, i64 m)

@@ -518,19 +518,11 @@ static void dialog_finish(void)
 {
     int status = 0;
     i64 v[3] = { 0, 0, 0 };
-    const char *p = dlg_buf, *e;
-    int i;
     close(dlg_fd); dlg_fd = -1;
     waitpid(dlg_pid, &status, 0);
     dlg_buf[dlg_len < sizeof dlg_buf ? dlg_len : sizeof dlg_buf - 1] = 0;
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) return; /* 취소 */
-    for (i = 0; i < 3; i++) {
-        while (*p == ' ' || *p == '|' || *p == '\t') p++;
-        v[i] = cf_atoi(p, &e);
-        if (e == p) break;
-        p = e;
-        while (*p && *p != ' ' && *p != '|' && *p != '\n') p++; /* yad는 "12.000000" — 소수부 건너뜀 */
-    }
+    if (cf_parse_dhm(dlg_buf, &v[0], &v[1], &v[2]) != 3) return; /* 코어 공용 파서(yad "12.000000" · zenity "0 12 50" · kdialog) */
     act(cf_dialog_submit(&app, dlg_mode, v[0], v[1], v[2]));
 }
 

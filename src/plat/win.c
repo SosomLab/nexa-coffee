@@ -9,7 +9,11 @@
  *   ⚠️ 덮개 닫힘 동작은 전원 정책(powercfg LIDACTION · 관리자)이라 앱이 바꾸지 않는다.
  * - 작업 종료 시: 실행 상태 해제 · 타이머 제거 · 동작 아이콘 파괴 · SetProcessWorkingSetSize(-1,-1)로
  *   작업 집합을 OS에 돌려준다(사용자 요청 09-12 "모든 메모리 회수").
- * - 입력 창(일·시·분 + 시작/저장) = 리소스 DIALOGEX(IDD_DHM) · DialogBoxParamW. About = MessageBoxW.
+ * - 입력 창(IDD_DHM DialogBoxParamW)·About(MessageBoxW)은 **자식 프로세스**에서(T-14 · T-13): 자기 자신을
+ *   `--dialog custom|auto d h m lang` / `--about lang`으로 CreateProcess, 결과 "d h m"은 stdout 파이프.
+ *   edit 컨트롤의 TSF 스택(textinputframework·CoreMessaging…)이 자식과 함께 사라져 부모 작업 집합이 커지지 않는다.
+ *   완료는 RegisterWaitForSingleObject → WM_CHILD_DONE. 메뉴·자식 종료 뒤 SetProcessWorkingSetSize(-1,-1).
+ * - 클래스 아이콘은 ICO 리소스를 읽지 않는다(PNG ICO 디코드가 WindowsCodecs를 올림 · 09-13 실기) — 탐색기 표시용으로만 둔다.
  */
 #include <windows.h>
 #include <shellapi.h>
@@ -17,6 +21,7 @@
 #include "../../res/resource.h"
 
 #define WM_TRAYICON (WM_USER + 1)
+#define WM_CHILD_DONE (WM_USER + 2) /* 입력 창/About 자식 프로세스 종료 */
 #define TIMER_TICK  1
 #define TIMER_MENU  2 /* 메뉴가 열린 동안 남은 시간 1초 갱신 */
 #define ICON_UID    1
@@ -45,6 +50,9 @@ static HICON           g_idle;     /* 대기 아이콘(재사용) */
 static int             g_idle_size;
 static WCHAR           g_conf[MAX_PATH];
 static HMENU           g_menu;     /* 열려 있는 팝업 메뉴(없으면 NULL) */
+static HANDLE          g_child, g_child_pipe, g_child_wait; /* 열려 있는 자식(입력 창/About) */
+static int             g_child_mode;
+static int             g_dlg_init[3]; /* 자식: 입력 창 초기값 */
 
 static void to_wide(const char *utf8, WCHAR *out, int cap);
 
@@ -260,13 +268,12 @@ static void show_menu(void)
     KillTimer(g_hwnd, TIMER_MENU);
     g_menu = NULL;
     DestroyMenu(m);
+    SetProcessWorkingSetSize(GetCurrentProcess(), (SIZE_T)-1, (SIZE_T)-1); /* T-13 ① 메뉴가 끌어온 페이지 반납 */
 }
 
 static void to_wide(const char *utf8, WCHAR *out, int cap) { MultiByteToWideChar(CP_UTF8, 0, utf8, -1, out, cap); }
 
-static void act(int action);
-
-/* ── 입력 창 ── */
+/* ── 입력 창(자식 프로세스에서 실행) ── */
 static int g_dlg_mode;
 static i64 g_dlg_v[3];
 
@@ -277,7 +284,7 @@ static INT_PTR CALLBACK dlg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     switch (msg) {
     case WM_INITDIALOG:
         g_dlg_mode = (int)lp;
-        cf_dialog_values(&g_app, g_dlg_mode, &v[0], &v[1], &v[2]);
+        v[0] = g_dlg_init[0]; v[1] = g_dlg_init[1]; v[2] = g_dlg_init[2];
         to_wide(cf_str(g_app.lang, g_dlg_mode == CF_DLG_AUTO ? CF_STR_DLG_AUTO : CF_STR_DLG_CUSTOM), w, 64); SetWindowTextW(h, w);
         to_wide(cf_str(g_app.lang, CF_STR_DAYS), w, 64);    SetDlgItemTextW(h, IDC_LD, w);
         to_wide(cf_str(g_app.lang, CF_STR_HOURS), w, 64);   SetDlgItemTextW(h, IDC_LH, w);
@@ -290,7 +297,12 @@ static INT_PTR CALLBACK dlg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
         SendDlgItemMessageW(h, IDC_D, EM_LIMITTEXT, 3, 0);
         SendDlgItemMessageW(h, IDC_H, EM_LIMITTEXT, 2, 0);
         SendDlgItemMessageW(h, IDC_M, EM_LIMITTEXT, 2, 0);
-        SendMessageW(h, WM_SETICON, ICON_SMALL, (LPARAM)g_wc.hIcon);
+        {   /* 창 아이콘 = 코어 대기 아이콘(ICO 디코드 없음) */
+            CfColor c = {154, 154, 158, 255};
+            int sz = GetSystemMetrics(SM_CXSMICON);
+            u8 *buf = xalloc((u32)(sz * sz * 4));
+            if (buf) { cf_icon_idle(buf, sz, c); SendMessageW(h, WM_SETICON, ICON_SMALL, (LPARAM)icon_from_rgba(buf, sz)); xfree(buf); }
+        }
         SetForegroundWindow(h);
         return TRUE; /* 첫 필드에 포커스 */
     case WM_COMMAND:
@@ -311,20 +323,126 @@ static INT_PTR CALLBACK dlg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     }
 }
 
-static void show_dialog(int mode)
+/* ── 자식 프로세스 띄우기(부모) ── */
+static void wcat_int(WCHAR *dst, i64 v)
 {
-    if (DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_DHM), g_hwnd, dlg_proc, (LPARAM)mode) == 1)
-        act(cf_dialog_submit(&g_app, mode, g_dlg_v[0], g_dlg_v[1], g_dlg_v[2]));
+    char num[24]; WCHAR w[24]; int i;
+    cf_itoa(v, num, sizeof num);
+    for (i = 0; num[i]; i++) w[i] = (WCHAR)num[i];
+    w[i] = 0;
+    lstrcatW(dst, w);
+}
+static VOID CALLBACK child_cb(PVOID ctx, BOOLEAN timedout) { PostMessageW(g_hwnd, WM_CHILD_DONE, 0, 0); }
+
+static void spawn_ui(const WCHAR *args, int mode)
+{
+    WCHAR exe[MAX_PATH], cmd[MAX_PATH + 128];
+    SECURITY_ATTRIBUTES sa;
+    HANDLE rd, wr;
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    if (g_child) return; /* 이미 열려 있음 */
+    GetModuleFileNameW(NULL, exe, MAX_PATH);
+    lstrcpyW(cmd, L"\""); lstrcatW(cmd, exe); lstrcatW(cmd, L"\" "); lstrcatW(cmd, args);
+    sa.nLength = sizeof sa; sa.lpSecurityDescriptor = NULL; sa.bInheritHandle = TRUE;
+    if (!CreatePipe(&rd, &wr, &sa, 0)) return;
+    SetHandleInformation(rd, HANDLE_FLAG_INHERIT, 0);
+    cf_memset(&si, 0, sizeof si);
+    si.cb = sizeof si;
+    si.dwFlags = STARTF_USESTDHANDLES;
+    si.hStdOutput = wr; si.hStdError = wr;
+    if (!CreateProcessW(exe, cmd, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) { CloseHandle(rd); CloseHandle(wr); return; }
+    CloseHandle(pi.hThread);
+    CloseHandle(wr); /* 부모 쪽 쓰기 끝을 닫아야 자식 종료 시 EOF가 온다 */
+    g_child = pi.hProcess; g_child_pipe = rd; g_child_mode = mode;
+    RegisterWaitForSingleObject(&g_child_wait, pi.hProcess, child_cb, NULL, INFINITE, WT_EXECUTEONLYONCE);
 }
 
+static void show_dialog(int mode)
+{
+    int v[3];
+    WCHAR args[96];
+    cf_dialog_values(&g_app, mode, &v[0], &v[1], &v[2]);
+    lstrcpyW(args, mode == CF_DLG_AUTO ? L"--dialog auto " : L"--dialog custom ");
+    wcat_int(args, v[0]); lstrcatW(args, L" "); wcat_int(args, v[1]); lstrcatW(args, L" ");
+    wcat_int(args, v[2]); lstrcatW(args, L" "); wcat_int(args, g_app.lang);
+    spawn_ui(args, mode);
+}
 static void show_about(void)
 {
-    char body[512];
-    WCHAR wb[512], wt[64];
-    cf_about(g_app.lang, body, sizeof body);
-    to_wide(body, wb, 512);
-    to_wide(cf_str(g_app.lang, CF_STR_APP), wt, 64);
-    MessageBoxW(g_hwnd, wb, wt, MB_OK | MB_ICONINFORMATION | MB_SETFOREGROUND);
+    WCHAR args[32];
+    lstrcpyW(args, L"--about "); wcat_int(args, g_app.lang);
+    spawn_ui(args, -1);
+}
+
+static void act(int action);
+static void child_done(void)
+{
+    char buf[64];
+    DWORD n = 0, total = 0, code = 1;
+    i64 d, h, m;
+    if (!g_child) return;
+    while (total < sizeof buf - 1 && ReadFile(g_child_pipe, buf + total, sizeof buf - 1 - total, &n, NULL) && n) total += n;
+    buf[total] = 0;
+    GetExitCodeProcess(g_child, &code);
+    UnregisterWait(g_child_wait); g_child_wait = NULL;
+    CloseHandle(g_child_pipe); CloseHandle(g_child); g_child = NULL; g_child_pipe = NULL;
+    if (g_child_mode >= 0 && code == 0 && cf_parse_dhm(buf, &d, &h, &m) == 3) act(cf_dialog_submit(&g_app, g_child_mode, d, h, m));
+    SetProcessWorkingSetSize(GetCurrentProcess(), (SIZE_T)-1, (SIZE_T)-1); /* T-13 ① */
+}
+
+/* ── 자식 프로세스 본체(`--dialog` · `--about`) — 뮤텍스·트레이 없이 창만 띄우고 끝난다 ── */
+static const WCHAR *wskip(const WCHAR *p) { while (*p == L' ') p++; return p; }
+static i64 wint(const WCHAR **pp)
+{
+    const WCHAR *p = wskip(*pp);
+    i64 v = 0; int neg = 0;
+    if (*p == L'-') { neg = 1; p++; }
+    while (*p >= L'0' && *p <= L'9') { v = v * 10 + (*p - L'0'); p++; }
+    *pp = p;
+    return neg ? -v : v;
+}
+static const WCHAR *wfind(const WCHAR *hay, const WCHAR *needle)
+{
+    for (; *hay; hay++) {
+        const WCHAR *a = hay, *b = needle;
+        while (*a && *b && *a == *b) { a++; b++; }
+        if (!*b) return hay;
+    }
+    return NULL;
+}
+static void child_main(const WCHAR *cmdline)
+{
+    const WCHAR *p;
+    int lang;
+    if ((p = wfind(cmdline, L"--dialog ")) != NULL) {
+        int mode;
+        char out[48], num[8];
+        DWORD w;
+        p += 9; p = wskip(p);
+        mode = (p[0] == L'a') ? CF_DLG_AUTO : CF_DLG_CUSTOM;
+        while (*p && *p != L' ') p++;
+        g_dlg_init[0] = (int)wint(&p); g_dlg_init[1] = (int)wint(&p); g_dlg_init[2] = (int)wint(&p);
+        lang = (int)wint(&p);
+        cf_app_init(&g_app, lang);
+        if (DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_DHM), NULL, dlg_proc, (LPARAM)mode) != 1) ExitProcess(1);
+        out[0] = 0;
+        cf_itoa(g_dlg_v[0], num, sizeof num); cf_strcat(out, sizeof out, num); cf_strcat(out, sizeof out, " ");
+        cf_itoa(g_dlg_v[1], num, sizeof num); cf_strcat(out, sizeof out, num); cf_strcat(out, sizeof out, " ");
+        cf_itoa(g_dlg_v[2], num, sizeof num); cf_strcat(out, sizeof out, num); cf_strcat(out, sizeof out, "\n");
+        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), out, cf_strlen(out), &w, NULL);
+        ExitProcess(0);
+    }
+    if ((p = wfind(cmdline, L"--about ")) != NULL) {
+        char body[512];
+        WCHAR wb[512], wt[64];
+        p += 8; lang = (int)wint(&p);
+        cf_about(lang, body, sizeof body);
+        to_wide(body, wb, 512);
+        to_wide(cf_str(lang, CF_STR_APP), wt, 64);
+        MessageBoxW(NULL, wb, wt, MB_OK | MB_ICONINFORMATION | MB_SETFOREGROUND);
+        ExitProcess(0);
+    }
 }
 
 static void act(int action)
@@ -363,6 +481,9 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_COMMAND:
         on_command((int)LOWORD(wp));
         return 0;
+    case WM_CHILD_DONE:
+        child_done();
+        return 0;
     case WM_DESTROY:
         KillTimer(hwnd, TIMER_TICK);
         KillTimer(hwnd, TIMER_MENU);
@@ -392,6 +513,8 @@ void start(void)
     MSG msg;
     int lang;
 
+    child_main(GetCommandLineW()); /* --dialog / --about 이면 여기서 끝난다 */
+
     CreateMutexW(NULL, TRUE, L"nexa-coffee-single-instance");
     if (GetLastError() == ERROR_ALREADY_EXISTS) ExitProcess(0);
 
@@ -411,7 +534,6 @@ void start(void)
     g_wc.lpfnWndProc = wnd_proc;
     g_wc.hInstance = hinst;
     g_wc.lpszClassName = L"NexaCoffee";
-    g_wc.hIcon = LoadIconW(hinst, MAKEINTRESOURCEW(IDI_APP));
     RegisterClassW(&g_wc);
     g_hwnd = CreateWindowExW(0, L"NexaCoffee", L"Nexa Coffee", 0, 0, 0, 0, 0, NULL, NULL, hinst, NULL);
 
