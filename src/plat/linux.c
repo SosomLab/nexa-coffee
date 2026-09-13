@@ -184,7 +184,7 @@ static int login1_inhibit(const char *what)
     int fd = -1;
     db_call_init(&m, "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "Inhibit", "ssss");
     db_w_str(&m, what); db_w_str(&m, "Nexa Coffee");
-    db_w_str(&m, app.lang == CF_LANG_KO ? "사용자가 절전 방지를 켰습니다" : "User asked to keep the system awake");
+    db_w_str(&m, cf_str(app.lang, CF_STR_WHY));
     db_w_str(&m, "block");
     if (db_call(&sysb, &m, &r, 3000, NULL, NULL)) {
         if (r.type == DB_METHOD_RETURN && r.nfds_got > 0) { fd = r.fds[0]; r.nfds_got = 0; }
@@ -203,7 +203,7 @@ static void inhibit(int on)
         if (!ss_cookie && !ss_serial) {
             db_call_init(&m, "org.freedesktop.ScreenSaver", "/org/freedesktop/ScreenSaver", "org.freedesktop.ScreenSaver", "Inhibit", "ss");
             db_w_str(&m, "nexa-coffee");
-            db_w_str(&m, app.lang == CF_LANG_KO ? "절전 방지" : "Keeping awake");
+            db_w_str(&m, cf_str(app.lang, CF_STR_KEEPING));
             ss_serial = db_send(&ses, &m);
         }
         if (login_fd < 0 && has_sys) {
@@ -500,9 +500,12 @@ static void show_dialog(int mode)
         char *argv[] = { "kdialog", "--title", title, "--inputbox", prompt, def, NULL };
         dlg_fd = spawn(argv, &dlg_pid, 0);
     } else {
-        notify(cf_str(L, CF_STR_APP), L == CF_LANG_KO
-               ? "입력 창을 띄울 도구가 없습니다 — yad, zenity, kdialog 중 하나를 설치하세요."
-               : "No dialog tool found — install yad, zenity or kdialog.");
+        static const char *const NO_TOOL[CF_LANG_COUNT] = {
+            "No dialog tool found — install yad, zenity or kdialog.",
+            "입력 창을 띄울 도구가 없습니다 — yad, zenity, kdialog 중 하나를 설치하세요.",
+            "入力ウィンドウを開くツールがありません — yad・zenity・kdialog のいずれかをインストールしてください。",
+            "未找到对话框工具 — 请安装 yad、zenity 或 kdialog 之一。" };
+        notify(cf_str(L, CF_STR_APP), NO_TOOL[(unsigned)L < CF_LANG_COUNT ? L : 0]);
         return;
     }
     dlg_len = 0;
@@ -552,6 +555,7 @@ static void act(int action)
     case CF_ACT_START: conf_save(); job_start(); break;
     case CF_ACT_STOP:  conf_save(); job_stop();  break;
     case CF_ACT_MENU:  conf_save(); emit_layout_updated(); break;
+    case CF_ACT_LANG:  conf_save(); emit_layout_updated(); emit0(ITEM_PATH, SNI_IFACE, "NewToolTip"); emit0(ITEM_PATH, SNI_IFACE, "NewTitle"); break;
     case CF_ACT_QUIT:  quit = 1; break;
     case CF_ACT_DIALOG_CUSTOM: show_dialog(CF_DLG_CUSTOM); break;
     case CF_ACT_DIALOG_AUTO:   show_dialog(CF_DLG_AUTO); break;
@@ -724,7 +728,7 @@ int main(void)
     struct sigaction sa;
     if (!lc || !*lc) lc = getenv("LC_MESSAGES");
     if (!lc || !*lc) lc = getenv("LANG");
-    cf_app_init(&app, lc && !strncmp(lc, "ko", 2) ? CF_LANG_KO : CF_LANG_EN);
+    cf_app_init(&app, cf_lang_of(lc));
     conf_init();
     conf_load();
     app.running = 0;

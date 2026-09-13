@@ -68,6 +68,17 @@ has "$out" 'string "끄기"'
 has "$out" 'string "사용자 지정…"'
 call /MenuBar com.canonical.dbusmenu.Event int32:20 string:clicked variant:int32:0 uint32:0 >/dev/null
 wait_conf 'auto=0,0,0'
+echo "== language submenu (ja → ko)"
+out=$(call /MenuBar com.canonical.dbusmenu.GetLayout int32:16 int32:-1 array:string:)
+has "$out" 'string "English"'
+has "$out" 'string "日本語"'
+call /MenuBar com.canonical.dbusmenu.Event int32:32 string:clicked variant:int32:0 uint32:0 >/dev/null
+wait_conf 'lang=ja'
+call /MenuBar com.canonical.dbusmenu.GetGroupProperties array:int32:13 array:string: | grep 'string "終了"' >/dev/null
+call /MenuBar com.canonical.dbusmenu.GetGroupProperties array:int32:14 array:string: | grep -E '[0-9]+日 [0-9]+時間 [0-9]+分 [0-9]+秒' >/dev/null
+call /StatusNotifierItem org.freedesktop.DBus.Properties.Get string:org.kde.StatusNotifierItem string:ToolTip | grep '残り' >/dev/null
+call /MenuBar com.canonical.dbusmenu.Event int32:31 string:clicked variant:int32:0 uint32:0 >/dev/null
+wait_conf 'lang=ko'
 echo "== custom dialog (fake yad via PATH)"
 call /MenuBar com.canonical.dbusmenu.Event int32:7 string:clicked variant:int32:0 uint32:0 >/dev/null
 wait_tip '1시간 남음'

@@ -245,6 +245,7 @@ static NSBitmapImageRep *repFromRGBA(const u8 *rgba, int px, CGFloat pt)
     case CF_ACT_START: [self confSave]; [self startJob]; break;
     case CF_ACT_STOP:  [self confSave]; [self stopJob];  break;
     case CF_ACT_MENU:  [self confSave]; break;
+    case CF_ACT_LANG:  [self confSave]; if (app.running) [self tickNow]; else [self showIdle]; break; /* 툴팁 갱신 · 메뉴는 열 때 새로 만든다 */
     case CF_ACT_QUIT:  [self stopJob]; [NSApp terminate:nil]; break;
     case CF_ACT_DIALOG_CUSTOM: [self showDialog:CF_DLG_CUSTOM]; break;
     case CF_ACT_DIALOG_AUTO:   [self showDialog:CF_DLG_AUTO]; break;
@@ -346,8 +347,7 @@ static NSString *S(int lang, int id) { return [NSString stringWithUTF8String:cf_
 
 - (void)applicationDidFinishLaunching:(NSNotification *)note
 {
-    NSString *lang = [[NSLocale preferredLanguages] firstObject];
-    cf_app_init(&app, [lang hasPrefix:@"ko"] ? CF_LANG_KO : CF_LANG_EN);
+    cf_app_init(&app, cf_lang_of([[[NSLocale preferredLanguages] firstObject] UTF8String]));
     [self confInit];
     [self confLoad];
     app.running = 0;

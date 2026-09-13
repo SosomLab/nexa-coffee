@@ -333,6 +333,7 @@ static void act(int action)
     case CF_ACT_START: conf_save(); job_start(); break;
     case CF_ACT_STOP:  conf_save(); job_stop();  break;
     case CF_ACT_MENU:  conf_save(); break;
+    case CF_ACT_LANG:  conf_save(); if (g_app.running) job_tick(); else show_idle(FALSE); break; /* 툴팁 문구 갱신 · 메뉴는 열 때 새로 만든다 */
     case CF_ACT_QUIT:  DestroyWindow(g_hwnd); break;
     case CF_ACT_DIALOG_CUSTOM: show_dialog(CF_DLG_CUSTOM); break;
     case CF_ACT_DIALOG_AUTO:   show_dialog(CF_DLG_AUTO); break;
@@ -395,7 +396,12 @@ void start(void)
     if (GetLastError() == ERROR_ALREADY_EXISTS) ExitProcess(0);
 
     enable_dpi();
-    lang = PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_KOREAN ? CF_LANG_KO : CF_LANG_EN;
+    switch (PRIMARYLANGID(GetUserDefaultUILanguage())) {
+    case LANG_KOREAN:   lang = CF_LANG_KO; break;
+    case LANG_JAPANESE: lang = CF_LANG_JA; break;
+    case LANG_CHINESE:  lang = CF_LANG_ZH; break;
+    default:            lang = CF_LANG_EN; break;
+    }
     cf_app_init(&g_app, lang);
     conf_init();
     conf_load();
