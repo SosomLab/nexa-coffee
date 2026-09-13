@@ -8,7 +8,7 @@
 
 - 조직: SosomLab · 개발자: Sangyong Bae · kiros33@gmail.com · 저장소: <https://github.com/SosomLab/nexa-coffee>
 - 라이선스: **MIT**(누구나 무료 — nexa-shortcut과 동일. beep/clip/dir2의 PolyForm NC와 **다르다**).
-- 현 단계: **v0.1.0 — i18n(en/ko/ja/zh)·GNOME 수정까지 main · 3-OS 빌드 로컬 확인(09-13 7차)**. 남은 실기: Windows · macOS 언어 메뉴(T-11).
+- 현 단계: **v0.1.0 — i18n(en/ko/ja/zh)·GNOME 수정까지 main · 3-OS 빌드·테스트 로컬 확인(Mac 7차 · Windows 8차, 09-13)**. Windows 트레이 등록 확인(◐ T-2) · 메모리 QA → T-13. 남은 실기: Windows DPI/메뉴 갱신 · macOS 언어 메뉴(T-11).
 
 ### 참조 원천(재발명 금지)
 
@@ -51,8 +51,8 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux · homebrew
 
 ## 5. 다음 단계
 
-0. 언어 메뉴(09-13)의 Windows·macOS 빌드/실기 확인(T-11) — Linux PC에서 구현해 CI 빌드만 거쳤다. ja/zh 문구 원어민 검토(T-12).
-1. Windows 실기 확인(트레이 · DPI별 아이콘 크기 · 메뉴 라디오 표시 · 절전 억제 `powercfg /requests`).
+0. **T-13** Windows 메모리 — UI 닫힘 뒤 작업 집합 반납 · 클래스 아이콘을 코어로 생성(런타임 ICO 디코드 제거). 09-13 실측: UI 사용 후 11 MB 미반납 · 개인 WS 476 K.
+1. Windows 남은 실기(T-2) — DPI별 아이콘 · 메뉴 라디오 · 열린 메뉴 1초 갱신 재그리기 · `powercfg /requests`. macOS 언어 메뉴 실기(T-11) · ja/zh 원어민 검토(T-12).
 2. Linux 남은 실기(KDE Plasma · 입력 창 클릭 · logind polkit) · 16px 픽스맵 프레임(T-10 — GNOME이 22→16 축소해 숫자 흐릿).
 3. macOS 화면보호기 실측(30초 사용자 활동 선언이 충분한지) · 로그인 항목 등록 안내.
 4. 패키지 채널 등록(brew tap · winget · choco) — 템플릿은 packaging/에 있다.

@@ -1,5 +1,6 @@
 # DEVLOG — 날짜별 요약(최신 위)
 
+- **2026-09-13 (8차)** — Windows PC: MSVC 로컬 빌드 27,648 B · test_core MSVC green · 릴리스 실행·트레이 등록 확인. 메모리 QA: 11 MB = UI 사용 후 미반납 작업 집합(개인 476 K) · PNG ICO가 WindowsCodecs 로드 → T-13. → [journal](journal/2026-09-13.md#8차--windows-실기-첫-확인--상주-메모리-분석-사용자-요청--사용자-qa--windows-pc)
 - **2026-09-13 (7차)** — Mac에서 i18n·GNOME 수정 pull 후 로컬 빌드 검증(Win 27,136 B · mac 154 KB · smoke green) · 릴리즈 빌드 실행. → [journal](journal/2026-09-13.md#7차--mac에서-pull-후-로컬-검증--릴리즈-빌드-실행-사용자-요청)
 - **2026-09-13 (6차)** — `feat/i18n-lang-menu` → main ff → push. CI 3-OS green(run 34736693426).
 - **2026-09-13 (5차)** — 언어 ▸ 메뉴(en/ko/ja/zh) · 문구 NUL 블록으로 크기 최소화 · `lang=` 설정 · ja/zh 툴팁 어순. → [journal](journal/2026-09-13.md#5차--언어-선택-메뉴english--한국어--日本語--中文--i18n-사용자-요청)

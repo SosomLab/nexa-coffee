@@ -1,5 +1,12 @@
 # STATUS — 지금 상태
 
+## 09-13 8차 — Windows 실기 첫 확인 · 상주 메모리 분석 (사용자 요청 · 사용자 QA)
+
+- **무엇**: Windows PC(VS 2022 Build Tools)에서 4~7차를 pull해 MSVC 로컬 빌드 **27,648 B** · `test_core` MSVC 실행 green(첫 로컬) · 릴리스 exe 실행 → 트레이 등록·툴팁 "Nexa Coffee — 대기 중"·한국어 로케일을 `NotifyIconSettings` 레지스트리로 확인. 아이콘·메뉴 시각 확인은 사용자(오버플로 "^"에 숨음).
+- **메모리(사용자 QA)**: 작업 관리자 11.4 MB는 메뉴·입력 창 사용 후 **반납 지점이 없어** 남은 작업 집합. 실제 개인 작업 집합 476 K · 반납 직후 1.3 MB. PNG 프레임 ICO가 시작 시 WindowsCodecs를 올리는 것도 확인(BMP ICO 실험으로 검증). 조치안 **T-13**(UI 닫힘 뒤 반납 · 클래스 아이콘 코어 생성).
+- **사용자 보고**: 3-OS 빌드·테스트 완료(Mac 7차 + Windows 8차). T-2 ◐.
+- **다음**: T-13 → T-2 남은 실기(DPI · 메뉴 1초 갱신 재그리기 · `powercfg /requests`) → T-11. 상세: [journal/2026-09-13](journal/2026-09-13.md#8차--windows-실기-첫-확인--상주-메모리-분석-사용자-요청--사용자-qa--windows-pc).
+
 ## 09-13 7차 — Mac에서 pull 후 로컬 검증 · 릴리즈 빌드 실행 (사용자 요청)
 
 - **무엇**: 5·6차(Linux PC 작업 · Windows/macOS는 CI 컴파일만)를 이 Mac에서 직접 빌드·실행. `make test` green · macOS 유니버설 154 KB + .app 276 KB 실행(고유 메모리 6.0 MB) · Windows 크로스 x64 **27,136 B** / x86 29,696 B(i18n 문자열 +0.5 KB) · linux-smoke(언어 왕복 포함) green.
