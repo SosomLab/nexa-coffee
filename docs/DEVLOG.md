@@ -1,5 +1,6 @@
 # DEVLOG — 날짜별 요약(최신 위)
 
+- **2026-09-13 (13차)** — brew 설치 실사용 ✓ · 테스트 번들 정리 · winget ManifestVersion 불일치 수정(PR 갱신 · 템플릿 1.12.0).
 - **2026-09-13 (12차)** — v0.1.0 배포: Release(수동 · API 500) · brew 탭 ✓ · choco push ✓ · winget PR #433980. → [journal](journal/2026-09-13.md#12차--v010-릴리스-실행-결과-사용자-요청)
 - **2026-09-13 (11차)** — v0.1.0 릴리스 + brew/winget/choco 배포 파이프라인(render-manifests · homebrew.yml · publish-windows-packages.yml). T-14 창 자식 프로세스 포함.
 - **2026-09-13 (8차)** — Windows PC: MSVC 로컬 빌드 27,648 B · test_core MSVC green · 릴리스 실행·트레이 등록 확인. 메모리 QA: 11 MB = UI 사용 후 미반납 작업 집합(개인 476 K) · PNG ICO가 WindowsCodecs 로드 → T-13. → [journal](journal/2026-09-13.md#8차--windows-실기-첫-확인--상주-메모리-분석-사용자-요청--사용자-qa--windows-pc)

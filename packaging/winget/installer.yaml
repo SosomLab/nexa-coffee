@@ -1,4 +1,5 @@
 # winget 매니페스트(포터블 zip) — 버전·해시는 render-manifests.sh가 채운다(손으로 적지 않는다).
+# ★ 세 파일의 ManifestVersion은 반드시 같아야 한다(09-13: komac이 installer만 1.12.0으로 올려 검증 오류 → 전부 1.12.0으로 통일).
 PackageIdentifier: SosomLab.NexaCoffee
 PackageVersion: "@VERSION@"
 MinimumOSVersion: 10.0.0.0
@@ -23,4 +24,4 @@ Installers:
       - RelativeFilePath: nexa-coffee-x86.exe
         PortableCommandAlias: nexa-coffee
 ManifestType: installer
-ManifestVersion: 1.6.0
+ManifestVersion: 1.12.0

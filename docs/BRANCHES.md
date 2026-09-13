@@ -3,6 +3,7 @@
 | 브랜치 | 생성 | 병합 | 커밋 수 | 요약 |
 | --- | --- | --- | --- | --- |
 | docs/win-verify | 2026-09-13 | 2026-09-13 → main(ff) | 1 | Windows 실기 첫 확인·메모리 분석 기록(8차) · T-13 |
+| docs/brew-verify | 2026-09-13 | 2026-09-13 → main(ff) | 1 | brew 설치 실사용 · 테스트 번들 정리 · winget ManifestVersion 1.12.0 통일 |
 | release/0.1.0 | 2026-09-13 | 2026-09-13 → main(ff) | 4 | T-14 창 자식 프로세스 · Windows T-13 · 배포 파이프라인(brew/winget/choco) · v0.1.0 태그 |
 | docs/mac-verify | 2026-09-13 | 2026-09-13 → main(ff) | 1 | Mac 로컬 검증·릴리즈 실행 기록(7차) |
 | feat/i18n-lang-menu | 2026-09-13 | 2026-09-13 → main(ff) | 4 | 언어 ▸ 메뉴(English/한국어/日本語/中文) · i18n en/ko/ja/zh · 문구 NUL 블록(크기 최소화) · `lang=` 설정 · 스모크 언어 왕복 |
