@@ -33,4 +33,5 @@ Docker가 있으면 `scripts/linux-docker.sh`가 Linux 컨테이너에서 빌드
 ## CI(.github/workflows)
 
 - `ci.yml`: ubuntu(테스트 · musl 정적 · D-Bus 스모크 · mingw 크로스 · **크기 예산** Windows ≤ 64 KB / Linux ≤ 128 KB) · macos(테스트 · 유니버설 · .app · ≤ 256 KB) · windows(MSVC).
-- `release.yml`: `v*` 태그 → mac universal zip · Windows x64/x86 zip · Linux tar.gz + `SHA256SUMS.txt` → GitHub Release. 태그 = `VERSION` 파일과 일치해야 한다.
+- `release.yml`: `v*` 태그 → mac universal zip · Windows x64/x86 zip · Linux tar.gz + `SHA256SUMS.txt` → GitHub Release → `homebrew.yml`(탭) · `publish-windows-packages.yml`(winget PR · choco push). 태그 = `VERSION` 파일과 일치해야 한다.
+- 릴리스 절차: `VERSION` 갱신 → main green → `git tag vX.Y.Z && git push origin vX.Y.Z`(공개 행위 · 사용자 승인) → `gh run watch` → 탭 커밋 · winget PR · choco 피드 확인(검수 며칠). 재제출은 각 워크플로 `workflow_dispatch`.

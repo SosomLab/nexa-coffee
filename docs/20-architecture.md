@@ -43,9 +43,11 @@ Linux는 `AboutToShow/GetLayout` 후 30초 동안 `ItemsPropertiesUpdated` 신�
 
 클릭 → `cf_app_click` → 행동. `CF_ACT_DIALOG_CUSTOM/AUTO`는 플랫폼이 입력 창(일·시·분 + 시작/저장)을 띄우고
 결과를 `cf_dialog_submit(mode, d, h, m)`에 넣는다(클램프 0~99일 · 0~23시 · 0~59분). CUSTOM은 START, AUTO는 저장(MENU).
-입력 창 구현: Windows `IDD_DHM` DIALOGEX + `DialogBoxParamW` · macOS `NSPanel` + `runModalForWindow`(타이머는 common modes) ·
-Linux는 툴킷이 없어 `yad --form` → `zenity --forms` → `kdialog --inputbox`를 자식으로 띄우고 stdout 파이프를 poll 루프에서 읽는다.
-About: `cf_about()` 본문 → MessageBoxW / 표준 About 패널 / zenity·kdialog·알림.
+**창은 전부 자식 프로세스**(DR-14): 부모는 띄우고 stdout 파이프로 "d h m"만 받아 `cf_parse_dhm` → `cf_dialog_submit`.
+- Windows: 자기 자신을 `--dialog custom|auto d h m lang` / `--about lang`으로 `CreateProcessW`(파이프 상속) · 완료 = `RegisterWaitForSingleObject` → `WM_CHILD_DONE`. 자식은 뮤텍스·트레이 없이 `IDD_DHM` DIALOGEX / `MessageBoxW`만.
+- macOS: `NSTask`로 같은 인자 · 자식은 `UiChild`(NSPanel 모달 / 표준 About 패널) · terminationHandler → 메인 큐.
+- Linux: `yad --form` → `zenity --forms` → `kdialog --inputbox` 자식 · poll 루프의 3번째 fd.
+이유: 창 1회가 프레임워크 텍스트 스택을 올려(macOS +5 MB · Windows TSF +10 MB) 프로세스 안에선 반납되지 않는다 — 자식 종료로 통째로 회수. 메뉴는 in-process(+2 MB · 허용).
 
 ## 5. 설정 파일
 `auto=d,h,m`(전부 0 = 끔) · `custom=d,h,m`(마지막 입력) — Windows `%APPDATA%\nexa-coffee\config` · macOS `~/Library/Application Support/nexa-coffee/config` · Linux `$XDG_CONFIG_HOME/nexa-coffee/config`. 같은 폴더의 `lock`(flock) / 뮤텍스로 중복 실행 방지.

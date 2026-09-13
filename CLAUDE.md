@@ -29,6 +29,7 @@
 | DR-5 | 대기 아이콘(`icon_idle.c`)과 동작 아이콘(`icon_active.c`)은 **별도 모듈** · 대기 = 앱 아이콘 모티프 단색 |
 | DR-6 | 메뉴 트리는 코어(`app.c`)에 한 번만 두고 각 OS가 그대로 네이티브 메뉴로 옮긴다 |
 | DR-7 | 작업 종료 시 메모리 회수 — 아이콘 버퍼 free + OS별 반납(`SetProcessWorkingSetSize` / `malloc_zone_pressure_relief` / `malloc_trim`) |
+| DR-14 | **창은 자식 프로세스**(입력 창·About) — 자기 자신 `--dialog`/`--about` 재실행 · stdout 파이프. 프레임워크 텍스트 캐시가 프로세스 안에선 안 돌아와서(09-13 실측) |
 | DR-8 | 덮개 닫힘은 Windows·macOS에선 관리자 정책 영역 — 앱이 손대지 않고 문서에 명시. Linux만 logind로 막는다 |
 | DR-13 | i18n = 코어 문구 블록(언어당 NUL 구분 문자열 1개 · 포인터 테이블 없음). "언어 ▸" 메뉴에서 고른 뒤에만 `lang=` 저장, 아니면 OS 로케일 자동 |
 
@@ -55,4 +56,4 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux · homebrew
 1. Windows 남은 실기(T-2) — DPI별 아이콘 · 메뉴 라디오 · 열린 메뉴 1초 갱신 재그리기 · `powercfg /requests`. macOS 언어 메뉴 실기(T-11) · ja/zh 원어민 검토(T-12).
 2. Linux 남은 실기(KDE Plasma · 입력 창 클릭 · logind polkit) · 16px 픽스맵 프레임(T-10 — GNOME이 22→16 축소해 숫자 흐릿).
 3. macOS 화면보호기 실측(30초 사용자 활동 선언이 충분한지) · 로그인 항목 등록 안내.
-4. 패키지 채널 등록(brew tap · winget · choco) — 템플릿은 packaging/에 있다.
+4. 패키지 채널 — v0.1.0부터 태그 push가 brew 탭·winget PR·choco push까지 자동(packaging/README). 검수 상태 추적(T-6).
