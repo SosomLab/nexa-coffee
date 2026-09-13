@@ -1,5 +1,5 @@
 PackageIdentifier: SosomLab.NexaCoffee
-PackageVersion: __VERSION__
+PackageVersion: "@VERSION@"
 DefaultLocale: en-US
 ManifestType: version
 ManifestVersion: 1.6.0

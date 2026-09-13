@@ -1,17 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Chocolatey 패키지(포터블 zip) — 버전·해시는 render-manifests.sh가 채운다. nexa-shortcut 선례. -->
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>nexa-coffee</id>
-    <version>__VERSION__</version>
-    <title>Nexa Coffee</title>
+    <version>@VERSION@</version>
+    <title>Nexa Coffee (Portable)</title>
     <authors>SosomLab</authors>
     <owners>SosomLab</owners>
     <projectUrl>https://github.com/SosomLab/nexa-coffee</projectUrl>
+    <packageSourceUrl>https://github.com/SosomLab/nexa-coffee/tree/main/packaging/choco</packageSourceUrl>
+    <docsUrl>https://github.com/SosomLab/nexa-coffee#readme</docsUrl>
+    <bugTrackerUrl>https://github.com/SosomLab/nexa-coffee/issues</bugTrackerUrl>
+    <iconUrl>https://raw.githubusercontent.com/SosomLab/nexa-coffee/main/packaging/branding/nexa-coffee-256.png</iconUrl>
     <licenseUrl>https://github.com/SosomLab/nexa-coffee/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <tags>caffeine keep-awake tray portable</tags>
+    <tags>nexa-coffee caffeine keep-awake sleep tray timer portable</tags>
     <summary>Tiny tray timer that keeps the PC awake</summary>
-    <description>Nexa Coffee sits in the tray and prevents sleep, hibernation and the screen saver for a chosen duration (30 min – 12 h, custom, or unlimited). No CRT, ~20 KB, zero dependencies.</description>
+    <description>
+Nexa Coffee sits in the tray and shows the remaining time inside a ring icon.
+Pick unlimited, 12 h, 6 h, 2 h, 1 h, 30 min or a custom days/hours/minutes value and it prevents
+sleep, hibernation, display-off and the screen saver until the timer ends.
+
+- Pure Win32, no C runtime, about 30 KB, one thread
+- Right-click menu, live countdown at the top of the menu
+- Optional auto-start duration on launch
+- English, Korean, Japanese and Chinese UI
+
+Portable: the zip is extracted into the package tools folder and a shim `nexa-coffee-x64` (or `-x86`) is added to PATH.
+    </description>
+    <releaseNotes>https://github.com/SosomLab/nexa-coffee/releases/tag/v@VERSION@</releaseNotes>
   </metadata>
   <files>
     <file src="tools\**" target="tools" />

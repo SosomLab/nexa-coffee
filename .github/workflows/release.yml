@@ -1,6 +1,6 @@
 # release — `v*` 태그 push → 5 산출물 + SHA256SUMS + GitHub Release 공개. (nexa-shortcut/nexa-clip 정책 계승)
 # 산출물: macOS universal .app zip · Windows x64/x86 zip(mingw) · Linux x64 tar.gz(musl 정적).
-# 패키지 관리자(brew/winget/choco) 제출은 packaging/ 템플릿으로 후속(docs/TODO).
+# 릴리스 공개 뒤 homebrew.yml(탭 갱신) · publish-windows-packages.yml(winget PR · choco push)을 이어서 부른다(nexa-clip 정책).
 name: release
 on:
   push:
@@ -38,12 +38,14 @@ jobs:
       - name: 포장
         run: |
           set -e
-          mkdir -p out/linux
-          cp dist/nexa-coffee packaging/linux/nexa-coffee.desktop packaging/linux/install.sh packaging/linux/uninstall.sh packaging/branding/nexa-coffee-256.png LICENSE out/linux/
-          tar -C out -czf "out/nexa-coffee-$VERSION-linux-x64.tar.gz" linux
-          (cd dist && zip -9 "../out/nexa-coffee-$VERSION-windows-x64.zip" nexa-coffee-x64.exe ../LICENSE)
-          (cd dist && zip -9 "../out/nexa-coffee-$VERSION-windows-x86.zip" nexa-coffee-x86.exe ../LICENSE)
-          rm -rf out/linux
+          # tar 최상위 = nexa-coffee-<v>-linux-x64/ (brew formula가 그 안을 본다)
+          mkdir -p "out/nexa-coffee-$VERSION-linux-x64"
+          cp dist/nexa-coffee packaging/linux/nexa-coffee.desktop packaging/linux/install.sh packaging/linux/uninstall.sh packaging/branding/nexa-coffee-256.png LICENSE "out/nexa-coffee-$VERSION-linux-x64/"
+          tar -C out -czf "out/nexa-coffee-$VERSION-linux-x64.tar.gz" "nexa-coffee-$VERSION-linux-x64"
+          rm -rf "out/nexa-coffee-$VERSION-linux-x64"
+          # zip 루트에 exe + LICENSE(-j: 경로 없이) — winget NestedInstallerFiles · choco unzip 모두 루트 기준
+          zip -9 -j "out/nexa-coffee-$VERSION-windows-x64.zip" dist/nexa-coffee-x64.exe LICENSE
+          zip -9 -j "out/nexa-coffee-$VERSION-windows-x86.zip" dist/nexa-coffee-x86.exe LICENSE
       - uses: actions/upload-artifact@v4
         with: { name: out-linux-windows, path: out/* }
 
@@ -56,7 +58,7 @@ jobs:
       - run: make test && make && make app
       - name: 포장
         run: |
-          mkdir -p out && cd dist && zip -9 -r -y "../out/nexa-coffee-$VERSION-macos-universal.zip" "Nexa Coffee.app" ../LICENSE
+          mkdir -p out && cp LICENSE dist/ && cd dist && zip -9 -r -y "../out/nexa-coffee-$VERSION-macos-universal.zip" "Nexa Coffee.app" LICENSE
       - uses: actions/upload-artifact@v4
         with: { name: out-macos, path: out/* }
 
@@ -75,3 +77,20 @@ jobs:
           body: |
             ⚠️ v1은 코드 서명이 없습니다 — macOS Gatekeeper("확인되지 않은 개발자")·Windows SmartScreen 경고가 뜹니다.
             macOS: `xattr -dr com.apple.quarantine "Nexa Coffee.app"` 후 실행. 무결성은 `SHA256SUMS.txt`로 확인하세요.
+
+  # ── 패키지 관리자(릴리스 공개 뒤 · 태그일 때만) ──
+  homebrew:
+    needs: [meta, publish]
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/homebrew.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets: inherit
+
+  windows-packages:
+    needs: [meta, publish]
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/publish-windows-packages.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets: inherit

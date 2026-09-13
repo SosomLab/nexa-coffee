@@ -1,18 +1,24 @@
-# winget 매니페스트(포터블) — 릴리스 시 wingetcreate가 버전·URL·해시를 갱신한다. nexa-shortcut 선례.
+# winget 매니페스트(포터블 zip) — 버전·해시는 render-manifests.sh가 채운다(손으로 적지 않는다).
 PackageIdentifier: SosomLab.NexaCoffee
-PackageVersion: __VERSION__
+PackageVersion: "@VERSION@"
+MinimumOSVersion: 10.0.0.0
+# zip 안의 exe 하나 — winget이 풀어서 shim(nexa-coffee)만 만든다(설치 흔적 없음). nexa-shortcut 선례.
 InstallerType: zip
 NestedInstallerType: portable
-NestedInstallerFiles:
-  - RelativeFilePath: nexa-coffee-x64.exe
-    PortableCommandAlias: nexa-coffee
+Commands:
+  - nexa-coffee
+UpgradeBehavior: install
+ReleaseDate: "@DATE@"
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/SosomLab/nexa-coffee/releases/download/v__VERSION__/nexa-coffee-__VERSION__-windows-x64.zip
-    InstallerSha256: __SHA256_X64__
+    InstallerUrl: https://github.com/SosomLab/nexa-coffee/releases/download/v@VERSION@/nexa-coffee-@VERSION@-windows-x64.zip
+    InstallerSha256: @SHA_WIN_X64@
+    NestedInstallerFiles:
+      - RelativeFilePath: nexa-coffee-x64.exe
+        PortableCommandAlias: nexa-coffee
   - Architecture: x86
-    InstallerUrl: https://github.com/SosomLab/nexa-coffee/releases/download/v__VERSION__/nexa-coffee-__VERSION__-windows-x86.zip
-    InstallerSha256: __SHA256_X86__
+    InstallerUrl: https://github.com/SosomLab/nexa-coffee/releases/download/v@VERSION@/nexa-coffee-@VERSION@-windows-x86.zip
+    InstallerSha256: @SHA_WIN_X86@
     NestedInstallerFiles:
       - RelativeFilePath: nexa-coffee-x86.exe
         PortableCommandAlias: nexa-coffee
