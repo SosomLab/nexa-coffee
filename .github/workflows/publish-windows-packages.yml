@@ -134,8 +134,13 @@ jobs:
           set -euo pipefail
           curl.exe -L -o wingetcreate.exe https://aka.ms/wingetcreate/latest
           d=$(find out/winget -name '*.installer.yaml' -exec dirname {} \; | head -1)
-          ./wingetcreate.exe submit --token "$WINGET_TOKEN" "$d"
-          echo "PR 생성 — microsoft/winget-pkgs의 자동 검증·리뷰를 거쳐야 노출된다."
+          # 09-13 첫 릴리스: GitHub API 일시 장애로 "Failed to connect to GitHub" → 3회 재시도(간격 60초). 그래도 실패하면
+          # 로컬에서 `komac submit <매니페스트 폴더> --yes`로 제출할 수 있다(0.1.0은 그렇게 PR #433980을 만들었다).
+          for i in 1 2 3; do
+            if ./wingetcreate.exe submit --token "$WINGET_TOKEN" "$d"; then echo "PR 생성 — microsoft/winget-pkgs의 자동 검증·리뷰를 거쳐야 노출된다."; exit 0; fi
+            echo "::warning::wingetcreate submit 실패($i/3) — 60초 뒤 재시도"; sleep 60
+          done
+          exit 1
       - if: needs.guard.outputs.winget_go != 'true'
         shell: bash
         run: echo "::notice::winget PR을 만들지 않았다(스위치 꺼짐·토큰 없음·직전 제출 검수 대기). 아티팩트를 직접 PR할 수 있다."

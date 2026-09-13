@@ -8,7 +8,7 @@
 
 - 조직: SosomLab · 개발자: Sangyong Bae · kiros33@gmail.com · 저장소: <https://github.com/SosomLab/nexa-coffee>
 - 라이선스: **MIT**(누구나 무료 — nexa-shortcut과 동일. beep/clip/dir2의 PolyForm NC와 **다르다**).
-- 현 단계: **v0.1.0 — i18n(en/ko/ja/zh)·GNOME 수정까지 main · 3-OS 빌드·테스트 로컬 확인(Mac 7차 · Windows 8차, 09-13)**. Windows 트레이 등록 확인(◐ T-2) · 메모리 QA → T-13. 남은 실기: Windows DPI/메뉴 갱신 · macOS 언어 메뉴(T-11).
+- 현 단계: **v0.1.0 배포됨(09-13)** — GitHub Release · brew 탭 ✓ · choco/winget 검수 대기. 남은 실기: Windows·macOS 언어 메뉴(T-11) · T-14 시작 버튼 경로 사용자 확인.
 
 ### 참조 원천(재발명 금지)
 

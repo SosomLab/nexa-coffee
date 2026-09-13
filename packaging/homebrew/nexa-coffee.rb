@@ -7,8 +7,7 @@ cask "nexa-coffee" do
   version "@VERSION@"
   sha256 "@SHA_MAC@"
 
-  url "https://github.com/SosomLab/nexa-coffee/releases/download/v#{version}/nexa-coffee-#{version}-macos-universal.zip",
-      verified: "github.com/SosomLab/nexa-coffee/"
+  url "https://github.com/SosomLab/nexa-coffee/releases/download/v#{version}/nexa-coffee-#{version}-macos-universal.zip"
   name "Nexa Coffee"
   desc "Tiny menu-bar timer that keeps the computer awake"
   homepage "https://github.com/SosomLab/nexa-coffee"
@@ -18,7 +17,7 @@ cask "nexa-coffee" do
     strategy :github_latest
   end
 
-  depends_on macos: :mojave
+  depends_on macos: :big_sur
 
   app "Nexa Coffee.app"
 

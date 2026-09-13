@@ -11,8 +11,9 @@
 | T-12 | P1 | 소 | 일본어·중국어 문구 원어민 검토 — About 설명 · logind 억제 사유 · "대화창 도구 없음" 알림 | ☐ |
 | T-4 | P1 | 소 | macOS 화면보호기 실측(30초 사용자 활동 선언으로 충분한지) — 부족하면 `IOPMAssertionCreateWithProperties` 검토 | ☐ |
 | T-5 | P1 | 소 | 시작 프로그램 등록 안내/옵션(Windows shell:startup · macOS 로그인 항목 · Linux ~/.config/autostart) | ☐ |
-| T-6 | P1 | 중 | 채널 등록 — render-manifests.sh + homebrew.yml + publish-windows-packages.yml · v0.1.0 태그로 첫 제출(09-13 11차) · winget/choco 검수 대기 추적 | ◐ |
+| T-6 | P1 | 중 | 채널 등록 — v0.1.0: brew ✅ · choco push ✅(모더레이션 대기) · winget PR #433980(검수 대기). 노출되면 README 설치표 확인 | ◐ |
 | T-7 | P2 | 소 | Windows 256px PNG 아이콘 프레임 여부 — ICO를 PNG 프레임으로 바꿔 16·32·48이 3.7 KB. 256은 +10 KB라 보류 | ✅ 09-13 |
 | T-8 | P2 | 소 | 툴팁에 종료 예정 시각 추가 여부 | ☐ |
 | T-9 | P2 | 소 | Docker 기반 Linux 검증(`scripts/linux-docker.sh`)을 실제로 한 번 돌리기(이 세션은 Docker 데몬 미가동) | ☐ |
 | T-14 | P1 | 중 | **창을 자식 프로세스로**(DR-14) — macOS 구현·실측 ✅(부모 6.0 MB 유지) · Windows 구현 ✅(크로스 빌드만 · 실기 ☐: 입력 창 결과 파이프 · About · 작업 집합) | ◐ |
+| T-15 | P2 | 소 | cask `postflight` → `postflight_steps` DSL 전환 검토(Homebrew deprecated 경고 · nexa-clip 공통) | ☐ |

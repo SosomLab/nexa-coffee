@@ -1,5 +1,16 @@
 # STATUS — 지금 상태
 
+## 09-13 12차 — v0.1.0 배포 완료 (사용자 요청)
+
+| 채널 | 상태 |
+| --- | --- |
+| GitHub Release v0.1.0 | ✅ 자산 5개(mac universal zip · Win x64/x86 zip · Linux tar.gz · SHA256SUMS) — API 500 장애로 수동 생성 |
+| Homebrew `brew install --cask kiros33/tap/nexa-coffee` | ✅ 탭 반영 · `brew fetch` sha 검증 ✓(Linux formula `nexa-coffee-portable`도 반영) |
+| Chocolatey `choco install nexa-coffee` | ✅ push 완료 · **모더레이션 대기**(며칠) |
+| winget `winget install SosomLab.NexaCoffee` | ✅ PR [#433980](https://github.com/microsoft/winget-pkgs/pull/433980) · **검수 대기** |
+
+- 상세·장애 대응: [journal/2026-09-13](journal/2026-09-13.md#12차--v010-릴리스-실행-결과-사용자-요청). 추적: T-6(검수 상태) · T-15(cask postflight_steps).
+
 ## 09-13 11차 — v0.1.0 릴리스 · 패키지 관리자 배포 (사용자 요청)
 
 - 파이프라인: 태그 `v0.1.0` → release(5 산출물 + SHA256SUMS) → homebrew(탭 커밋) · publish-windows-packages(choco push · winget PR). 결과는 아래 12차에.
