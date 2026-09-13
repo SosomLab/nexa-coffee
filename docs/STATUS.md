@@ -1,5 +1,11 @@
 # STATUS — 지금 상태
 
+## 09-13 7차 — Mac에서 pull 후 로컬 검증 · 릴리즈 빌드 실행 (사용자 요청)
+
+- **무엇**: 5·6차(Linux PC 작업 · Windows/macOS는 CI 컴파일만)를 이 Mac에서 직접 빌드·실행. `make test` green · macOS 유니버설 154 KB + .app 276 KB 실행(고유 메모리 6.0 MB) · Windows 크로스 x64 **27,136 B** / x86 29,696 B(i18n 문자열 +0.5 KB) · linux-smoke(언어 왕복 포함) green.
+- **T-11 부분 해소**: 두 OS 빌드 확인 완료. 남은 것은 실기(언어 메뉴 CJK 글꼴 · 입력 창 라벨 폭 · Windows 간체/번체).
+- **다음**: T-11 실기 → T-10(16px 픽스맵) → T-12. 상세: [journal/2026-09-13](journal/2026-09-13.md#7차--mac에서-pull-후-로컬-검증--릴리즈-빌드-실행-사용자-요청).
+
 ## 09-13 6차 — 커밋 · main 병합 · push · CI (사용자 요청)
 
 - `feat/i18n-lang-menu` 4커밋(core → plat → docs → 진행사항) → main ff → push. 앞선 0717da7(GNOME 등록 경쟁 수정)도 같이 올라감.
