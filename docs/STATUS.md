@@ -1,5 +1,13 @@
 # STATUS — 지금 상태
 
+## 09-17 — winget·choco 검수가 막힌 원인 규명 · 버전 리소스 추가 (사용자 요청)
+
+- **핵심**: 09-13에 "검수 대기"로 적어 둔 두 채널이 실제로는 **Needs-Author-Feedback / Waiting for Maintainer** — 우리 답을 기다리고 있었다.
+- **winget** PR [#433980](https://github.com/microsoft/winget-pkgs/pull/433980): 설치 검증 실패를 이 Windows PC에서 재현 → `winget validate` ✓ · x64 설치 ✓ · **x86만** Defender가 `Trojan:Win32/Tecabans.STV!cl`(클라우드 ML 오탐 · `MpCmdRun` 로컬 스캔은 깨끗)로 격리. 매니페스트 문제 아님.
+- **choco**: 모더레이터 `virtualex`(09-14) Requirement **1건 — `iconUrl`을 raw.githubusercontent.com → jsDelivr**. VirusTotal 플래그(x86)는 "BitDefender 휴리스틱 · 재제출하면 재스캔"이라 했다. 상태·코멘트를 읽는 공개 API는 없고 **API 키는 push 전용**.
+- **조치**: PE 버전 리소스(`res/nexa-coffee.rc` · 숫자는 VERSION 단일 출처 · MSVC 30,720→**31,744 B** green · rc.exe 양 아키텍처 확인) · choco iconUrl 수정 · 워크플로 `channels` 입력(choco만 재제출해도 winget PR이 중복으로 안 열리게) · **VERSION 0.1.1**.
+- **다음**: choco 0.1.0 재제출 → v0.1.1 릴리스 → 새 x86 zip으로 오탐 재현 검증 → 통과하면 #433980 닫고 0.1.1 PR. 상세: [journal/2026-09-17](journal/2026-09-17.md).
+
 ## 09-13 14차 — Windows에서 DR-14·T-13 실기 검증 · v0.1.0 확인 (사용자 요청)
 
 - **무엇**: Windows PC에서 9~13차 pull(+태그 v0.1.0) → MSVC 빌드 30,720 B · test green → 실행. **부모 모듈 37 → 25**(코덱·텍스트 입력 DLL 전부 제거 · WS 1.26 MB) = **T-13 ✅**. `--dialog`/`--about` 자식 프로세스가 ko 제목으로 뜨고 TSF는 자식에만 로드 → T-14 Windows 창 경로 ✅(시작 버튼 → 파이프는 사용자 확인).

@@ -8,7 +8,7 @@
 
 - 조직: SosomLab · 개발자: Sangyong Bae · kiros33@gmail.com · 저장소: <https://github.com/SosomLab/nexa-coffee>
 - 라이선스: **MIT**(누구나 무료 — nexa-shortcut과 동일. beep/clip/dir2의 PolyForm NC와 **다르다**).
-- 현 단계: **v0.1.0 배포됨(09-13)** — GitHub Release · brew 탭 ✓ · choco/winget 검수 대기. Windows 실기(09-13 14차): T-13 ✅ · DR-14 자식 창 ✅. 남은 실기: Windows·macOS 언어 메뉴(T-11) · T-14 시작 버튼 경로 사용자 확인 · T-2(DPI·메뉴 갱신·powercfg).
+- 현 단계: **v0.1.0 배포됨(09-13)** · **v0.1.1 준비 중(09-17)** — GitHub Release · brew 탭 ✓ · choco/winget은 **검수에서 우리 차례**(choco: iconUrl Requirement 수정 → 재제출 · winget: x86 Defender 오탐으로 설치 검증 실패 → 버전 리소스 넣고 0.1.1로 재제출). Windows 실기(09-13 14차): T-13 ✅ · DR-14 자식 창 ✅. 남은 실기: Windows·macOS 언어 메뉴(T-11) · T-14 시작 버튼 경로 사용자 확인 · T-2(DPI·메뉴 갱신·powercfg).
 
 ### 참조 원천(재발명 금지)
 
@@ -55,4 +55,4 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux · homebrew
 0. Windows 남은 실기(T-2) — DPI별 아이콘 · 메뉴 라디오 · 열린 메뉴 1초 갱신 재그리기 · `powercfg /requests`. macOS 언어 메뉴 실기(T-11) · ja/zh 원어민 검토(T-12).
 1. Linux 남은 실기(KDE Plasma · 입력 창 클릭 · logind polkit) · 16px 픽스맵 프레임(T-10 — GNOME이 22→16 축소해 숫자 흐릿).
 2. macOS 화면보호기 실측(30초 사용자 활동 선언이 충분한지) · 로그인 항목 등록 안내.
-3. 패키지 채널 — v0.1.0부터 태그 push가 brew 탭·winget PR·choco push까지 자동(packaging/README). 검수 상태 추적(T-6).
+3. 패키지 채널 — v0.1.0부터 태그 push가 brew 탭·winget PR·choco push까지 자동(packaging/README). 검수 상태 추적(T-6) · **Windows x86 백신 오탐(T-16)**. 검수 상태는 공개 API가 없으니 choco는 패키지 페이지 HTML, winget은 PR 라벨·코멘트로 확인한다.
