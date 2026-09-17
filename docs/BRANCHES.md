@@ -2,6 +2,7 @@
 
 | 브랜치 | 생성 | 병합 | 커밋 수 | 요약 |
 | --- | --- | --- | --- | --- |
+| fix/winget-schema-header | 2026-09-17 | 2026-09-17 → main(ff) | 2 | winget 템플릿 스키마 헤더 — `winget validate` exit 40으로 죽던 워크플로 수정 |
 | fix/pkg-moderation-versioninfo | 2026-09-17 | 2026-09-17 → main(ff) | 4 | PE 버전 리소스(Defender 오탐 완화 · VERSION 단일 출처) · choco iconUrl→jsDelivr(모더레이터 Requirement) · 워크플로 `channels` 입력 · VERSION 0.1.1 |
 | docs/win-verify | 2026-09-13 | 2026-09-13 → main(ff) | 1 | Windows 실기 첫 확인·메모리 분석 기록(8차) · T-13 |
 | docs/win-verify-2 | 2026-09-13 | 2026-09-13 → main(ff) | 1 | Windows에서 DR-14·T-13 실기 검증 기록(14차) |
