@@ -75,7 +75,11 @@ jobs:
               if [ -n "$prev" ]; then
                 pv="${prev#v}"
                 url="https://community.chocolatey.org/api/v2/Packages()?\$filter=Id%20eq%20'nexa-coffee'%20and%20Version%20eq%20'$pv'"
-                if ! curl -fsS "$url" | grep -q "<entry>"; then echo "::warning::choco: nexa-coffee $pv 이(가) 아직 공개 피드에 없다(모더레이션 대기) — 건너뛴다."; go=false; fi
+                # ⚠️ 피드는 **미승인 버전도 <entry>로 돌려준다**(IsApproved=false · PackageStatus=Submitted).
+                # 09-17: <entry> 유무로 봤다가 0.1.0 모더레이션 중인데 0.1.1을 밀어 403을 받았다. 승인 여부로 판정한다.
+                if ! curl -fsS "$url" | grep -q '<d:IsApproved m:type="Edm.Boolean">true</d:IsApproved>'; then
+                  echo "::warning::choco: nexa-coffee $pv 이(가) 아직 승인되지 않았다(모더레이션 대기) — 건너뛴다."; go=false
+                fi
               else
                 echo "직전 정식 태그 없음 — 첫 제출."
               fi
@@ -136,7 +140,17 @@ jobs:
           set -euo pipefail
           ./packaging/render-manifests.sh "${TAG#v}" assets out
           d=$(find out/winget -name '*.installer.yaml' -exec dirname {} \; | head -1)
-          echo "== $d"; winget validate --manifest "$d"
+          echo "== $d · winget $(winget --version)"
+          # `winget validate`는 경고만 있어도 **exit 40**으로 끝난다 — 40은 실패가 아니므로 기록만 남기고 넘어간다.
+          # 09-17: 러너의 winget이 우리 ManifestVersion(1.12.0)보다 오래돼 스키마 헤더를 "예상 패턴과 다르다"고 본다
+          # (같은 파일이 로컬 winget 1.29에서는 경고 없이 통과 · PR #433980의 komac 매니페스트도 같은 URL을 쓴다).
+          set +e; v_out=$(winget validate --manifest "$d" 2>&1); rc=$?; set -e
+          echo "$v_out"
+          case "$rc" in
+            0)  ;;
+            40) echo "::warning::winget validate 경고(exit 40) — 위 내용 확인" ;;
+            *)  echo "::error::winget validate 실패(exit $rc)"; exit "$rc" ;;
+          esac
       - uses: actions/upload-artifact@v4
         with: { name: "winget-${{ inputs.tag }}", path: out/winget/** }
       - name: winget-pkgs PR
