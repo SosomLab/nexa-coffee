@@ -11,7 +11,8 @@
     <packageSourceUrl>https://github.com/SosomLab/nexa-coffee/tree/main/packaging/choco</packageSourceUrl>
     <docsUrl>https://github.com/SosomLab/nexa-coffee#readme</docsUrl>
     <bugTrackerUrl>https://github.com/SosomLab/nexa-coffee/issues</bugTrackerUrl>
-    <iconUrl>https://raw.githubusercontent.com/SosomLab/nexa-coffee/main/packaging/branding/nexa-coffee-256.png</iconUrl>
+    <!-- CDN(jsDelivr) + 태그 고정 — raw.githubusercontent.com은 choco 모더레이션 요구사항 위반(virtualex 09-14). -->
+    <iconUrl>https://cdn.jsdelivr.net/gh/SosomLab/nexa-coffee@v@VERSION@/packaging/branding/nexa-coffee-256.png</iconUrl>
     <licenseUrl>https://github.com/SosomLab/nexa-coffee/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <tags>nexa-coffee caffeine keep-awake sleep tray timer portable</tags>

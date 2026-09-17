@@ -3,6 +3,9 @@
 # | 채널 | 스위치 변수 | 시크릿 | 대기 판정 |
 # | winget | vars.WINGET_PUBLISH=true | WINGET_TOKEN | microsoft/winget-pkgs에 SosomLab.NexaCoffee 열린 PR이 있으면 대기 |
 # | Chocolatey | vars.CHOCO_PUSH=true | CHOCO_API_KEY | 공개 피드에 직전 릴리스 버전이 아직 없으면 대기(모더레이션 중) |
+#
+# `channels`로 한 채널만 고를 수 있다(both·choco·winget). 모더레이션 지적을 고쳐 같은 버전을 다시 올릴 때 쓴다 —
+# 예: choco 수정 재push는 `channels=choco force=true`(force가 없으면 첫 제출이 대기 중이라 건너뛴다).
 name: publish-windows-packages
 
 on:
@@ -10,10 +13,13 @@ on:
     inputs:
       tag: { required: true, type: string }
       force: { required: false, default: false, type: boolean }
+      channels: { required: false, default: both, type: string }
   workflow_dispatch:
     inputs:
       tag: { description: "릴리스 태그(예: v0.1.0)", required: true, type: string }
       force: { description: "검수 대기 판정을 무시하고 제출", required: false, default: false, type: boolean }
+      # 재제출은 보통 한 채널만 필요하다 — choco 모더레이션 수정 재push 때 winget PR이 덩달아 또 열리면 안 된다.
+      channels: { description: "제출 채널", required: false, default: both, type: choice, options: [both, choco, winget] }
 
 permissions:
   contents: read
@@ -40,7 +46,10 @@ jobs:
         run: |
           set -euo pipefail
           go=false
-          if [ "${{ vars.WINGET_PUBLISH }}" = "true" ] && [ -n "${WINGET_TOKEN:-}" ]; then
+          ch="${{ inputs.channels || 'both' }}"
+          if [ "$ch" != "both" ] && [ "$ch" != "winget" ]; then
+            echo "::notice::winget: channels=$ch — 건너뛴다."
+          elif [ "${{ vars.WINGET_PUBLISH }}" = "true" ] && [ -n "${WINGET_TOKEN:-}" ]; then
             go=true
             if [ "${{ inputs.force }}" != "true" ]; then
               me=$(GH_TOKEN="$WINGET_TOKEN" gh api user -q .login)
@@ -55,7 +64,10 @@ jobs:
         run: |
           set -euo pipefail
           go=false
-          if [ "${{ vars.CHOCO_PUSH }}" = "true" ] && [ -n "${CHOCO_API_KEY:-}" ]; then
+          ch="${{ inputs.channels || 'both' }}"
+          if [ "$ch" != "both" ] && [ "$ch" != "choco" ]; then
+            echo "::notice::choco: channels=$ch — 건너뛴다."
+          elif [ "${{ vars.CHOCO_PUSH }}" = "true" ] && [ -n "${CHOCO_API_KEY:-}" ]; then
             go=true
             if [ "${{ inputs.force }}" != "true" ]; then
               cur="${{ inputs.tag }}"
