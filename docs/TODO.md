@@ -17,6 +17,6 @@
 | T-9 | P2 | 소 | Docker 기반 Linux 검증(`scripts/linux-docker.sh`)을 실제로 한 번 돌리기(이 세션은 Docker 데몬 미가동) | ☐ |
 | T-14 | P1 | 중 | **창을 자식 프로세스로**(DR-14) — macOS ✅ · Windows ✅ 09-13(자식 창·TSF·작업 집합) · **시작 버튼 → 파이프 → 작업 시작 ✅ 09-17**(메뉴→입력 창 자식 프로세스→Enter→powercfg 억제 등록→메뉴 남은 시간 일치, 끝단까지 자동 검증) | ✅ 09-17 |
 | T-15 | P2 | 소 | cask `postflight` → `postflight_steps` DSL 전환 검토(Homebrew deprecated 경고 · nexa-clip 공통) | ☐ |
-| T-18 | P2 | 소 | **대기 중 DPI 변경 시 트레이 아이콘이 옛 크기로 남는다** — `job_tick()`은 매 틱 `icon_size()`를 다시 읽지만(동작 중 ✅), 대기 중엔 `show_idle()`을 부르는 계기가 없다. `WM_DPICHANGED`/`WM_SETTINGCHANGE`에서 `!running`이면 `show_idle(FALSE)` (09-17 코드 관찰). 재현 절차는 [18 실기 점검표 ①-5](18-build-and-test.md#-아이콘-dpi-100--150--200) | ☐ |
+| T-18 | P2 | 소 | **대기 중 DPI 변경 시 트레이 아이콘이 옛 크기로 남는다** — `job_tick()`은 매 틱 `icon_size()`를 다시 읽지만(동작 중 ✅), 대기 중엔 `show_idle()`을 부르는 계기가 없다. `WM_DPICHANGED`/`WM_SETTINGCHANGE`에서 `!running`이면 `show_idle(FALSE)` (09-17 코드 관찰). 재현 절차는 [18 실기 점검표](18-build-and-test.md#사람이-해야-하는-실기-점검windows)의 ① 5단계 | ☐ |
 | T-16 | P0 | 소 | **Windows x86 백신 오탐** `Trojan:Win32/Tecabans.STV!cl`(클라우드 ML · x64는 깨끗) — PE 버전 리소스 추가 ✅ · v0.1.1 실제 자산으로 `winget install --architecture x86` **성공** ✅ 09-17. 재발하면 [WDSI 오탐 신고](https://www.microsoft.com/en-us/wdsi/filesubmission)(웹 폼 · 사용자 직접). 근본 해결은 코드 서명(v1 범위 밖) | ✅ 09-17 |
 | T-17 | P1 | 소 | `WINGET_TOKEN`(PAT)에 `workflow` 스코프 — 사용자가 기존 classic PAT 스코프만 수정(값 유지 · 시크릿 재등록 없음). `repo, workflow` 확인 · 포크 fast-forward 성공(upstream과 identical). 워크플로에 스코프 진단 + 무조건 동기화 추가 | ✅ 09-17 |

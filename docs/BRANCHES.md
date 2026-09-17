@@ -2,6 +2,7 @@
 
 | 브랜치 | 생성 | 병합 | 커밋 수 | 요약 |
 | --- | --- | --- | --- | --- |
+| docs/0917-consolidate | 2026-09-17 | 2026-09-17 → main(ff) | 5 | 09-17 진행사항 최신화 — journal 마무리 절 · STATUS/DEVLOG 압축 · MILESTONES(09-12 이후 첫 갱신) · CLAUDE.md 현 단계 |
 | docs/win-manual-checks | 2026-09-17 | 2026-09-17 → main(ff) | 2 | 18에 사람이 해야 하는 Windows 실기 점검표(아이콘 DPI · TaskbarCreated) |
 | test/win-verify-0917 | 2026-09-17 | 2026-09-17 → main(ff) | 2 | Windows 실기 2차 — T-14 종료 · T-2/T-11 대부분 해소 · T-18 신규 |
 | docs/t17-done | 2026-09-17 | 2026-09-17 → main(ff) | 1 | T-17 해소 · winget PR #436346 검증 통과 기록 |
