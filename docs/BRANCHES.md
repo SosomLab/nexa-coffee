@@ -2,6 +2,8 @@
 
 | 브랜치 | 생성 | 병합 | 커밋 수 | 요약 |
 | --- | --- | --- | --- | --- |
+| docs/t17-done | 2026-09-17 | 2026-09-17 → main(ff) | 1 | T-17 해소 · winget PR #436346 검증 통과 기록 |
+| fix/winget-token-diag | 2026-09-17 | 2026-09-17 → main(ff) | 1 | WINGET_TOKEN 스코프 진단(값 비노출) · 포크 동기화 무조건 실행 |
 | docs/0117-wrap | 2026-09-17 | 2026-09-17 → main(ff) | 2 | v0.1.1 오탐 해소 최종 확인 · winget PR #436346 교체 · T-17(WINGET_TOKEN 스코프) |
 | fix/winget-fork-sync | 2026-09-17 | 2026-09-17 → main(ff) | 1 | winget 제출 전 포크 upstream 동기화 |
 | fix/publish-guards | 2026-09-17 | 2026-09-17 → main(ff) | 2 | choco 가드 `IsApproved` 판정(403의 원인) · `winget validate` exit 40(경고) 통과 처리 |
