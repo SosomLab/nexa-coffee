@@ -8,7 +8,9 @@
 
 - 조직: SosomLab · 개발자: Sangyong Bae · kiros33@gmail.com · 저장소: <https://github.com/SosomLab/nexa-coffee>
 - 라이선스: **MIT**(누구나 무료 — nexa-shortcut과 동일. beep/clip/dir2의 PolyForm NC와 **다르다**).
-- 현 단계: **v0.1.0 배포됨(09-13)** · **v0.1.1 준비 중(09-17)** — GitHub Release · brew 탭 ✓ · choco/winget은 **검수에서 우리 차례**(choco: iconUrl Requirement 수정 → 재제출 · winget: x86 Defender 오탐으로 설치 검증 실패 → 버전 리소스 넣고 0.1.1로 재제출). Windows 실기(09-13 14차): T-13 ✅ · DR-14 자식 창 ✅. 남은 실기: Windows·macOS 언어 메뉴(T-11) · T-14 시작 버튼 경로 사용자 확인 · T-2(DPI·메뉴 갱신·powercfg).
+- 현 단계: **v0.1.1 배포됨(09-17)** — Release · brew 탭 ✓ · winget [PR #436346](https://github.com/microsoft/winget-pkgs/pull/436346) 검증 통과(머지 대기) · choco 0.1.0 모더레이션 대기.
+  - **Windows 실기 사실상 완료**(09-13·09-17): 트레이·툴팁·메뉴 라디오·열린 메뉴 1초 갱신·`powercfg`·i18n(CJK·언어 메뉴·입력 창 라벨 폭)·T-13 메모리·**DR-14 파이프 끝단**. 남은 둘(아이콘 DPI·TaskbarCreated)은 화면 배율·셸을 건드려야 해 [18 실기 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows)로 넘겼다.
+  - **v1은 코드 서명이 없다** — SmartScreen·Gatekeeper 경고의 원인이자, 0.1.0 x86이 Defender 오탐(`Trojan:Win32/Tecabans.STV!cl`)으로 격리된 근본 원인. 0.1.1에서 **PE 버전 리소스**를 넣어 완화했다(09-17 실측: 0.1.0 x86 격리 / 0.1.1 x86 통과).
 
 ### 참조 원천(재발명 금지)
 
@@ -52,7 +54,9 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux · homebrew
 
 ## 5. 다음 단계
 
-0. Windows 남은 실기(T-2) — DPI별 아이콘 · 메뉴 라디오 · 열린 메뉴 1초 갱신 재그리기 · `powercfg /requests`. macOS 언어 메뉴 실기(T-11) · ja/zh 원어민 검토(T-12).
-1. Linux 남은 실기(KDE Plasma · 입력 창 클릭 · logind polkit) · 16px 픽스맵 프레임(T-10 — GNOME이 22→16 축소해 숫자 흐릿).
-2. macOS 화면보호기 실측(30초 사용자 활동 선언이 충분한지) · 로그인 항목 등록 안내.
-3. 패키지 채널 — v0.1.0부터 태그 push가 brew 탭·winget PR·choco push까지 자동(packaging/README). 검수 상태 추적(T-6) · **Windows x86 백신 오탐(T-16)**. 검수 상태는 공개 API가 없으니 choco는 패키지 페이지 HTML, winget은 PR 라벨·코멘트로 확인한다.
+0. **채널 마무리(T-6)** — winget #436346 머지 대기(할 일 없음) · choco는 0.1.0이 승인돼야 0.1.1을 올린다. ⚠️ 검수 중인 **0.1.0은 32비트에서 깨진 상태**(x86 zip을 Defender가 격리 · 64비트는 무사)라, 모더레이터에게 reject를 요청하는 편이 빠르다(웹 로그인 필요 · 코멘트 API 없음). 검수 상태는 공개 API가 없어 choco는 패키지 페이지 HTML, winget은 PR 라벨로 본다.
+1. Windows 남은 실기 둘(아이콘 DPI · TaskbarCreated) — 절차는 [18 실기 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows). 그 과정에서 **T-18**(대기 중 DPI 변경 시 아이콘 미갱신)도 재현된다.
+2. macOS — 언어 메뉴 실기(T-11) · 화면보호기 실측(T-4) · 로그인 항목 등록 안내. Linux — KDE Plasma · 입력 창 클릭 · logind polkit(T-3) · 16px 픽스맵(T-10).
+3. ja/zh 원어민 검토(T-12) · 시작 프로그램 등록(T-5).
+
+> 재릴리스 판단: v0.1.1 태그 이후 바뀐 것은 워크플로·패키징 문서·docs뿐이고 `src/`·`res/`·`VERSION`은 그대로다. **코드를 고칠 때(예: T-18) v0.1.2로 묶는다.**
