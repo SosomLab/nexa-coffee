@@ -10,7 +10,9 @@
 - **choco 0.1.0 재제출 ✅** — run 35176472169 `pushed successfully` · 검수 로그에 09-17 03:00 제출 기록(= *Waiting for Maintainer* 해제). 가드도 의도대로(winget 건너뜀 → 중복 PR 없음).
 - **오탐 완화 A/B 확인 ✅**(릴리스 전) — 같은 PC·정의에서 0.1.0 x86 zip은 쓰는 즉시 격리, **0.1.1 x86 zip은 통과**. CI green(mingw x64 30,208 · x86 34,816 B · 예산 64 KB).
 - **v0.1.1 릴리스 ✅**(run 35179731098) — 자산 5개 + SHA256SUMS · brew 탭 0.1.1. 제출 잡 2개는 실패했고 **둘 다 진짜 버그**라 고쳤다: ① choco 가드가 모더레이션을 못 알아봄(피드는 **미승인 버전도 `<entry>`로 준다** → `IsApproved`로 판정) — 0.1.1을 밀어 **403**을 받은 원인 ② `winget validate`의 **exit 40은 경고**(러너 winget이 ManifestVersion 1.12.0보다 오래됨 · 로컬 1.29는 경고 없음) → 40은 기록만 하고 통과.
-- **다음**: (사용자 확인 대기) → 새 x86 zip으로 오탐 재현 검증 → 통과하면 #433980 닫고 0.1.1 PR. 상세: [journal/2026-09-17](journal/2026-09-17.md).
+- **winget 오탐 해소 최종 확인 ✅** — 릴리스된 0.1.1 자산으로 `winget install --manifest --architecture x86` **성공**(0.1.0에서 죽던 바로 그 명령). #433980은 원인 설명 후 닫고 **[PR #436346](https://github.com/microsoft/winget-pkgs/pull/436346)**(0.1.1) 제출 — OPEN · MERGEABLE.
+- **🔴 남은 사용자 조치**: `WINGET_TOKEN`(PAT)에 **`workflow` 스코프 추가**(T-17). 없으면 포크 동기화가 422로 막혀 다음 릴리스의 winget 자동 제출이 실패한다 — 이번엔 API로 우회했다.
+- **다음**: choco 0.1.0 모더레이션 결과 대기(승인되면 0.1.1 push는 가드가 자동 통과) · winget #436346 검수 · T-2/T-11 실기. → 새 x86 zip으로 오탐 재현 검증 → 통과하면 #433980 닫고 0.1.1 PR. 상세: [journal/2026-09-17](journal/2026-09-17.md).
 
 ## 09-13 14차 — Windows에서 DR-14·T-13 실기 검증 · v0.1.0 확인 (사용자 요청)
 
