@@ -9,20 +9,13 @@
 - **T-18 신규**(P2) — 동작 중엔 매 틱 아이콘을 다시 만들지만 **대기 중엔 DPI가 바뀌어도 아이콘이 옛 크기로 남는다**(`WM_DPICHANGED` 미처리).
 - 상세: [journal/2026-09-17](journal/2026-09-17.md).
 
-## 09-17 — winget·choco 검수가 막힌 원인 규명 · 버전 리소스 추가 (사용자 요청)
+## 09-17 (1차) — winget·choco가 막힌 원인 규명 · v0.1.1 릴리스 (사용자 요청)
 
-- **핵심**: 09-13에 "검수 대기"로 적어 둔 두 채널이 실제로는 **Needs-Author-Feedback / Waiting for Maintainer** — 우리 답을 기다리고 있었다.
-- **winget** PR [#433980](https://github.com/microsoft/winget-pkgs/pull/433980): 설치 검증 실패를 이 Windows PC에서 재현 → `winget validate` ✓ · x64 설치 ✓ · **x86만** Defender가 `Trojan:Win32/Tecabans.STV!cl`(클라우드 ML 오탐 · `MpCmdRun` 로컬 스캔은 깨끗)로 격리. 매니페스트 문제 아님.
-- **choco**: 모더레이터 `virtualex`(09-14) Requirement **1건 — `iconUrl`을 raw.githubusercontent.com → jsDelivr**. VirusTotal 플래그(x86)는 "BitDefender 휴리스틱 · 재제출하면 재스캔"이라 했다. 상태·코멘트를 읽는 공개 API는 없고 **API 키는 push 전용**.
-- **조치**: PE 버전 리소스(`res/nexa-coffee.rc` · 숫자는 VERSION 단일 출처 · MSVC 30,720→**31,744 B** green · rc.exe 양 아키텍처 확인) · choco iconUrl 수정 · 워크플로 `channels` 입력(choco만 재제출해도 winget PR이 중복으로 안 열리게) · **VERSION 0.1.1**.
-- **덤으로 잡은 것**: winget 잡이 늘 죽던 원인 — `winget validate`는 경고가 있으면 **exit 40**인데 우리 템플릿에 `yaml-language-server` 스키마 헤더가 없었다(09-13 실패는 그 뒤 submit 단계 오류에 가려져 있었다). 헤더 추가 후 로컬 대조 확인(있음 exit 0 / 없음 exit 40).
-- **choco 0.1.0 재제출 ✅** — run 35176472169 `pushed successfully` · 검수 로그에 09-17 03:00 제출 기록(= *Waiting for Maintainer* 해제). 가드도 의도대로(winget 건너뜀 → 중복 PR 없음).
-- **오탐 완화 A/B 확인 ✅**(릴리스 전) — 같은 PC·정의에서 0.1.0 x86 zip은 쓰는 즉시 격리, **0.1.1 x86 zip은 통과**. CI green(mingw x64 30,208 · x86 34,816 B · 예산 64 KB).
-- **v0.1.1 릴리스 ✅**(run 35179731098) — 자산 5개 + SHA256SUMS · brew 탭 0.1.1. 제출 잡 2개는 실패했고 **둘 다 진짜 버그**라 고쳤다: ① choco 가드가 모더레이션을 못 알아봄(피드는 **미승인 버전도 `<entry>`로 준다** → `IsApproved`로 판정) — 0.1.1을 밀어 **403**을 받은 원인 ② `winget validate`의 **exit 40은 경고**(러너 winget이 ManifestVersion 1.12.0보다 오래됨 · 로컬 1.29는 경고 없음) → 40은 기록만 하고 통과.
-- **winget 오탐 해소 최종 확인 ✅** — 릴리스된 0.1.1 자산으로 `winget install --manifest --architecture x86` **성공**(0.1.0에서 죽던 바로 그 명령). #433980은 원인 설명 후 닫고 **[PR #436346](https://github.com/microsoft/winget-pkgs/pull/436346)**(0.1.1) 제출 — OPEN · MERGEABLE.
-- **T-17 해소 ✅** — 사용자가 기존 classic PAT의 스코프만 수정(값 유지 → 시크릿 재등록 불필요). `repo, workflow` 확인(사용자 curl · 워크플로 진단 일치) · 포크가 upstream과 **identical**로 fast-forward. 재발 방지로 스코프 진단(`x-oauth-scopes` · 값 비노출)과 무조건 포크 동기화를 워크플로에 넣었다.
-- **winget PR #436346 검증 통과 ✅** — `Azure-Pipeline-Passed` · `Validation-Completed` · 오류 라벨 없음. 0.1.0을 막던 그 검증이다 → 오탐 수정이 **Microsoft 검수 환경에서도** 확인됐다. 사람 리뷰·머지 대기.
-- **다음**: choco 0.1.0 모더레이션 결과 대기(승인되면 0.1.1 push는 가드가 자동 통과) · winget #436346 검수 · T-2/T-11 실기. → 새 x86 zip으로 오탐 재현 검증 → 통과하면 #433980 닫고 0.1.1 PR. 상세: [journal/2026-09-17](journal/2026-09-17.md).
+- **핵심**: "검수 대기"로 적어 둔 두 채널이 실제로는 **우리 차례**였다 — winget `Needs-Author-Feedback` · choco `Waiting for Maintainer`.
+- **원인**: winget 설치 검증 실패 = **x86 zip만** Defender가 `Trojan:Win32/Tecabans.STV!cl`(클라우드 ML 오탐)로 격리(매니페스트는 정상). choco = 모더레이터 Requirement 1건(`iconUrl` → jsDelivr).
+- **조치**: PE 버전 리소스(VERSION 단일 출처) → **v0.1.1 릴리스** · choco iconUrl 수정 후 **0.1.0 재제출** · 파이프라인 버그 3건(`winget validate` exit 40 · choco 가드가 `<entry>`로 모더레이션 오판 → `IsApproved` · 포크 미동기화).
+- **결과**: **winget [PR #436346](https://github.com/microsoft/winget-pkgs/pull/436346) 검증 통과**(`Azure-Pipeline-Passed` · #433980은 원인 설명 후 닫음) · **T-16 · T-17 해소**.
+- 상세·실측값: [journal/2026-09-17](journal/2026-09-17.md).
 
 ## 09-13 14차 — Windows에서 DR-14·T-13 실기 검증 · v0.1.0 확인 (사용자 요청)
 
