@@ -6,7 +6,9 @@
 - **winget** PR [#433980](https://github.com/microsoft/winget-pkgs/pull/433980): 설치 검증 실패를 이 Windows PC에서 재현 → `winget validate` ✓ · x64 설치 ✓ · **x86만** Defender가 `Trojan:Win32/Tecabans.STV!cl`(클라우드 ML 오탐 · `MpCmdRun` 로컬 스캔은 깨끗)로 격리. 매니페스트 문제 아님.
 - **choco**: 모더레이터 `virtualex`(09-14) Requirement **1건 — `iconUrl`을 raw.githubusercontent.com → jsDelivr**. VirusTotal 플래그(x86)는 "BitDefender 휴리스틱 · 재제출하면 재스캔"이라 했다. 상태·코멘트를 읽는 공개 API는 없고 **API 키는 push 전용**.
 - **조치**: PE 버전 리소스(`res/nexa-coffee.rc` · 숫자는 VERSION 단일 출처 · MSVC 30,720→**31,744 B** green · rc.exe 양 아키텍처 확인) · choco iconUrl 수정 · 워크플로 `channels` 입력(choco만 재제출해도 winget PR이 중복으로 안 열리게) · **VERSION 0.1.1**.
-- **다음**: choco 0.1.0 재제출 → v0.1.1 릴리스 → 새 x86 zip으로 오탐 재현 검증 → 통과하면 #433980 닫고 0.1.1 PR. 상세: [journal/2026-09-17](journal/2026-09-17.md).
+- **덤으로 잡은 것**: winget 잡이 늘 죽던 원인 — `winget validate`는 경고가 있으면 **exit 40**인데 우리 템플릿에 `yaml-language-server` 스키마 헤더가 없었다(09-13 실패는 그 뒤 submit 단계 오류에 가려져 있었다). 헤더 추가 후 로컬 대조 확인(있음 exit 0 / 없음 exit 40).
+- **choco 0.1.0 재제출 ✅** — run 35176472169 `pushed successfully`(가드도 의도대로: winget 건너뜀 → 중복 PR 없음).
+- **다음**: v0.1.1 릴리스 → 새 x86 zip으로 오탐 재현 검증 → 통과하면 #433980 닫고 0.1.1 PR. 상세: [journal/2026-09-17](journal/2026-09-17.md).
 
 ## 09-13 14차 — Windows에서 DR-14·T-13 실기 검증 · v0.1.0 확인 (사용자 요청)
 
