@@ -9,9 +9,12 @@ if errorlevel 1 (
 )
 if not exist build mkdir build
 if not exist dist  mkdir dist
-rc /nologo /fo build\nexa-coffee.res res\nexa-coffee.rc
-if errorlevel 1 exit /b 1
 set /p VERSION=<VERSION
+rem 버전 리소스 숫자는 VERSION 파일에서 — Makefile의 RCDEF와 같은 규약.
+for /f "tokens=1,2,3 delims=." %%a in ("%VERSION%") do set VMAJ=%%a& set VMIN=%%b& set VPAT=%%c
+rc /nologo /dCF_VER_MAJOR=%VMAJ% /dCF_VER_MINOR=%VMIN% /dCF_VER_PATCH=%VPAT% /dCF_ARCH64=1 ^
+   /fo build\nexa-coffee.res res\nexa-coffee.rc
+if errorlevel 1 exit /b 1
 cl /nologo /utf-8 /O1 /GS- /Oi- /DUNICODE /D_UNICODE /DCF_VERSION=\"%VERSION%\" ^
    src\plat\win.c src\core\app.c src\core\draw.c src\core\font.c src\core\icon_active.c ^
    src\core\icon_idle.c src\core\timer.c src\core\util.c build\nexa-coffee.res ^
