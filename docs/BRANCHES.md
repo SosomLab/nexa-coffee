@@ -2,6 +2,8 @@
 
 | 브랜치 | 생성 | 병합 | 커밋 수 | 요약 |
 | --- | --- | --- | --- | --- |
+| docs/0117-wrap | 2026-09-17 | 2026-09-17 → main(ff) | 2 | v0.1.1 오탐 해소 최종 확인 · winget PR #436346 교체 · T-17(WINGET_TOKEN 스코프) |
+| fix/winget-fork-sync | 2026-09-17 | 2026-09-17 → main(ff) | 1 | winget 제출 전 포크 upstream 동기화 |
 | fix/publish-guards | 2026-09-17 | 2026-09-17 → main(ff) | 2 | choco 가드 `IsApproved` 판정(403의 원인) · `winget validate` exit 40(경고) 통과 처리 |
 | fix/winget-schema-header | 2026-09-17 | 2026-09-17 → main(ff) | 2 | winget 템플릿 스키마 헤더 — `winget validate` exit 40으로 죽던 워크플로 수정 |
 | fix/pkg-moderation-versioninfo | 2026-09-17 | 2026-09-17 → main(ff) | 4 | PE 버전 리소스(Defender 오탐 완화 · VERSION 단일 출처) · choco iconUrl→jsDelivr(모더레이터 Requirement) · 워크플로 `channels` 입력 · VERSION 0.1.1 |
