@@ -153,6 +153,19 @@ jobs:
           esac
       - uses: actions/upload-artifact@v4
         with: { name: "winget-${{ inputs.tag }}", path: out/winget/** }
+      # wingetcreate는 우리 포크의 master가 upstream과 맞지 않으면 "The forked repository could not be
+      # synced with the upstream commits"로 제출을 거부한다. upstream은 릴리스 사이에 수천 커밋 나아가므로
+      # (09-17: 1,663 커밋 뒤처져 v0.1.1 제출 실패) 제출 직전에 매번 맞춘다.
+      - name: winget-pkgs 포크 동기화
+        if: needs.guard.outputs.winget_go == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          me=$(GH_TOKEN="$WINGET_TOKEN" gh api user -q .login)
+          if ! GH_TOKEN="$WINGET_TOKEN" gh api -X POST "repos/$me/winget-pkgs/merge-upstream" -f branch=master --jq '.message'; then
+            echo "::error::포크 동기화 실패 — upstream 커밋이 .github/workflows/를 건드리므로 WINGET_TOKEN에 workflow 스코프가 필요하다."
+            exit 1
+          fi
       - name: winget-pkgs PR
         if: needs.guard.outputs.winget_go == 'true'
         shell: bash
