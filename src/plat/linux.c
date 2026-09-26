@@ -37,13 +37,16 @@
 #define WATCHER "org.kde.StatusNotifierWatcher"
 #define PROPS_IFACE "org.freedesktop.DBus.Properties"
 
-static const int ICON_SIZES[2] = { 22, 44 };
+/* 16 = GNOME 패널 실제 크기(T-10: 22만 주면 확장이 22→16 축소해 두 자리 숫자가 흐릿) · 22 = KDE 기본 · 44 = HiDPI.
+ * 호스트는 목록에서 가장 가까운 크기를 고르므로 16을 넣으면 코어 래스터라이저의 16px 결과가 그대로 쓰인다. */
+#define ICON_N 3
+static const int ICON_SIZES[ICON_N] = { 16, 22, 44 };
 
 static DbConn ses, sysb;
 static int has_sys;
 static CfApp app;
 static i64 deadline, total, next_tick;
-static u8 *idle_px[2], *active_px[2];
+static u8 *idle_px[ICON_N], *active_px[ICON_N];
 static u32 ss_cookie, ss_serial;
 static int login_fd = -1;
 static u32 menu_rev = 1;
@@ -105,15 +108,15 @@ static void render_idle(void)
 {
     CfColor gray = {154, 154, 158, 255};
     int i;
-    for (i = 0; i < 2; i++) {
-        if (!idle_px[i]) idle_px[i] = malloc((size_t)ICON_SIZES[i] * ICON_SIZES[i] * 4); /* 정확한 크기(1.9 KB · 7.7 KB) */
+    for (i = 0; i < ICON_N; i++) {
+        if (!idle_px[i]) idle_px[i] = malloc((size_t)ICON_SIZES[i] * ICON_SIZES[i] * 4); /* 정확한 크기(1 KB · 1.9 KB · 7.7 KB) */
         cf_icon_idle(idle_px[i], ICON_SIZES[i], gray);
     }
 }
 static void render_active(const CfDisplay *d)
 {
     int i;
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < ICON_N; i++) {
         if (!active_px[i]) active_px[i] = malloc((size_t)ICON_SIZES[i] * ICON_SIZES[i] * 4);
         cf_icon_active(active_px[i], ICON_SIZES[i], d);
     }
@@ -124,7 +127,7 @@ static void write_pixmaps(DbMsg *m)
     DbArr a, b;
     int i;
     db_w_arr_open(m, 8, &a);
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < ICON_N; i++) {
         const u8 *px = app.running && active_px[i] ? active_px[i] : idle_px[i];
         int s = ICON_SIZES[i], k;
         if (!px) continue;
@@ -231,7 +234,7 @@ static void job_stop(void)
     inhibit(0);
     app.running = 0;
     next_tick = 0;
-    for (i = 0; i < 2; i++) { free(active_px[i]); active_px[i] = NULL; }
+    for (i = 0; i < ICON_N; i++) { free(active_px[i]); active_px[i] = NULL; }
     emit_icon();
     emit_layout_updated();
 #ifdef __GLIBC__
