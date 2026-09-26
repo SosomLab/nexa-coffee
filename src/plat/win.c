@@ -22,6 +22,9 @@
 
 #define WM_TRAYICON (WM_USER + 1)
 #define WM_CHILD_DONE (WM_USER + 2) /* 입력 창/About 자식 프로세스 종료 */
+#ifndef WM_DPICHANGED
+#define WM_DPICHANGED 0x02E0 /* 오래된 SDK 헤더 대비 */
+#endif
 #define TIMER_TICK  1
 #define TIMER_MENU  2 /* 메뉴가 열린 동안 남은 시간 1초 갱신 */
 #define ICON_UID    1
@@ -91,9 +94,27 @@ static void conf_save(void)
 }
 
 /* ── 아이콘 ── */
+/* 트레이 아이콘 한 변. Per-Monitor V2에서 GetSystemMetrics는 프로세스 시작 시점의 시스템 DPI 값에 머문다 —
+ * 배율을 바꿔도 옛 크기가 나온다(T-18). 창(주 모니터의 숨은 최상위 창)의 현재 DPI로 다시 묻는다.
+ * 두 API는 Windows 10 1607+ — 없으면 예전 값으로 떨어진다. */
 static int icon_size(void)
 {
-    int s = GetSystemMetrics(SM_CXSMICON);
+    typedef UINT (WINAPI *DpiForWindow)(HWND);
+    typedef int (WINAPI *MetricsForDpi)(int, UINT);
+    static DpiForWindow dfw;
+    static MetricsForDpi mfd;
+    static int loaded;
+    int s = 0;
+    if (!loaded) {
+        HMODULE u = GetModuleHandleW(L"user32.dll");
+        loaded = 1;
+        if (u) {
+            dfw = (DpiForWindow)(void *)GetProcAddress(u, "GetDpiForWindow");
+            mfd = (MetricsForDpi)(void *)GetProcAddress(u, "GetSystemMetricsForDpi");
+        }
+    }
+    if (dfw && mfd && g_hwnd) { UINT dpi = dfw(g_hwnd); if (dpi) s = mfd(SM_CXSMICON, dpi); }
+    if (s <= 0) s = GetSystemMetrics(SM_CXSMICON);
     if (s < 16) s = 16;
     if (s > CF_ICON_MAX) s = CF_ICON_MAX;
     return s;
@@ -484,6 +505,13 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_CHILD_DONE:
         child_done();
         return 0;
+    case WM_DPICHANGED:
+    case WM_DISPLAYCHANGE:
+    case WM_SETTINGCHANGE:
+        /* 배율 변경(T-18) — 동작 중엔 다음 틱이 새 크기로 그리지만 대기 중엔 계기가 없다.
+         * show_idle은 크기가 같으면 아이콘을 다시 만들지 않으므로(툴팁만 NIM_MODIFY) 잦은 WM_SETTINGCHANGE도 싸다. */
+        if (g_app.running) job_tick(); else show_idle(FALSE);
+        return msg == WM_SETTINGCHANGE ? DefWindowProcW(hwnd, msg, wp, lp) : 0;
     case WM_DESTROY:
         KillTimer(hwnd, TIMER_TICK);
         KillTimer(hwnd, TIMER_MENU);
