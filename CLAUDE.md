@@ -60,6 +60,7 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux · homebrew
 
 ## 5. 다음 단계
 
+0. **v0.1.2 릴리스(사용자)** — 노트([docs/releases/v0.1.2.md](docs/releases/v0.1.2.md)) 준비됨 → `VERSION` 0.1.2 → 태그. **T-19**(v0.1.1 Linux SIGSEGV: 늦게 뜬 트레이 워처) 수정이 핵심. 이후 채널: choco 0.1.0 승인 → 0.1.1/0.1.2 · winget #436346 머지 → 0.1.2.
 0. **채널 마무리(T-6)** — winget #436346 머지 대기(할 일 없음) · choco는 0.1.0이 승인돼야 0.1.1을 올린다. ⚠️ 검수 중인 **0.1.0은 32비트에서 깨진 상태**(x86 zip을 Defender가 격리 · 64비트는 무사)라, 모더레이터에게 reject를 요청하는 편이 빠르다(웹 로그인 필요 · 코멘트 API 없음). 검수 상태는 공개 API가 없어 choco는 패키지 페이지 HTML, winget은 PR 라벨로 본다.
 1. Windows 남은 실기 둘(아이콘 DPI · TaskbarCreated) — 절차는 [18 실기 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows). 그 과정에서 **T-18**(대기 중 DPI 변경 시 아이콘 미갱신)도 재현된다.
 2. macOS — 언어 메뉴 실기(T-11) · 화면보호기 실측(T-4) · 로그인 항목 등록 안내. Linux — KDE Plasma · 입력 창 클릭 · logind polkit(T-3) · 16px 픽스맵(T-10).

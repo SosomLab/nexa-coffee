@@ -10,7 +10,7 @@
 | T-13 | P1 | 소 | Windows 상주 메모리 — ① 메뉴·자식 종료 뒤 `SetProcessWorkingSetSize(-1,-1)` ② 클래스 아이콘 LoadIcon 제거(창 아이콘은 `cf_icon_idle`) — 09-13 10차 구현 · 14차 Windows 실기: 부모 모듈 37→25 · 코덱/TSF 없음 · WS 1.26 MB | ✅ 09-13 |
 | T-12 | P1 | 소 | 일본어·중국어 문구 원어민 검토 — About 설명 · logind 억제 사유 · "대화창 도구 없음" 알림 | ☐ |
 | T-4 | P1 | 소 | macOS 화면보호기 실측(30초 사용자 활동 선언으로 충분한지) — 부족하면 `IOPMAssertionCreateWithProperties` 검토 | ☐ |
-| T-5 | P1 | 소 | 시작 프로그램 등록 안내/옵션(Windows shell:startup · macOS 로그인 항목 · Linux ~/.config/autostart) | ☐ |
+| T-5 | P1 | 소 | 시작 프로그램 등록 — **Linux ✅ 09-26**: `install.sh --autostart`(XDG autostart · uninstall이 함께 제거 · `scripts/test-install.sh` CI 검증 · T-19 수정으로 셸보다 먼저 떠도 안전) · Windows(`shell:startup`)·macOS(로그인 항목)는 README 안내. **결정 대기**: 앱 메뉴에 "로그인 시 실행" 토글을 넣을지(3-OS 코어 메뉴 변경) | ◐ |
 | T-6 | P1 | 중 | 채널 등록 — brew ✅(0.1.1) · choco 0.1.0: 09-14 iconUrl · **09-21 `<copyright>`** 두 Requirement 반영해 **09-26 재제출**(Updated · 재스캔 · 승인돼야 0.1.1 push 가능 — 패키지 페이지를 며칠마다 확인) · winget **PR [#436346](https://github.com/microsoft/winget-pkgs/pull/436346)**: **검증 통과** → 사람 리뷰·머지 대기. 노출되면 README 설치표 확인 | ◐ |
 | T-7 | P2 | 소 | Windows 256px PNG 아이콘 프레임 여부 — ICO를 PNG 프레임으로 바꿔 16·32·48이 3.7 KB. 256은 +10 KB라 보류 | ✅ 09-13 |
 | T-8 | P2 | 소 | 툴팁에 종료 예정 시각 추가 여부 | ☐ |

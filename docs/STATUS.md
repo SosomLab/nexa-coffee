@@ -1,5 +1,11 @@
 # STATUS — 지금 상태
 
+## 09-26 (3차) — v0.1.2 준비 완료 (사용자 요청)
+
+- **릴리스 준비됨**: `docs/releases/v0.1.2.md` 작성 → 남은 것은 `VERSION` 0.1.2 · 태그(사용자). 절차는 [packaging/README](../packaging/README.md#릴리스-절차).
+- Linux `install.sh --autostart`(T-5 Linux) · 설치 스크립트 CI 검증 · 릴리스 본문에 노트 파일.
+- 상세: [journal/2026-09-26 3차](journal/2026-09-26.md#3차--v012-전-마무리-개발-linux-로그인-자동-실행--설치-스크립트-ci-검증--릴리스-노트-사용자-요청--브랜치-featlinux-autostart-release-notes).
+
 ## 09-26 (2차) — Linux PC 개발·자동화: v0.1.1 크래시 발견·수정 · T-10 · T-18 (사용자 요청)
 
 - **T-19 🔴→✅(코드)**: v0.1.1은 **앱보다 늦게 뜬 트레이 워처에서 SIGSEGV** — 로그인 자동 시작·셸 재시작·확장 켜기. 새 스모크의 가짜 워처가 잡았다. **v0.1.2 필요**.

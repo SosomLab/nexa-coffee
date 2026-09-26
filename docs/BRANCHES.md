@@ -2,6 +2,7 @@
 
 | 브랜치 | 생성 | 병합 | 커밋 수 | 요약 |
 | --- | --- | --- | --- | --- |
+| feat/linux-autostart-release-notes | 2026-09-26 | 2026-09-26 → main(ff) | 3 | Linux `install.sh --autostart` · `test-install.sh` CI · 릴리스 본문 `docs/releases/<태그>.md` · v0.1.2 노트 초안 |
 | feat/linux-16px-dpi-ci | 2026-09-26 | 2026-09-26 → main(ff) | 9 | **T-19 v0.1.1 SIGSEGV(늦게 뜬 워처) 수정** · T-10 16px · T-18 Windows DPI · 스모크 가짜 워처·logind(시스템 버스도 전용) · CI 액션 node24 · FORTIFY 경고 · 한글 응답 규칙 |
 | docs/0917-consolidate | 2026-09-17 | 2026-09-17 → main(ff) | 5 | 09-17 진행사항 최신화 — journal 마무리 절 · STATUS/DEVLOG 압축 · MILESTONES(09-12 이후 첫 갱신) · CLAUDE.md 현 단계 |
 | docs/win-manual-checks | 2026-09-17 | 2026-09-17 → main(ff) | 2 | 18에 사람이 해야 하는 Windows 실기 점검표(아이콘 DPI · TaskbarCreated) |
