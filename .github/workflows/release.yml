@@ -69,14 +69,25 @@ jobs:
       - uses: actions/download-artifact@v7
         with: { path: out, merge-multiple: true }
       - run: cd out && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      # 릴리스 본문 = docs/releases/<태그>.md(있으면) + 공통 안내. PR 없이 main에 바로 커밋하는 저장소라
+      # generate_release_notes만으로는 비교 링크 한 줄뿐이다 — 무엇이 바뀌었는지는 사람이 쓴 노트로 남긴다.
+      - uses: actions/checkout@v5
+        with: { sparse-checkout: docs/releases, path: src }
+      - name: 릴리스 본문
+        run: |
+          f="src/docs/releases/${GITHUB_REF_NAME}.md"
+          {
+            if [ -f "$f" ]; then cat "$f"; echo; else echo "::warning::$f 없음 — 공통 안내만 싣는다" >&2; fi
+            echo '⚠️ v1은 코드 서명이 없습니다 — macOS Gatekeeper("확인되지 않은 개발자")·Windows SmartScreen 경고가 뜹니다.'
+            echo 'macOS: `xattr -dr com.apple.quarantine "Nexa Coffee.app"` 후 실행. 무결성은 `SHA256SUMS.txt`로 확인하세요.'
+          } > notes.md
+          cat notes.md
       - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           files: out/*
           generate_release_notes: true
-          body: |
-            ⚠️ v1은 코드 서명이 없습니다 — macOS Gatekeeper("확인되지 않은 개발자")·Windows SmartScreen 경고가 뜹니다.
-            macOS: `xattr -dr com.apple.quarantine "Nexa Coffee.app"` 후 실행. 무결성은 `SHA256SUMS.txt`로 확인하세요.
+          body_path: notes.md
 
   # ── 패키지 관리자(릴리스 공개 뒤 · 태그일 때만) ──
   homebrew:
