@@ -50,6 +50,7 @@ static u32 menu_rev = 1;
 static i64 menu_open_until, menu_next; /* 메뉴가 열려 있다고 보는 동안(AboutToShow/GetLayout 후 30초) 1초마다 남은 시간 갱신 */
 static char busname[64], conf_path[1024];
 static volatile sig_atomic_t quit;
+static int need_register; /* 워처가 (다시) 나타났다 — 메인 루프에서 등록 */
 /* 입력 창 자식 프로세스 */
 static pid_t dlg_pid;
 static int dlg_fd = -1, dlg_mode;
@@ -692,7 +693,11 @@ static void handle(DbConn *c, DbRead *r, void *ud)
         if (r->member && r->iface && !strcmp(r->iface, "org.freedesktop.DBus") && !strcmp(r->member, "NameOwnerChanged")) {
             const char *name = db_r_str(r), *old = db_r_str(r), *neu = db_r_str(r);
             (void)old;
-            if (!strcmp(name, WATCHER) && *neu) register_watcher();
+            /* 여기서 바로 register_watcher()를 부르면 안 된다 — 이 신호가 아직 수신 버퍼 맨 앞에 남아 있어
+             * 중첩 db_call의 db_recv가 같은 신호를 다시 꺼내고 → handle → register_watcher … 무한 재귀로
+             * 스택이 넘친다(v0.1.1: 앱보다 늦게 뜬 워처 = 로그인 직후 자동 시작·셸 재시작에서 SIGSEGV).
+             * 표시만 하고 메인 루프가 신호를 소비한 뒤 등록한다. */
+            if (!strcmp(name, WATCHER) && *neu) need_register = 1;
         }
         return;
     }
@@ -775,6 +780,7 @@ int main(void)
             int got;
             while ((got = db_recv(&ses, &r, 0)) == 1) { handle(&ses, &r, NULL); db_consume(&ses); }
             if (got < 0) { fprintf(stderr, "nexa-coffee: session bus disconnected\n"); break; }
+            while (need_register) { need_register = 0; register_watcher(); } /* 등록 대기 중 또 재등장하면 한 번 더 */
         }
         if (has_sys && p[1].revents) {
             int got = db_recv(&sysb, &r, 0);
