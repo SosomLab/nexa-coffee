@@ -11,7 +11,7 @@
 | T-12 | P1 | 소 | 일본어·중국어 문구 원어민 검토 — About 설명 · logind 억제 사유 · "대화창 도구 없음" 알림 | ☐ |
 | T-4 | P1 | 소 | macOS 화면보호기 실측(30초 사용자 활동 선언으로 충분한지) — 부족하면 `IOPMAssertionCreateWithProperties` 검토 | ☐ |
 | T-5 | P1 | 소 | 시작 프로그램 등록 — **Linux ✅ 09-26**: `install.sh --autostart`(XDG autostart · uninstall이 함께 제거 · `scripts/test-install.sh` CI 검증 · T-19 수정으로 셸보다 먼저 떠도 안전) · Windows(`shell:startup`)·macOS(로그인 항목)는 README 안내. **결정 대기**: 앱 메뉴에 "로그인 시 실행" 토글을 넣을지(3-OS 코어 메뉴 변경) | ◐ |
-| T-6 | P1 | 중 | 채널 등록 — brew ✅(0.1.1) · choco 0.1.0: 09-14 iconUrl · **09-21 `<copyright>`** 두 Requirement 반영해 **09-26 재제출**(Updated · 재스캔 · 승인돼야 0.1.1 push 가능 — 패키지 페이지를 며칠마다 확인) · winget **PR [#436346](https://github.com/microsoft/winget-pkgs/pull/436346)**: **검증 통과** → 사람 리뷰·머지 대기. 노출되면 README 설치표 확인 | ◐ |
+| T-6 | P1 | 중 | 채널 등록 — brew ✅(**0.1.2**) · choco 0.1.0: 09-14 iconUrl · 09-21 `<copyright>` 반영해 09-26 재제출(Updated · 재스캔) → **승인되면 0.1.2를 `tag=v0.1.2 channels=choco force=true`로**(가드는 직전 태그 0.1.1을 보는데 0.1.1은 안 올렸다 · 패키지 페이지를 며칠마다 확인) · winget **PR [#436346](https://github.com/microsoft/winget-pkgs/pull/436346)**(0.1.1) 검증 통과 → 머지 대기 → 머지되면 0.1.2 제출. 노출되면 README 설치표 확인 | ◐ |
 | T-7 | P2 | 소 | Windows 256px PNG 아이콘 프레임 여부 — ICO를 PNG 프레임으로 바꿔 16·32·48이 3.7 KB. 256은 +10 KB라 보류 | ✅ 09-13 |
 | T-8 | P2 | 소 | 툴팁에 종료 예정 시각 추가 여부 | ☐ |
 | T-9 | P2 | 소 | Docker 기반 Linux 검증(`scripts/linux-docker.sh`)을 실제로 한 번 돌리기(이 세션은 Docker 데몬 미가동) | ☐ |
@@ -20,4 +20,4 @@
 | T-18 | P2 | 소 | **대기 중 DPI 변경 시 트레이 아이콘이 옛 크기로 남는다** — 09-26 코드 수정: `icon_size()`가 `GetSystemMetricsForDpi(SM_CXSMICON, GetDpiForWindow)`(PMv2에서 `GetSystemMetrics`는 시작 시점 값에 머묾) + `WM_DPICHANGED`/`WM_DISPLAYCHANGE`/`WM_SETTINGCHANGE`에서 대기 중 `show_idle(FALSE)`. **남음**: Windows 실기([18 점검표](18-build-and-test.md#사람이-해야-하는-실기-점검windows) ① 5단계) | ◐ |
 | T-16 | P0 | 소 | **Windows x86 백신 오탐** `Trojan:Win32/Tecabans.STV!cl`(클라우드 ML · x64는 깨끗) — PE 버전 리소스 추가 ✅ · v0.1.1 실제 자산으로 `winget install --architecture x86` **성공** ✅ 09-17. 재발하면 [WDSI 오탐 신고](https://www.microsoft.com/en-us/wdsi/filesubmission)(웹 폼 · 사용자 직접). 근본 해결은 코드 서명(v1 범위 밖) | ✅ 09-17 |
 | T-17 | P1 | 소 | `WINGET_TOKEN`(PAT)에 `workflow` 스코프 — 사용자가 기존 classic PAT 스코프만 수정(값 유지 · 시크릿 재등록 없음). `repo, workflow` 확인 · 포크 fast-forward 성공(upstream과 identical). 워크플로에 스코프 진단 + 무조건 동기화 추가 | ✅ 09-17 |
-| T-19 | P0 | 소 | **Linux: 앱보다 늦게 뜬 트레이 워처에서 SIGSEGV**(v0.1.0·0.1.1) — NameOwnerChanged 핸들러 안의 동기 등록이 버퍼 맨 앞의 같은 신호를 다시 꺼내 무한 재귀. 로그인 자동 시작·셸 재시작·확장 켜기에서 발생. `need_register` 플래그로 메인 루프에서 등록 · 스모크가 회귀 검출(v0.1.1 실패 / 수정본 통과). **v0.1.2로 배포 필요** | ◐ 09-26 |
+| T-19 | P0 | 소 | **Linux: 앱보다 늦게 뜬 트레이 워처에서 SIGSEGV**(v0.1.0·0.1.1) — NameOwnerChanged 핸들러 안의 동기 등록이 버퍼 맨 앞의 같은 신호를 다시 꺼내 무한 재귀. 로그인 자동 시작·셸 재시작·확장 켜기에서 발생. `need_register` 플래그로 메인 루프에서 등록 · 스모크가 회귀 검출(v0.1.1 실패 / 수정본 통과). **v0.1.2로 배포** | ✅ 09-26 |

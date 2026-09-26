@@ -1,5 +1,6 @@
 # DEVLOG — 날짜별 요약(최신 위)
 
+- **2026-09-26 (4차)** — **v0.1.2 릴리스**: 노트 본문 첫 적용 · brew 탭 ✅ · winget/choco는 가드가 건너뜀(choco는 0.1.0 승인 뒤 0.1.2를 force로) · 이 PC 재설치(16/22/44). → [journal](journal/2026-09-26.md#4차--v012-릴리스-사용자-요청)
 - **2026-09-26 (3차)** — v0.1.2 전 마무리: Linux `install.sh --autostart`(T-5 Linux) · `scripts/test-install.sh` CI 추가 · 릴리스 본문에 `docs/releases/<태그>.md` · v0.1.2 노트 초안. → [journal](journal/2026-09-26.md#3차--v012-전-마무리-개발-linux-로그인-자동-실행--설치-스크립트-ci-검증--릴리스-노트-사용자-요청--브랜치-featlinux-autostart-release-notes)
 - **2026-09-26 (2차)** — Linux PC 개발·자동화: **T-19 v0.1.1 SIGSEGV 발견·수정**(늦게 뜬 트레이 워처 → NameOwnerChanged 핸들러 재귀) · T-10 16px 프레임 · T-18 Windows DPI(코드 · 실기 대기) · 스모크에 가짜 워처·logind(재등록 · Inhibit 해제 · polkit 거부 · 자동 시작 · 시스템 버스도 전용) · CI 액션 node24 · FORTIFY 경고 0. → [journal](journal/2026-09-26.md#2차--linux-pc에서-할-수-있는-개발--스모크-자동화-확장-사용자-요청--브랜치-featlinux-16px-dpi-ci)
 - **2026-09-26** — Linux(GNOME) 설치본 점검 ✅(트레이·logind/GNOME 억제·해제·144 kB). 앱 목록 누락 = Exec PATH 미탐 + 옛 hicolor 캐시 → `install.sh` 수정. choco 0.1.0이 09-21 Requirement(`<copyright>`)로 또 우리 차례였다 → nuspec 수정 후 재제출(Updated · 재스캔). winget #436346 승인 대기. → [journal](journal/2026-09-26.md)

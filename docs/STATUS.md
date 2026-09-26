@@ -1,5 +1,11 @@
 # STATUS — 지금 상태
 
+## 09-26 (4차) — v0.1.2 배포됨 (사용자 요청)
+
+- [Release v0.1.2](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.2) · brew 탭 ✅ · winget(#436346 0.1.1 대기)·choco(0.1.0 대기)는 자동 건너뜀.
+- **T-19 크래시 수정이 사용자에게 나갔다.** choco는 0.1.0 승인 뒤 0.1.2를 `channels=choco force=true`로(0.1.1 건너뜀).
+- 상세: [journal/2026-09-26 4차](journal/2026-09-26.md#4차--v012-릴리스-사용자-요청).
+
 ## 09-26 (3차) — v0.1.2 준비 완료 (사용자 요청)
 
 - **릴리스 준비됨**: `docs/releases/v0.1.2.md` 작성 → 남은 것은 `VERSION` 0.1.2 · 태그(사용자). 절차는 [packaging/README](../packaging/README.md#릴리스-절차).
