@@ -1,30 +1,13 @@
 # STATUS — 지금 상태
 
-## 09-26 (4차) — v0.1.2 배포됨 (사용자 요청)
+## 09-26 — v0.1.2 배포 · v0.1.1 Linux 크래시(T-19) 발견·수정 · Linux PC 개발·자동화 (사용자 요청 · Linux VM)
 
-- [Release v0.1.2](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.2) · brew 탭 ✅ · winget(#436346 0.1.1 대기)·choco(0.1.0 대기)는 자동 건너뜀.
-- **T-19 크래시 수정이 사용자에게 나갔다.** choco는 0.1.0 승인 뒤 0.1.2를 `channels=choco force=true`로(0.1.1 건너뜀).
-- 상세: [journal/2026-09-26 4차](journal/2026-09-26.md#4차--v012-릴리스-사용자-요청).
-
-## 09-26 (3차) — v0.1.2 준비 완료 (사용자 요청)
-
-- **릴리스 준비됨**: `docs/releases/v0.1.2.md` 작성 → 남은 것은 `VERSION` 0.1.2 · 태그(사용자). 절차는 [packaging/README](../packaging/README.md#릴리스-절차).
-- Linux `install.sh --autostart`(T-5 Linux) · 설치 스크립트 CI 검증 · 릴리스 본문에 노트 파일.
-- 상세: [journal/2026-09-26 3차](journal/2026-09-26.md#3차--v012-전-마무리-개발-linux-로그인-자동-실행--설치-스크립트-ci-검증--릴리스-노트-사용자-요청--브랜치-featlinux-autostart-release-notes).
-
-## 09-26 (2차) — Linux PC 개발·자동화: v0.1.1 크래시 발견·수정 · T-10 · T-18 (사용자 요청)
-
-- **T-19 🔴→✅(코드)**: v0.1.1은 **앱보다 늦게 뜬 트레이 워처에서 SIGSEGV** — 로그인 자동 시작·셸 재시작·확장 켜기. 새 스모크의 가짜 워처가 잡았다. **v0.1.2 필요**.
-- **T-10 ✅** 16px 프레임 · **T-18** Windows 배율 변경(코드 · 실기 대기) · CI 액션 node24.
-- **스모크**: 가짜 워처·logind로 재등록 · Inhibit 해제 · polkit 거부 · 자동 시작까지 약 1.5초 자동 검증. 시스템 버스도 전용(예전엔 실제 logind에 붙었다).
-- 상세: [journal/2026-09-26 2차](journal/2026-09-26.md#2차--linux-pc에서-할-수-있는-개발--스모크-자동화-확장-사용자-요청--브랜치-featlinux-16px-dpi-ci).
-
-## 09-26 — Linux 설치본 점검 · 앱 목록 누락 수정 · choco 0.1.0 재제출 (사용자 요청)
-
-- **Linux 실기**(GNOME 50 · v0.1.1 릴리스 설치본): 트레이 등록 · 1시간 시작 시 logind + GNOME 억제 · 끄기 시 해제 · 동작 아이콘 ✅.
-- **앱 목록에 안 보이던 문제**: `.desktop`의 `Exec=nexa-coffee`를 셸 PATH에서 못 찾아 GLib이 숨김 + 옛 `icon-theme.cache` → `install.sh`가 절대 경로·캐시 갱신(다음 릴리스부터).
-- **choco**: 09-21 모더레이터 Requirement(`<copyright>`)가 걸려 있었다 → 수정 후 0.1.0 재제출(`Updated` · 재스캔 중). **winget** #436346 승인 대기.
-- 상세: [journal/2026-09-26](journal/2026-09-26.md).
+- **[v0.1.2](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.2) 배포** — brew 탭 ✅ · winget(#436346 0.1.1 머지 대기)·choco(0.1.0 재스캔 중)는 가드가 건너뜀. choco는 0.1.0 승인 뒤 **0.1.2를 force로**(0.1.1 건너뜀).
+- **T-19**: v0.1.0·0.1.1은 **앱보다 늦게 뜬 트레이 워처에서 SIGSEGV**(로그인 자동 실행·셸 재시작·확장 켜기). 스모크의 가짜 워처가 잡았고 0.1.2에서 고쳤다.
+- **T-10 ✅** 16px · **T-18** Windows 배율(코드 · 실기 대기) · **T-5 Linux** `install.sh --autostart` · 앱 목록 누락(Exec 절대 경로 · 아이콘 캐시) 수정.
+- **자동 검증**: 스모크에 가짜 워처·logind(재등록 · Inhibit 해제 · polkit 거부 · 자동 시작) · 시스템 버스도 전용 · `test-install.sh` 신설.
+- **남음**: 사람 실기(GNOME 16px·확장 재시작 · Windows 배율) · 채널 승인 · 결정 대기(앱 메뉴 로그인 토글 · T-8 · T-15).
+- 상세: [journal/2026-09-26](journal/2026-09-26.md)(1~4차 · 마무리).
 
 ## 09-17 (2차) — Windows 실기: T-14 종료 · T-2/T-11 대부분 해소 (사용자 요청)
 
