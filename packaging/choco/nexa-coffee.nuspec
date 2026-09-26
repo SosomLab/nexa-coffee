@@ -7,6 +7,8 @@
     <title>Nexa Coffee (Portable)</title>
     <authors>SosomLab</authors>
     <owners>SosomLab</owners>
+    <!-- LICENSE 첫 줄과 같게 — 없으면 choco 모더레이션 Requirement(virtualex 09-21). -->
+    <copyright>Copyright (c) 2026 SosomLab (Sangyong Bae)</copyright>
     <projectUrl>https://github.com/SosomLab/nexa-coffee</projectUrl>
     <packageSourceUrl>https://github.com/SosomLab/nexa-coffee/tree/main/packaging/choco</packageSourceUrl>
     <docsUrl>https://github.com/SosomLab/nexa-coffee#readme</docsUrl>
