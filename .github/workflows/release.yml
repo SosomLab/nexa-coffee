@@ -16,7 +16,7 @@ jobs:
     outputs:
       version: ${{ steps.v.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: v
         run: |
           set -e
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     env: { VERSION: "${{ needs.meta.outputs.version }}" }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq musl-tools dbus gcc-mingw-w64 zip
       - run: make test && make static && sh scripts/linux-smoke.sh dist/nexa-coffee && make win
       - name: 포장
@@ -46,7 +46,7 @@ jobs:
           # zip 루트에 exe + LICENSE(-j: 경로 없이) — winget NestedInstallerFiles · choco unzip 모두 루트 기준
           zip -9 -j "out/nexa-coffee-$VERSION-windows-x64.zip" dist/nexa-coffee-x64.exe LICENSE
           zip -9 -j "out/nexa-coffee-$VERSION-windows-x86.zip" dist/nexa-coffee-x86.exe LICENSE
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with: { name: out-linux-windows, path: out/* }
 
   macos:
@@ -54,19 +54,19 @@ jobs:
     runs-on: macos-latest
     env: { VERSION: "${{ needs.meta.outputs.version }}" }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: make test && make && make app
       - name: 포장
         run: |
           mkdir -p out && cp LICENSE dist/ && cd dist && zip -9 -r -y "../out/nexa-coffee-$VERSION-macos-universal.zip" "Nexa Coffee.app" LICENSE
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with: { name: out-macos, path: out/* }
 
   publish:
     needs: [meta, linux-windows, macos]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with: { path: out, merge-multiple: true }
       - run: cd out && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
       - uses: softprops/action-gh-release@v2

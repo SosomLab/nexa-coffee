@@ -34,7 +34,7 @@ jobs:
       WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
       CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: { fetch-depth: 0 }
       - name: 스위치 상태(값 노출 없음)
         run: |
@@ -103,7 +103,7 @@ jobs:
     env:
       CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: 릴리스 자산 내려받기
         shell: bash
         env: { GH_TOKEN: "${{ github.token }}" }
@@ -118,7 +118,7 @@ jobs:
           mkdir -p out/choco/nupkg
           choco pack out/choco/nexa-coffee/nexa-coffee.nuspec --version "$v" --outputdirectory out/choco/nupkg
           ls -l out/choco/nupkg
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with: { name: "chocolatey-${{ inputs.tag }}", path: out/choco/** }
       - name: choco push
         if: needs.guard.outputs.choco_go == 'true'
@@ -138,7 +138,7 @@ jobs:
     env:
       WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: 릴리스 자산 내려받기
         shell: bash
         env: { GH_TOKEN: "${{ github.token }}" }
@@ -161,7 +161,7 @@ jobs:
             40) echo "::warning::winget validate 경고(exit 40) — 위 내용 확인" ;;
             *)  echo "::error::winget validate 실패(exit $rc)"; exit "$rc" ;;
           esac
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with: { name: "winget-${{ inputs.tag }}", path: out/winget/** }
       # wingetcreate는 우리 포크의 master가 upstream과 맞지 않으면 "The forked repository could not be
       # synced with the upstream commits"로 제출을 거부한다. upstream은 릴리스 사이에 수천 커밋 나아가므로

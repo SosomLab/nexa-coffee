@@ -21,7 +21,7 @@ jobs:
     env:
       TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: 릴리스 자산 내려받기
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
@@ -38,7 +38,7 @@ jobs:
           ruby -c out/homebrew/Casks/nexa-coffee.rb
           ruby -c out/homebrew/Formula/nexa-coffee-portable.rb
           brew style out/homebrew/Casks/nexa-coffee.rb || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with: { name: "homebrew-${{ inputs.tag }}", path: out/homebrew/** }
       - name: 탭에 반영
         if: ${{ inputs.dry_run != true }}
