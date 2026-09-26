@@ -82,5 +82,9 @@ test: | build build/icons
 	cc -std=c99 -Wall -Wextra -O1 -o build/icon_dump test/icon_dump.c $(CORE)
 	./build/icon_dump build/icons
 
+# 스모크용 가짜 D-Bus 상대(워처 · logind) — scripts/linux-smoke.sh가 빌드해 쓴다. 배포물 아님.
+build/fake_peer: test/fake_peer.c src/plat/dbus.c src/plat/dbus.h src/core/coffee.h | build
+	cc -std=gnu99 -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -O1 -o $@ test/fake_peer.c src/core/util.c
+
 clean:
 	rm -rf build dist

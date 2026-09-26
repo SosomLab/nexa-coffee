@@ -20,11 +20,13 @@ x86은 64비트 나눗셈 헬퍼 때문에 `-lgcc`를 정적으로 붙인다.
 | --- | --- | --- |
 | 코어 단위 | `make test` | util · 표시 규칙 · 다음 변화 시각 · 메뉴 트리/클릭 · 설정 왕복 · 툴팁 · 아이콘 결정성/경계 |
 | 아이콘 육안 | `make test` → `build/icons/*.pam` | `magick x.pam -background '#1e1e1e' -flatten -filter point -resize 800% x.png` |
-| Linux D-Bus 계약 | `sh scripts/linux-smoke.sh dist/nexa-coffee` | 세션 버스 위에서 SNI 속성 · dbusmenu 레이아웃/속성 · Event 클릭 → 작업/설정 · 종료 |
+| Linux D-Bus 계약 | `sh scripts/linux-smoke.sh dist/nexa-coffee` | 전용 세션·시스템 버스 위에서 SNI 속성(16/22/44 픽스맵) · dbusmenu 레이아웃/속성 · Event 클릭 → 작업/설정 · **가짜 워처**(늦게 등장 · 재시작 · Register 응답 전 GetAll) · **가짜 logind**(Inhibit fd 수신·해제 · 덮개 거부 시 `sleep:idle` 재시도 · 전부 거부돼도 동작) · 실행 시 자동 시작 · 종료 (약 1.5초) |
 | macOS 실기 | `make app && open "dist/Nexa Coffee.app"` — **확인 뒤 `make clean`**(dist 번들이 설치본과 함께 Launchpad에 보인다 · 09-13) | 메뉴바 아이콘 · `pmset -g assertions \| grep Coffee` · `ps -o rss` · 창 확인은 `NEXA_COFFEE_SHOW=custom\|auto\|about dist/nexa-coffee` |
 | Windows 실기 | exe 실행 | 트레이 · 우클릭 메뉴 · `powercfg /requests`(SYSTEM/DISPLAY에 nexa-coffee). 사람 손이 필요한 둘은 ↓ [실기 점검표](#사람이-해야-하는-실기-점검windows) |
 
-`linux-smoke.sh`는 시스템 세션 버스를 쓰지 않고 `scripts/dbus-test.conf`로 전용 dbus-daemon을 띄운다(macOS launchd·CI 컨테이너 공통). macOS는 `brew install dbus`.
+`linux-smoke.sh`는 실제 세션·시스템 버스를 쓰지 않고 `scripts/dbus-test.conf`로 전용 dbus-daemon **둘**(세션 · 시스템)을 띄운다(macOS launchd·CI 컨테이너 공통). macOS는 `brew install dbus`.
+가짜 상대는 `test/fake_peer.c`(앱과 같은 `dbus.c`를 포함 · `make build/fake_peer`) — `watcher`는 GNOME AppIndicator 순서를, `login1 allow|deny-lid|deny-all`은 polkit 허용/거부를 흉내 낸다.
+HOME·XDG·버스·로그를 전부 `mktemp -d` 한 폴더에 가두고 끝나면 지우므로, 같은 PC에서 **다른 앱의 자동 시험이나 설치된 nexa-coffee와 겹치지 않는다**(실제 logind 억제도 잡지 않는다 — 09-26 이전 스모크는 실제 시스템 버스에 붙었다).
 Docker가 있으면 `scripts/linux-docker.sh`가 Linux 컨테이너에서 빌드+정적+스모크를 한 번에 돌린다.
 
 ## 사람이 해야 하는 실기 점검(Windows)
