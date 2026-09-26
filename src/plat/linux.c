@@ -775,7 +775,9 @@ int main(void)
         st = poll(p, 3, timeout);
         if (st < 0) continue; /* EINTR */
         if (dlg_fd >= 0 && p[2].revents) {
-            ssize_t n = read(dlg_fd, dlg_buf + dlg_len, sizeof dlg_buf - 1 - dlg_len);
+            /* 남은 칸을 먼저 확인한다 — 버퍼가 차면 읽지 않고 끝낸다(glibc FORTIFY가 길이 음수 가능성을 경고하던 자리) */
+            u32 room = dlg_len < sizeof dlg_buf - 1 ? (u32)(sizeof dlg_buf - 1 - dlg_len) : 0;
+            ssize_t n = room ? read(dlg_fd, dlg_buf + dlg_len, room) : 0;
             if (n > 0) dlg_len += (u32)n;
             if (n <= 0 || dlg_len >= sizeof dlg_buf - 1) dialog_finish();
         }
