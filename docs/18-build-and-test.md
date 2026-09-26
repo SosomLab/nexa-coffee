@@ -21,6 +21,7 @@ x86은 64비트 나눗셈 헬퍼 때문에 `-lgcc`를 정적으로 붙인다.
 | 코어 단위 | `make test` | util · 표시 규칙 · 다음 변화 시각 · 메뉴 트리/클릭 · 설정 왕복 · 툴팁 · 아이콘 결정성/경계 |
 | 아이콘 육안 | `make test` → `build/icons/*.pam` | `magick x.pam -background '#1e1e1e' -flatten -filter point -resize 800% x.png` |
 | Linux D-Bus 계약 | `sh scripts/linux-smoke.sh dist/nexa-coffee` | 전용 세션·시스템 버스 위에서 SNI 속성(16/22/44 픽스맵) · dbusmenu 레이아웃/속성 · Event 클릭 → 작업/설정 · **가짜 워처**(늦게 등장 · 재시작 · Register 응답 전 GetAll) · **가짜 logind**(Inhibit fd 수신·해제 · 덮개 거부 시 `sleep:idle` 재시도 · 전부 거부돼도 동작) · 실행 시 자동 시작 · 종료 (약 1.5초) |
+| Linux 설치 스크립트 | `sh scripts/test-install.sh dist/nexa-coffee` | 임시 prefix·XDG에서 `install.sh`/`uninstall.sh` — Exec 절대 경로 · 옛 아이콘 캐시 갱신(다른 앱 항목 유지 · 도구 없으면 hicolor 시각 갱신) · `--autostart` 항목(재설치 중복 없음) · 다른 설치를 가리키는 자동 실행 항목 보존 · 제거 |
 | macOS 실기 | `make app && open "dist/Nexa Coffee.app"` — **확인 뒤 `make clean`**(dist 번들이 설치본과 함께 Launchpad에 보인다 · 09-13) | 메뉴바 아이콘 · `pmset -g assertions \| grep Coffee` · `ps -o rss` · 창 확인은 `NEXA_COFFEE_SHOW=custom\|auto\|about dist/nexa-coffee` |
 | Windows 실기 | exe 실행 | 트레이 · 우클릭 메뉴 · `powercfg /requests`(SYSTEM/DISPLAY에 nexa-coffee). 사람 손이 필요한 둘은 ↓ [실기 점검표](#사람이-해야-하는-실기-점검windows) |
 

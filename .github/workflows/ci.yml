@@ -18,6 +18,8 @@ jobs:
         run: make static
       - name: Linux D-Bus 스모크(세션 버스 · SNI · dbusmenu · 클릭)
         run: sh scripts/linux-smoke.sh dist/nexa-coffee
+      - name: Linux 설치 스크립트(install.sh · uninstall.sh · --autostart · 아이콘 캐시)
+        run: sh scripts/test-install.sh dist/nexa-coffee
       - name: Windows 크로스 빌드(mingw · CRT 미링크)
         run: make win
       - name: 크기 예산(초경량 회귀 검사)

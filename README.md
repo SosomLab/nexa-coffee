@@ -50,7 +50,7 @@ Linux는 libdbus 없이 D-Bus를 직접 말하며(musl 정적 · libc 하나), m
 | --- | --- | --- |
 | Windows | `winget install SosomLab.NexaCoffee` · `choco install nexa-coffee` | `nexa-coffee-<v>-windows-x64.zip`(x86도 있음) → `nexa-coffee-x64.exe` 실행 · 시작 프로그램은 `Win+R` → `shell:startup`에 바로가기 |
 | macOS | `brew install --cask kiros33/tap/nexa-coffee` | `nexa-coffee-<v>-macos-universal.zip` → `xattr -dr com.apple.quarantine "Nexa Coffee.app"` 후 응용 프로그램 폴더로 · 로그인 항목에 추가 |
-| Linux | `brew install kiros33/tap/nexa-coffee-portable` | `nexa-coffee-<v>-linux-x64.tar.gz` → `./install.sh`(~/.local) · 트레이 호스트 필요(KDE 기본 · GNOME은 AppIndicator 확장) |
+| Linux | `brew install kiros33/tap/nexa-coffee-portable` | `nexa-coffee-<v>-linux-x64.tar.gz` → `./install.sh`(~/.local) · 로그인 시 자동 실행은 `./install.sh --autostart` · 트레이 호스트 필요(KDE 기본 · GNOME은 AppIndicator 확장) |
 
 winget·Chocolatey는 첫 제출 후 커뮤니티 검수(며칠)를 거쳐야 검색된다. 채널 구성은 [`packaging/`](packaging/README.md).
 
