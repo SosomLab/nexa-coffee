@@ -1,5 +1,6 @@
 # DEVLOG — 날짜별 요약(최신 위)
 
+- **2026-09-26** — Linux(GNOME) 설치본 점검 ✅(트레이·logind/GNOME 억제·해제·144 kB). 앱 목록 누락 = Exec PATH 미탐 + 옛 hicolor 캐시 → `install.sh` 수정. choco 0.1.0이 09-21 Requirement(`<copyright>`)로 또 우리 차례였다 → nuspec 수정 후 재제출(Updated · 재스캔). winget #436346 승인 대기. → [journal](journal/2026-09-26.md)
 - **2026-09-17 (2차)** — Windows 실기: **T-14 ✅ 종료**(메뉴→자식 프로세스 입력 창→Enter→파이프→작업 시작을 powercfg·메뉴로 확인) · T-2 powercfg·메뉴 라디오·**1초 갱신**(59:58→59:54) ✅ · T-11 Windows ✅(CJK 메뉴·언어 메뉴·입력 창 라벨 폭). 남음: 아이콘 DPI·TaskbarCreated(둘 다 세션 조작 필요) · macOS T-11. 신규 T-18(대기 중 DPI 변경 시 아이콘 미갱신). → [journal](journal/2026-09-17.md)
 - **2026-09-17 (1차)** — winget·choco가 막힌 건 대기가 아니라 **우리 차례**였다. winget 설치 검증 실패 = **x86 zip만** Defender 오탐(`Trojan:Win32/Tecabans.STV!cl`) → PE 버전 리소스 넣고 **v0.1.1 릴리스**, 릴리스 자산으로 x86 설치 성공 → **PR #436346 검증 통과**. choco는 `iconUrl`→jsDelivr 고쳐 0.1.0 재제출. 파이프라인 버그 3건(validate exit 40 · 가드가 미승인을 승인으로 오판 → 403 · 포크 미동기화) 수정 · T-16·T-17 해소. → [journal](journal/2026-09-17.md)
 - **2026-09-13 (14차)** — Windows 실기: DR-14 자식 창 ✅ · T-13 ✅(부모 모듈 37→25 · 코덱/TSF 제거 실측) · MSVC 30,720 B green. `lang=en`은 사용자 선택. → [journal](journal/2026-09-13.md#14차--windows에서-dr-14자식-프로세스-창t-13-실기-검증--v010-릴리스-확인-사용자-요청--windows-pc)

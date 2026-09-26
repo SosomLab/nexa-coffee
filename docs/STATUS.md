@@ -1,5 +1,12 @@
 # STATUS — 지금 상태
 
+## 09-26 — Linux 설치본 점검 · 앱 목록 누락 수정 · choco 0.1.0 재제출 (사용자 요청)
+
+- **Linux 실기**(GNOME 50 · v0.1.1 릴리스 설치본): 트레이 등록 · 1시간 시작 시 logind + GNOME 억제 · 끄기 시 해제 · 동작 아이콘 ✅.
+- **앱 목록에 안 보이던 문제**: `.desktop`의 `Exec=nexa-coffee`를 셸 PATH에서 못 찾아 GLib이 숨김 + 옛 `icon-theme.cache` → `install.sh`가 절대 경로·캐시 갱신(다음 릴리스부터).
+- **choco**: 09-21 모더레이터 Requirement(`<copyright>`)가 걸려 있었다 → 수정 후 0.1.0 재제출(`Updated` · 재스캔 중). **winget** #436346 승인 대기.
+- 상세: [journal/2026-09-26](journal/2026-09-26.md).
+
 ## 09-17 (2차) — Windows 실기: T-14 종료 · T-2/T-11 대부분 해소 (사용자 요청)
 
 - **방법**: 릴리스 v0.1.1 x64 자산 실행 + 부모 창에 `WM_TRAYICON`을 직접 post해 메뉴를 띄우고 팝업을 캡처(사람 클릭 없이). 설정은 백업 후 복원.
