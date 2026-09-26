@@ -46,6 +46,7 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux · homebrew
 
 ## 4. 작업 규약
 
+- **응답은 한글로 한다**(사용자 요청 09-26). 코드·명령·식별자·로그 원문은 그대로 둔다.
 - 문서·커밋/푸시 규약 SSOT = [docs/16](docs/16-doc-git-conventions.md). 기록: journal 상세 → DEVLOG 요약 → STATUS/TODO.
 - **큰 단위 = 브랜치, 세부 = 커밋. push·태그는 사용자 명시 요청 시에만.** `git add <파일>`만(`-A`·`.` 금지).
 - 🔴 push 전: `make test` · `make win` · `sh scripts/linux-smoke.sh`(brew dbus) · macOS `make app` 실행 확인. Linux PC에는 mingw/musl이 없어 `make win`·`make app`은 CI(`gh run watch`)로 대신한다. 크기 예산(CI): Windows ≤ 64KB · Linux 정적 ≤ 128KB · macOS 유니버설 ≤ 256KB.
