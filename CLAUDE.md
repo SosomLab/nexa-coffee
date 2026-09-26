@@ -2,6 +2,12 @@
 
 > 다른 PC에서 clone 시 즉시 컨텍스트를 복원하기 위한 휴대용 메모리. **먼저 읽기:** [docs/STATUS.md](docs/STATUS.md) → [docs/10-decision-record.md](docs/10-decision-record.md).
 
+## 0. 응답 언어 — 🔴 항상 한글
+
+- **사용자에게 보이는 모든 글은 한글로 쓴다** — 최종 보고 · 중간 진행 안내 · 질문 · 표 · 요약 전부(사용자 요청 09-26 · 두 번 요청됨).
+- 코드 · 명령 · 파일 경로 · 식별자 · 로그/오류 원문만 그대로 둔다. 커밋 메시지·문서도 기존대로 한글.
+- 긴 작업 끝의 보고에서 영어로 돌아가는 일이 있었다 — 보내기 전에 언어를 확인한다.
+
 ## 1. 이 프로젝트는
 
 **Nexa Coffee** = 트레이/메뉴바 절전 방지 타이머(Windows · macOS · Linux). **순수 C · 프레임워크 0 · 외부 라이브러리 0 · 극단적 최소화**.
@@ -46,7 +52,6 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux · homebrew
 
 ## 4. 작업 규약
 
-- **응답은 한글로 한다**(사용자 요청 09-26). 코드·명령·식별자·로그 원문은 그대로 둔다.
 - 문서·커밋/푸시 규약 SSOT = [docs/16](docs/16-doc-git-conventions.md). 기록: journal 상세 → DEVLOG 요약 → STATUS/TODO.
 - **큰 단위 = 브랜치, 세부 = 커밋. push·태그는 사용자 명시 요청 시에만.** `git add <파일>`만(`-A`·`.` 금지).
 - 🔴 push 전: `make test` · `make win` · `sh scripts/linux-smoke.sh`(brew dbus) · macOS `make app` 실행 확인. Linux PC에는 mingw/musl이 없어 `make win`·`make app`은 CI(`gh run watch`)로 대신한다. 크기 예산(CI): Windows ≤ 64KB · Linux 정적 ≤ 128KB · macOS 유니버설 ≤ 256KB.
