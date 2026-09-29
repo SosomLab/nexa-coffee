@@ -1,5 +1,12 @@
 # STATUS — 지금 상태
 
+## 09-29 — choco 0.1.0 승인 · 0.1.2 제출 (사용자 요청 · Windows PC)
+
+- **새 버전 불필요** — v0.1.2 이후 변경은 문서뿐(코드·패키징 무변경).
+- **choco 0.1.0 Approved**(09-28 · virtualex · 스캔 Exempted) → **0.1.2 제출**: `publish-windows-packages` `tag=v0.1.2 channels=choco force=true` success · push 성공 · 모더레이션 중.
+- winget #436346(0.1.1) 여전히 머지 대기 · brew 0.1.2.
+- 상세: [journal/2026-09-29](journal/2026-09-29.md).
+
 ## 09-26 — v0.1.2 배포 · v0.1.1 Linux 크래시(T-19) 발견·수정 · Linux PC 개발·자동화 (사용자 요청 · Linux VM)
 
 - **[v0.1.2](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.2) 배포** — brew 탭 ✅ · winget(#436346 0.1.1 머지 대기)·choco(0.1.0 재스캔 중)는 가드가 건너뜀. choco는 0.1.0 승인 뒤 **0.1.2를 force로**(0.1.1 건너뜀).

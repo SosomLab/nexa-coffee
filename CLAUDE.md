@@ -14,7 +14,7 @@
 
 - 조직: SosomLab · 개발자: Sangyong Bae · kiros33@gmail.com · 저장소: <https://github.com/SosomLab/nexa-coffee>
 - 라이선스: **MIT**(누구나 무료 — nexa-shortcut과 동일. beep/clip/dir2의 PolyForm NC와 **다르다**).
-- 현 단계: **v0.1.2 배포됨(09-26)** — Release · brew 탭 ✓ · winget [PR #436346](https://github.com/microsoft/winget-pkgs/pull/436346)(0.1.1) 머지 대기 · choco 0.1.0 모더레이션 대기(승인 뒤 0.1.2를 force로). 0.1.2 = **T-19**(Linux 늦게 뜬 트레이 워처 SIGSEGV) 수정 · 16px · Windows 배율 · install.sh.
+- 현 단계: **v0.1.2 배포됨(09-26)** — Release · brew 탭 ✓ · winget [PR #436346](https://github.com/microsoft/winget-pkgs/pull/436346)(0.1.1) 머지 대기 · choco **0.1.0 승인(09-28)** · 0.1.2 제출(09-29 · 모더레이션 중). 0.1.2 = **T-19**(Linux 늦게 뜬 트레이 워처 SIGSEGV) 수정 · 16px · Windows 배율 · install.sh.
   - **Windows 실기 사실상 완료**(09-13·09-17): 트레이·툴팁·메뉴 라디오·열린 메뉴 1초 갱신·`powercfg`·i18n(CJK·언어 메뉴·입력 창 라벨 폭)·T-13 메모리·**DR-14 파이프 끝단**. 남은 둘(아이콘 DPI·TaskbarCreated)은 화면 배율·셸을 건드려야 해 [18 실기 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows)로 넘겼다.
   - **v1은 코드 서명이 없다** — SmartScreen·Gatekeeper 경고의 원인이자, 0.1.0 x86이 Defender 오탐(`Trojan:Win32/Tecabans.STV!cl`)으로 격리된 근본 원인. 0.1.1에서 **PE 버전 리소스**를 넣어 완화했다(09-17 실측: 0.1.0 x86 격리 / 0.1.1 x86 통과).
 
@@ -60,7 +60,7 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux · homebrew
 
 ## 5. 다음 단계
 
-0. **채널 마무리(T-6)** — winget #436346(0.1.1) 머지 대기 → 머지되면 0.1.2 제출. choco는 0.1.0 승인 뒤 **0.1.2를 `publish-windows-packages` `tag=v0.1.2 channels=choco force=true`로**(가드는 직전 태그 0.1.1을 보는데 0.1.1은 안 올렸다). 검수 상태는 공개 API가 없어 choco는 패키지 페이지 HTML(며칠마다 확인), winget은 PR 라벨로 본다.
+0. **채널 마무리(T-6)** — winget #436346(0.1.1) 머지 대기 → 머지되면 0.1.2 제출. choco는 0.1.0 승인(09-28) 뒤 **0.1.2 제출 완료(09-29 · `channels=choco force=true`)** → 승인 추적 · Requirement가 오면 같은 버전 force 재push. 검수 상태는 공개 API가 없어 choco는 패키지 페이지 HTML(며칠마다 확인), winget은 PR 라벨로 본다.
 1. **v0.1.2 실기 확인(사람)** — Linux: GNOME 패널 16px 숫자 선명도 · AppIndicator 확장 끄고 켜기/재로그인(`--autostart`)에서 트레이 복귀(T-19). Windows: [18 실기 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows)(배율 → T-18 · TaskbarCreated).
 2. macOS — 언어 메뉴 실기(T-11) · 화면보호기 실측(T-4). Linux — KDE Plasma · 입력 창 실제 클릭(T-3).
 3. 결정 대기 — 앱 메뉴 "로그인 시 실행" 토글(T-5 · 3-OS) · 툴팁 종료 시각(T-8) · cask DSL(T-15). ja/zh 원어민 검토(T-12).
