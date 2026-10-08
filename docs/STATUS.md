@@ -4,6 +4,7 @@
 
 - **무엇**: nexa-sql 방식 이식 — `packaging/linux/build-pkgs.sh` · `.github/workflows/linux-packages.yml`(release.yml이 호출 · 수동 = 기존 태그 덧붙이기) · SosomLab/linux-repo `apps/nexa-coffee.toml`.
 - **설치(등록 후)**: `sudo apt install nexa-coffee` / `sudo dnf install nexa-coffee` — 저장소 등록 명령은 <https://pkg.sosomlab.com/>.
+- **결과**: v0.1.2 .deb·.rpm 덧붙임 ✅ · pkg.sosomlab.com APT·RPM 색인에 nexa-coffee 0.1.2 ✅. 다음 태그부터 자동. **남음**: 실제 배포판에서 apt/dnf 설치 실기.
 - 상세: [journal/2026-10-09](journal/2026-10-09.md).
 
 ## 09-29 — choco 0.1.0 승인 · 0.1.2 제출 (사용자 요청 · Windows PC)
