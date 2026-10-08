@@ -9,9 +9,10 @@
 | winget | `winget/*.yaml` → microsoft/winget-pkgs PR(`SosomLab.NexaCoffee` · 포터블 zip) | `publish-windows-packages.yml` | 변수 `WINGET_PUBLISH=true` + 시크릿 `WINGET_TOKEN` · 열린 PR 있으면 대기 · `channels`로 채널 선택 |
 | Chocolatey | `choco/` → `choco push`(`nexa-coffee` · 포터블 zip · `.gui` shim) | 〃 | 변수 `CHOCO_PUSH=true` + 시크릿 `CHOCO_API_KEY` · 직전 버전 미공개면 대기 |
 | macOS .app | `macos/Info.plist` + `macos/make-app.sh` — LSUIElement · ad-hoc 서명 · LSEnvironment(MallocSpaceEfficient) | release | — |
-| Linux | `linux/nexa-coffee.desktop` + `install.sh`/`uninstall.sh`(~/.local) | release | — |
+| Linux tar.gz | `linux/nexa-coffee.desktop` + `install.sh`/`uninstall.sh`(~/.local) | release | — |
+| Linux APT · RPM(pkg.sosomlab.com) | `linux/build-pkgs.sh` — tar.gz 안 바이너리 그대로 `.deb`·`.rpm` 포장 → 릴리스에 덧붙임 → `SosomLab/linux-repo`(`apps/nexa-coffee.toml`)에 발행 신호 | `linux-packages.yml`(release가 호출 · 수동 = 기존 태그에 덧붙이기) | 시크릿 `LINUX_REPO_DISPATCH_TOKEN`(없으면 linux-repo 하루 1회 정기 실행) |
 
-설치 명령: `brew install --cask kiros33/tap/nexa-coffee` · `brew install kiros33/tap/nexa-coffee-portable`(Linux) · `winget install SosomLab.NexaCoffee` · `choco install nexa-coffee`.
+설치 명령: `brew install --cask kiros33/tap/nexa-coffee` · `brew install kiros33/tap/nexa-coffee-portable`(Linux) · `sudo apt install nexa-coffee` / `sudo dnf install nexa-coffee`(pkg.sosomlab.com 등록 후) · `winget install SosomLab.NexaCoffee` · `choco install nexa-coffee`.
 
 로컬 점검: 릴리스와 같은 이름의 자산을 한 폴더에 두고 `./packaging/render-manifests.sh 0.1.1 assets out` → `ruby -c out/homebrew/Casks/nexa-coffee.rb`. 수동 재제출은 각 워크플로의 `workflow_dispatch`(tag 입력).
 

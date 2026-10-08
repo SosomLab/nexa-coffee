@@ -1,6 +1,6 @@
 # release — `v*` 태그 push → 5 산출물 + SHA256SUMS + GitHub Release 공개. (nexa-shortcut/nexa-clip 정책 계승)
 # 산출물: macOS universal .app zip · Windows x64/x86 zip(mingw) · Linux x64 tar.gz(musl 정적).
-# 릴리스 공개 뒤 homebrew.yml(탭 갱신) · publish-windows-packages.yml(winget PR · choco push)을 이어서 부른다(nexa-clip 정책).
+# 릴리스 공개 뒤 homebrew.yml(탭 갱신) · publish-windows-packages.yml(winget PR · choco push) · linux-packages.yml(.deb·.rpm → pkg.sosomlab.com)을 이어서 부른다.
 name: release
 on:
   push:
@@ -102,6 +102,14 @@ jobs:
     needs: [meta, publish]
     if: startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/publish-windows-packages.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets: inherit
+
+  linux-packages:
+    needs: [meta, publish]
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/linux-packages.yml
     with:
       tag: ${{ github.ref_name }}
     secrets: inherit

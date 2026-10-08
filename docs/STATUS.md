@@ -1,5 +1,11 @@
 # STATUS — 지금 상태
 
+## 10-09 1차 — Linux APT·RPM 저장소(pkg.sosomlab.com) 채널 (사용자 요청)
+
+- **무엇**: nexa-sql 방식 이식 — `packaging/linux/build-pkgs.sh` · `.github/workflows/linux-packages.yml`(release.yml이 호출 · 수동 = 기존 태그 덧붙이기) · SosomLab/linux-repo `apps/nexa-coffee.toml`.
+- **설치(등록 후)**: `sudo apt install nexa-coffee` / `sudo dnf install nexa-coffee` — 저장소 등록 명령은 <https://pkg.sosomlab.com/>.
+- 상세: [journal/2026-10-09](journal/2026-10-09.md).
+
 ## 09-29 — choco 0.1.0 승인 · 0.1.2 제출 (사용자 요청 · Windows PC)
 
 - **새 버전 불필요** — v0.1.2 이후 변경은 문서뿐(코드·패키징 무변경).
