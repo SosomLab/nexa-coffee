@@ -1,10 +1,11 @@
 # STATUS — 지금 상태
 
-## 10-09 1차 — Linux APT·RPM 저장소(pkg.sosomlab.com) 채널 (사용자 요청)
+## 10-09 — Linux APT·RPM 저장소(pkg.sosomlab.com) 채널 · choco 0.1.2 승인 (사용자 요청 · Mac)
 
-- **무엇**: nexa-sql 방식 이식 — `packaging/linux/build-pkgs.sh` · `.github/workflows/linux-packages.yml`(release.yml이 호출 · 수동 = 기존 태그 덧붙이기) · SosomLab/linux-repo `apps/nexa-coffee.toml`.
-- **설치(등록 후)**: `sudo apt install nexa-coffee` / `sudo dnf install nexa-coffee` — 저장소 등록 명령은 <https://pkg.sosomlab.com/>.
-- **결과**: v0.1.2 .deb·.rpm 덧붙임 ✅ · pkg.sosomlab.com APT·RPM 색인에 nexa-coffee 0.1.2 ✅. 다음 태그부터 자동. **남음**: 실제 배포판에서 apt/dnf 설치 실기.
+- **pkg.sosomlab.com ✅** — nexa-sql 방식 이식: `packaging/linux/build-pkgs.sh`(릴리스 tar.gz 바이너리 → .deb·.rpm) · `linux-packages.yml`(release.yml이 호출 · 수동 = 기존 태그 덧붙이기) · SosomLab/linux-repo `apps/nexa-coffee.toml`. v0.1.2에 덧붙여 APT·RPM 색인 반영 확인. 다음 태그부터 자동.
+- 설치: 저장소 등록(<https://pkg.sosomlab.com/>) 후 `sudo apt install nexa-coffee` / `sudo dnf install nexa-coffee`.
+- **choco 0.1.2 Approved ✅** · winget #436346(0.1.1) 여전히 머지 대기.
+- **남음**: 실제 배포판에서 apt/dnf 설치 실기(T-20 · 사람).
 - 상세: [journal/2026-10-09](journal/2026-10-09.md).
 
 ## 09-29 — choco 0.1.0 승인 · 0.1.2 제출 (사용자 요청 · Windows PC)

@@ -20,7 +20,7 @@
 
 1. `docs/releases/v<버전>.md`에 바뀐 점을 쓴다(사용자에게 보이는 말로) — `release.yml`이 릴리스 본문 맨 위에 싣는다. 없으면 공통 안내(서명 없음)만 실린다.
 2. `VERSION`을 올려 커밋 → main push → CI green.
-3. `git tag v<버전> && git push origin v<버전>` → release → homebrew · publish-windows-packages가 이어서 돈다(검수 대기 중인 채널은 가드가 건너뛴다).
+3. `git tag v<버전> && git push origin v<버전>` → release → homebrew · publish-windows-packages · linux-packages(.deb·.rpm 덧붙임 → pkg.sosomlab.com)가 이어서 돈다(검수 대기 중인 채널은 가드가 건너뛴다).
 
 ## 검수 지적을 고쳐 다시 올릴 때
 

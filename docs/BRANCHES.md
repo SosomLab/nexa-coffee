@@ -2,6 +2,8 @@
 
 | 브랜치 | 생성 | 병합 | 커밋 수 | 요약 |
 | --- | --- | --- | --- | --- |
+| docs/1009-consolidate | 2026-10-09 | 2026-10-09 → main(ff) | 1 | 10-09 진행사항 최신화 — journal 정리(설계표·결과·채널 상태) · STATUS/DEVLOG 압축 · TODO(T-6 · T-20) · MILESTONES M5 · CLAUDE.md · choco 0.1.2 승인 반영 |
+| feat/linux-repo | 2026-10-09 | 2026-10-09 → main(ff · rebase 후) | 2 | pkg.sosomlab.com(APT·RPM) 채널 — `build-pkgs.sh` · `linux-packages.yml`(release.yml이 호출) · v0.1.2 덧붙임 · 결과 기록 |
 | docs/0929-choco-012 | 2026-09-29 | 2026-09-29 → main(ff) | 1 | choco 0.1.0 승인(09-28) · 0.1.2 제출 기록 · 새 버전 불필요 판단 |
 | docs/0926-consolidate | 2026-09-26 | 2026-09-26 → main(ff) | 1 | 09-26 진행사항 최신화 — journal 제목·1차 절·마무리 절 · STATUS/DEVLOG 한 항목으로 압축 · MILESTONES(M3·M4·M5) |
 | feat/linux-autostart-release-notes | 2026-09-26 | 2026-09-26 → main(ff) | 3 | Linux `install.sh --autostart` · `test-install.sh` CI · 릴리스 본문 `docs/releases/<태그>.md` · v0.1.2 노트 초안 |

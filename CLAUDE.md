@@ -14,7 +14,7 @@
 
 - 조직: SosomLab · 개발자: Sangyong Bae · kiros33@gmail.com · 저장소: <https://github.com/SosomLab/nexa-coffee>
 - 라이선스: **MIT**(누구나 무료 — nexa-shortcut과 동일. beep/clip/dir2의 PolyForm NC와 **다르다**).
-- 현 단계: **v0.1.2 배포됨(09-26)** — Release · brew 탭 ✓ · winget [PR #436346](https://github.com/microsoft/winget-pkgs/pull/436346)(0.1.1) 머지 대기 · choco **0.1.0 승인(09-28)** · 0.1.2 제출(09-29 · 모더레이션 중). 0.1.2 = **T-19**(Linux 늦게 뜬 트레이 워처 SIGSEGV) 수정 · 16px · Windows 배율 · install.sh.
+- 현 단계: **v0.1.2 배포됨(09-26)** — Release · brew 탭 ✓ · choco **0.1.2 승인 ✓(10-09 확인)** · **pkg.sosomlab.com APT·RPM ✓(10-09 · SosomLab/linux-repo)** · winget [PR #436346](https://github.com/microsoft/winget-pkgs/pull/436346)(0.1.1) 머지 대기. 0.1.2 = **T-19**(Linux 늦게 뜬 트레이 워처 SIGSEGV) 수정 · 16px · Windows 배율 · install.sh.
   - **Windows 실기 사실상 완료**(09-13·09-17): 트레이·툴팁·메뉴 라디오·열린 메뉴 1초 갱신·`powercfg`·i18n(CJK·언어 메뉴·입력 창 라벨 폭)·T-13 메모리·**DR-14 파이프 끝단**. 남은 둘(아이콘 DPI·TaskbarCreated)은 화면 배율·셸을 건드려야 해 [18 실기 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows)로 넘겼다.
   - **v1은 코드 서명이 없다** — SmartScreen·Gatekeeper 경고의 원인이자, 0.1.0 x86이 Defender 오탐(`Trojan:Win32/Tecabans.STV!cl`)으로 격리된 근본 원인. 0.1.1에서 **PE 버전 리소스**를 넣어 완화했다(09-17 실측: 0.1.0 x86 격리 / 0.1.1 x86 통과).
 
@@ -24,6 +24,7 @@
 | --- | --- | --- |
 | **nexa-shortcut** | `../kiros33/nexa-shortcut` | ★ 초경량 원칙 — CRT 미링크 · `-nostdlib` · 진입점 `start` · Makefile/build.bat · 크기 예산 CI · winget/choco 포터블 |
 | **nexa-clip** | `../kiros33/nexa-clip` | 트레이 계약 — SNI 속성 · dbusmenu 레이아웃(`nclip-plat/src/tray.rs::sni`) · macOS NSStatusItem · 패키징/릴리스 워크플로 · 문서 규약(docs/16) |
+| **nexa-sql · linux-repo** | `../kiros33/nexa-sql` · `../kiros33/linux-repo` | pkg.sosomlab.com(APT·RPM) — 등록 `apps/nexa-coffee.toml` · deb/rpm 포장(`packaging/linux/build-pkgs.sh`) · 발행 신호(`linux-packages.yml`) |
 | **nexa-beep / nexa-dir2** | `../kiros33/…` | 브랜딩 계열 규칙(라운드 스퀘어 rx 232 · 세로 그라디언트) · 문서 4층 체계 |
 
 ## 2. 확정 결정(요약 — 전문 [docs/10](docs/10-decision-record.md))
@@ -47,7 +48,7 @@
 src/core/   coffee.h · util.c · timer.c · font.c · draw.c · icon_idle.c · icon_active.c · app.c   ← 플랫폼 비종속
 src/plat/   win.c(Win32 · CRT 없음) · mac.m(AppKit+IOKit) · linux.c(SNI·dbusmenu·억제) · dbus.c/h(미니 D-Bus)
 test/       test_core.c(단위) · icon_dump.c(PAM 덤프)     scripts/  linux-smoke.sh(D-Bus 계약) · dbus-test.conf · linux-docker.sh
-packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux · homebrew · winget · choco
+packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux(tar.gz 설치 스크립트 · build-pkgs.sh = deb/rpm) · homebrew · winget · choco
 ```
 
 ## 4. 작업 규약
@@ -60,7 +61,7 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux · homebrew
 
 ## 5. 다음 단계
 
-0. **채널 마무리(T-6)** — winget #436346(0.1.1) 머지 대기 → 머지되면 0.1.2 제출. choco는 0.1.0 승인(09-28) 뒤 **0.1.2 제출 완료(09-29 · `channels=choco force=true`)** → 승인 추적 · Requirement가 오면 같은 버전 force 재push. 검수 상태는 공개 API가 없어 choco는 패키지 페이지 HTML(며칠마다 확인), winget은 PR 라벨로 본다.
+0. **채널 마무리(T-6)** — winget #436346(0.1.1) 머지 대기 → 머지되면 0.1.2 제출. choco 0.1.2 · pkg.sosomlab.com은 끝(다음 태그부터 release.yml이 brew·winget·choco·linux-packages를 모두 부른다). 남은 사람 손: pkg.sosomlab.com apt/dnf 설치 실기(T-20). winget 검수는 PR 라벨로 본다.
 1. **v0.1.2 실기 확인(사람)** — Linux: GNOME 패널 16px 숫자 선명도 · AppIndicator 확장 끄고 켜기/재로그인(`--autostart`)에서 트레이 복귀(T-19). Windows: [18 실기 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows)(배율 → T-18 · TaskbarCreated).
 2. macOS — 언어 메뉴 실기(T-11) · 화면보호기 실측(T-4). Linux — KDE Plasma · 입력 창 실제 클릭(T-3).
 3. 결정 대기 — 앱 메뉴 "로그인 시 실행" 토글(T-5 · 3-OS) · 툴팁 종료 시각(T-8) · cask DSL(T-15). ja/zh 원어민 검토(T-12).

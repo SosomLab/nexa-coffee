@@ -1,6 +1,6 @@
 # DEVLOG — 날짜별 요약(최신 위)
 
-- **2026-10-09 (1차)** — pkg.sosomlab.com(APT·RPM) 채널: `build-pkgs.sh`(tar.gz 바이너리 → .deb·.rpm) · `linux-packages.yml`(release가 호출 · 릴리스에 덧붙임 → linux-repo 신호) · linux-repo `apps/nexa-coffee.toml`. nexa-sql 이식. → [journal](journal/2026-10-09.md)
+- **2026-10-09** — **pkg.sosomlab.com(APT·RPM) 채널**: `build-pkgs.sh`(tar.gz 바이너리 → .deb·.rpm · 포장만) · `linux-packages.yml`(release.yml이 workflow_call — GITHUB_TOKEN 공개는 release 이벤트를 안 깨움) · linux-repo `apps/nexa-coffee.toml` · v0.1.2 덧붙임 → 색인 반영 ✅. **choco 0.1.2 승인** 확인. 로컬 main이 원격보다 뒤처져 rebase 후 push. → [journal](journal/2026-10-09.md)
 - **2026-09-29** — 배포 필요성 검토: v0.1.2 이후 문서만 바뀌어 새 버전 불필요. **choco 0.1.0 승인**(09-28) 확인 → **0.1.2 제출**(`channels=choco force=true` · 모더레이션 중). winget #436346 머지 대기. → [journal](journal/2026-09-29.md)
 - **2026-09-26** — **v0.1.2 배포**. Linux 설치본 점검 → 앱 목록 누락(Exec PATH · 옛 hicolor 캐시) 수정 · choco 0.1.0 `<copyright>` 재제출 · 스모크에 가짜 워처·logind(시스템 버스도 전용)를 붙이자 **v0.1.1 SIGSEGV(T-19: 늦게 뜬 트레이 워처)** 발견·수정 · T-10 16px · T-18 Windows 배율 · `install.sh --autostart` · `test-install.sh` · 릴리스 본문 노트 파일 · CI 액션 node24. → [journal](journal/2026-09-26.md)
 - **2026-09-17 (2차)** — Windows 실기: **T-14 ✅ 종료**(메뉴→자식 프로세스 입력 창→Enter→파이프→작업 시작을 powercfg·메뉴로 확인) · T-2 powercfg·메뉴 라디오·**1초 갱신**(59:58→59:54) ✅ · T-11 Windows ✅(CJK 메뉴·언어 메뉴·입력 창 라벨 폭). 남음: 아이콘 DPI·TaskbarCreated(둘 다 세션 조작 필요) · macOS T-11. 신규 T-18(대기 중 DPI 변경 시 아이콘 미갱신). → [journal](journal/2026-09-17.md)
