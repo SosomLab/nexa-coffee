@@ -1,5 +1,5 @@
 # release — `v*` 태그 push → 5 산출물 + SHA256SUMS + GitHub Release 공개. (nexa-shortcut/nexa-clip 정책 계승)
-# 산출물: macOS universal .app zip · Windows x64/x86 zip(mingw) · Linux x64 tar.gz(musl 정적).
+# 산출물: macOS universal .app zip · Windows x64/x86 zip(mingw) + 설치본 setup.exe(NSIS · DR-16) · Linux x64 tar.gz(musl 정적).
 # 릴리스 공개 뒤 homebrew.yml(탭 갱신) · publish-windows-packages.yml(winget PR · choco push) · linux-packages.yml(.deb·.rpm → pkg.sosomlab.com)을 이어서 부른다.
 name: release
 on:
@@ -33,7 +33,7 @@ jobs:
     env: { VERSION: "${{ needs.meta.outputs.version }}" }
     steps:
       - uses: actions/checkout@v5
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq musl-tools dbus gcc-mingw-w64 zip
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq musl-tools dbus gcc-mingw-w64 zip nsis
       - run: make test && make static && sh scripts/linux-smoke.sh dist/nexa-coffee && make win
       - name: 포장
         run: |
@@ -46,6 +46,16 @@ jobs:
           # zip 루트에 exe + LICENSE(-j: 경로 없이) — winget NestedInstallerFiles · choco unzip 모두 루트 기준
           zip -9 -j "out/nexa-coffee-$VERSION-windows-x64.zip" dist/nexa-coffee-x64.exe LICENSE
           zip -9 -j "out/nexa-coffee-$VERSION-windows-x86.zip" dist/nexa-coffee-x86.exe LICENSE
+      - name: Windows 설치본(NSIS · x64/x86 exe를 담은 setup.exe 하나)
+        run: |
+          set -e
+          mkdir -p build/nsis
+          cp dist/nexa-coffee-x64.exe dist/nexa-coffee-x86.exe packaging/branding/nexa-coffee.ico LICENSE build/nsis/
+          # VIProductVersion은 숫자 넷만 — 개발 빌드(0.0.0-dev.<sha>)도 VERSION 파일의 세 자리로 만든다
+          sed -e "s/@VERSION@/$VERSION/g" -e "s/@VIVERSION@/$(cat VERSION).0/g" packaging/windows/installer.nsi > build/nsis/installer.nsi
+          makensis -V2 -INPUTCHARSET UTF8 build/nsis/installer.nsi
+          mv "build/nsis/nexa-coffee-$VERSION-windows-setup.exe" out/
+          ls -la out/
       - uses: actions/upload-artifact@v6
         with: { name: out-linux-windows, path: out/* }
 
