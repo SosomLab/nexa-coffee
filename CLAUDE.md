@@ -43,7 +43,7 @@
 | DR-8 | 덮개 닫힘은 Windows·macOS에선 관리자 정책 영역 — 앱이 손대지 않고 문서에 명시. Linux만 logind로 막는다 |
 | DR-13 | i18n = 코어 문구 블록(언어당 NUL 구분 문자열 1개 · 포인터 테이블 없음). "언어 ▸" 메뉴에서 고른 뒤에만 `lang=` 저장, 아니면 OS 로케일 자동. **10-16 보강**: 서브메뉴 맨 위 "시스템 (OS 언어)"(id 29) — 고르면 `lang=` 제거 · OS 언어 변경을 Win/mac은 즉시 반영(Linux는 시작 시 고정) |
 | DR-15 | **로그인 시 실행** = 앱 메뉴 체크 토글(3-OS) + Windows 설치본 옵션. 설정에 저장하지 않고 **OS 상태**를 읽는다 — Win HKCU Run 값 `Nexa Coffee` · mac `~/Library/LaunchAgents/com.sosomlab.nexa-coffee.plist` · Linux `~/.config/autostart/nexa-coffee.desktop`(install.sh --autostart와 같은 파일) |
-| DR-16 | **Windows 설치본 = NSIS**(`packaging/windows/installer.nsi` · nexa-clip 이식) — 사용자 단위(HKCU · `%LOCALAPPDATA%\Programs\NexaCoffee`) · x64/x86 한 파일 · 실행 중 인스턴스는 WM_CLOSE로 종료. winget/choco는 포터블 유지(전환은 T-22 사용자 결정) |
+| DR-16 | **Windows 설치본 = NSIS**(`packaging/windows/installer.nsi` · nexa-clip 이식) — 사용자 단위(HKCU · `%LOCALAPPDATA%\Programs\NexaCoffee`) · x64/x86 한 파일 · 실행 중 인스턴스는 WM_CLOSE로 종료. **10-17 분리**: winget `SosomLab.NexaCoffee`·choco `nexa-coffee` = 설치본 / `SosomLab.NexaCoffee.Portable`·`nexa-coffee-portable` = 포터블 zip(`-portable.zip`) · 검수 대기 판정은 패키지별 |
 
 ## 3. 구조
 
