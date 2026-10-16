@@ -102,6 +102,7 @@ enum {
     CF_ID_STATUS,            /* 맨 위: 남은 시간(비활성 · 1초 갱신) */
     CF_ID_SEP0,
     CF_ID_LANG,              /* 서브메뉴: English / 한국어 / 日本語 / 中文 */
+    CF_ID_LOGIN,             /* 체크: 로그인 시 실행(DR-15 · 진실 원천 = OS 상태 · 설정에 저장 안 함) */
     CF_ID_AUTO_OFF = 20, CF_ID_AUTO_CUSTOM,
     CF_ID_LANG0 = 30         /* 30+CF_LANG_* */
 };
@@ -125,6 +126,8 @@ typedef struct {
     int cust_d, cust_h, cust_m; /* 사용자 지정 일·시·분(마지막 입력) */
     int auto_d, auto_h, auto_m; /* 실행 시 자동 시작 시간(전부 0 = 끔) */
     i64 remaining_s; /* 플랫폼이 메뉴를 만들기 전에 채운다(초 · 올림) */
+    int login_on;    /* 로그인 시 실행 — 플랫폼이 메뉴를 만들기 전에 OS 상태(Run 키 · LaunchAgent · autostart)에서 채운다.
+                        클릭하면 코어가 뒤집고 CF_ACT_LOGIN을 돌려주며, 플랫폼이 OS에 반영한다. 설정 파일엔 저장하지 않는다. */
 } CfApp;
 
 /* 클릭 결과 — 플랫폼이 수행. */
@@ -137,7 +140,8 @@ enum {
     CF_ACT_DIALOG_CUSTOM, /* 입력 창(CF_DLG_CUSTOM) 열기 */
     CF_ACT_DIALOG_AUTO,   /* 입력 창(CF_DLG_AUTO) 열기 */
     CF_ACT_ABOUT,         /* About 화면 */
-    CF_ACT_LANG           /* 언어 바뀜 — 저장 + 메뉴·툴팁 전부 다시 */
+    CF_ACT_LANG,          /* 언어 바뀜 — 저장 + 메뉴·툴팁 전부 다시 */
+    CF_ACT_LOGIN          /* 로그인 시 실행 토글 — app->login_on을 OS에 반영(등록/해제) · 설정 저장 없음 */
 };
 /* 입력 창 모드 */
 enum { CF_DLG_CUSTOM = 0, CF_DLG_AUTO = 1 };
@@ -178,7 +182,7 @@ enum {
     CF_STR_APP = 0, CF_STR_IDLE, CF_STR_QUIT, CF_STR_AUTO,
     CF_STR_DLG_CUSTOM, CF_STR_DLG_AUTO, CF_STR_DAYS, CF_STR_HOURS, CF_STR_MINUTES,
     CF_STR_START, CF_STR_SAVE, CF_STR_CANCEL, CF_STR_ABOUT, CF_STR_VERSION,
-    CF_STR_LANG, CF_STR_KEEPING, CF_STR_WHY, CF_STR_COUNT
+    CF_STR_LANG, CF_STR_KEEPING, CF_STR_WHY, CF_STR_LOGIN, CF_STR_COUNT
 };
 const char *cf_str(int lang, int id);
 

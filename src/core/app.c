@@ -2,7 +2,7 @@
  *
  * 메뉴(사용자 확정 09-12 2차 · 09-13 언어):
  *   무제한 · 12시간 · 6시간 · 2시간 · 1시간 · 30분 · 사용자 지정… · 끄기
- *   ─ 실행 시 자동 시작 ▸ (끄기 / 사용자 지정…) · 언어 ▸ (English / 한국어 / 日本語 / 中文) ─ 정보 · 종료
+ *   ─ 실행 시 자동 시작 ▸ (끄기 / 사용자 지정…) · ☐ 로그인 시 실행 · 언어 ▸ (English / 한국어 / 日本語 / 中文) ─ 정보 · 종료
  * 문구는 언어당 NUL로 구분한 문자열 블록 하나(포인터 테이블·재배치 없음 · id번째까지 걸어간다 — 메뉴 열 때만 쓰므로 충분).
  * "사용자 지정…"과 "자동 시작 ▸ 사용자 지정…"은 같은 입력 창(일·시·분 숫자 + 시작/저장 버튼)을 쓴다.
  * 창을 그리는 것은 플랫폼 몫 — 여기서는 초기값·검증·결과 반영만.
@@ -20,7 +20,7 @@ enum {
     S_DLG_CUSTOM, S_DLG_AUTO, S_DAYS, S_HOURS, S_MINUTES, S_START, S_SAVE, S_CANCEL, S_ABOUT,
     S_ABOUT_DESC, S_ABOUT_LICENSE,
     S_SEC1, S_SECN, S_MIN1, S_MINN, S_HOUR1, S_HOURN, S_DAY1, S_DAYN, /* CF_UNIT_* 순서 */
-    S_LANG, S_WHY, S_COUNT
+    S_LANG, S_WHY, S_LOGIN, S_COUNT
 };
 /* 각 항목은 줄 하나 · "\0"으로 끝난다(리터럴 이어붙이기는 이스케이프 처리 뒤라 "\0" 뒤에 숫자가 와도 안전). */
 static const char STR_EN[] =
@@ -31,7 +31,7 @@ static const char STR_EN[] =
     "About Nexa Coffee…\0"
     "Keeps the computer awake from the tray.\0" "© 2026 SosomLab · MIT License\0"
     " second\0" " seconds\0" " minute\0" " minutes\0" " hour\0" " hours\0" " day\0" " days\0"
-    "Language\0" "User asked to keep the system awake";
+    "Language\0" "User asked to keep the system awake\0" "Start at login";
 static const char STR_KO[] =
     "Nexa Coffee\0" "대기 중\0" "종료\0" "실행 시 자동 시작\0"
     "무제한\0" "12시간\0" "6시간\0" "2시간\0" "1시간\0" "30분\0" "사용자 지정…\0" "끄기\0"
@@ -40,7 +40,7 @@ static const char STR_KO[] =
     "Nexa Coffee 정보…\0"
     "트레이에서 PC가 잠들지 않게 합니다.\0" "© 2026 SosomLab · MIT 라이선스\0"
     "초\0" "초\0" "분\0" "분\0" "시간\0" "시간\0" "일\0" "일\0"
-    "언어\0" "사용자가 절전 방지를 켰습니다";
+    "언어\0" "사용자가 절전 방지를 켰습니다\0" "로그인 시 실행";
 static const char STR_JA[] =
     "Nexa Coffee\0" "待機中\0" "終了\0" "起動時に自動開始\0"
     "無制限\0" "12時間\0" "6時間\0" "2時間\0" "1時間\0" "30分\0" "カスタム…\0" "オフ\0"
@@ -49,7 +49,7 @@ static const char STR_JA[] =
     "Nexa Coffee について…\0"
     "トレイからPCをスリープさせません。\0" "© 2026 SosomLab · MIT ライセンス\0"
     "秒\0" "秒\0" "分\0" "分\0" "時間\0" "時間\0" "日\0" "日\0"
-    "言語\0" "ユーザーがスリープ防止を有効にしました";
+    "言語\0" "ユーザーがスリープ防止を有効にしました\0" "ログイン時に起動";
 static const char STR_ZH[] =
     "Nexa Coffee\0" "空闲\0" "退出\0" "启动时自动开始\0"
     "无限制\0" "12小时\0" "6小时\0" "2小时\0" "1小时\0" "30分钟\0" "自定义…\0" "关闭\0"
@@ -58,7 +58,7 @@ static const char STR_ZH[] =
     "关于 Nexa Coffee…\0"
     "从托盘防止电脑休眠。\0" "© 2026 SosomLab · MIT 许可证\0"
     "秒\0" "秒\0" "分钟\0" "分钟\0" "小时\0" "小时\0" "天\0" "天\0"
-    "语言\0" "用户已开启防休眠";
+    "语言\0" "用户已开启防休眠\0" "登录时启动";
 static const char *const STRS[CF_LANG_COUNT] = { STR_EN, STR_KO, STR_JA, STR_ZH };
 /* 언어 이름은 늘 그 언어로 · 설정 태그는 lang*3 */
 static const char LANG_NAME[] = "English\0" "한국어\0" "日本語\0" "中文";
@@ -96,6 +96,7 @@ const char *cf_str(int lang, int id)
     case CF_STR_LANG:       return s_(lang, S_LANG);
     case CF_STR_KEEPING:    return s_(lang, S_KEEPING);
     case CF_STR_WHY:        return s_(lang, S_WHY);
+    case CF_STR_LOGIN:      return s_(lang, S_LOGIN);
     default: return "";
     }
 }
@@ -147,6 +148,7 @@ int cf_app_click(CfApp *a, int id)
     case CF_ID_OFF:         a->running = 0; a->sel = CF_SEL_OFF; return CF_ACT_STOP;
     case CF_ID_AUTO_OFF:    a->auto_d = a->auto_h = a->auto_m = 0; return CF_ACT_MENU;
     case CF_ID_AUTO_CUSTOM: return CF_ACT_DIALOG_AUTO;
+    case CF_ID_LOGIN:       a->login_on = !a->login_on; return CF_ACT_LOGIN;
     case CF_ID_ABOUT:       return CF_ACT_ABOUT;
     case CF_ID_QUIT:        return CF_ACT_QUIT;
     default:                return CF_ACT_NONE;
@@ -193,7 +195,7 @@ int cf_dialog_submit(CfApp *a, int mode, i64 d, i64 h, i64 m)
 int cf_menu_children(const CfApp *a, int parent, int *ids, int max)
 {
     static const int root[] = { CF_ID_STATUS, CF_ID_SEP0, CF_ID_INF, CF_ID_12H, CF_ID_6H, CF_ID_2H, CF_ID_1H, CF_ID_30M,
-                                CF_ID_CUSTOM, CF_ID_OFF, CF_ID_SEP1, CF_ID_AUTO, CF_ID_LANG, CF_ID_SEP2, CF_ID_ABOUT, CF_ID_QUIT };
+                                CF_ID_CUSTOM, CF_ID_OFF, CF_ID_SEP1, CF_ID_AUTO, CF_ID_LOGIN, CF_ID_LANG, CF_ID_SEP2, CF_ID_ABOUT, CF_ID_QUIT };
     static const int autom[] = { CF_ID_AUTO_OFF, CF_ID_AUTO_CUSTOM };
     const int *src = 0;
     int n = 0, count = 0, i;
@@ -266,6 +268,7 @@ int cf_menu_item(const CfApp *a, int id, CfMenuItem *out)
         set(out, CF_KIND_RADIO, cf_auto_secs(a) > 0, s_(L, S_CUSTOM));
         if (cf_auto_secs(a) > 0) { dhm_summary(L, a->auto_d, a->auto_h, a->auto_m, tmp, sizeof tmp); paren(out, tmp); }
         return 1;
+    case CF_ID_LOGIN: set(out, CF_KIND_CHECK, a->login_on != 0, s_(L, S_LOGIN)); return 1;
     case CF_ID_LANG:  set(out, CF_KIND_SUBMENU, 0, s_(L, S_LANG)); return 1;
     case CF_ID_ABOUT: set(out, CF_KIND_NORMAL, 0, s_(L, S_ABOUT)); return 1;
     case CF_ID_QUIT:  set(out, CF_KIND_NORMAL, 0, s_(L, S_QUIT)); return 1;

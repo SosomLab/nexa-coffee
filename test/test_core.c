@@ -49,7 +49,7 @@ static void t_app(void)
     char buf[256];
     cf_app_init(&a, CF_LANG_KO);
     CHECK(a.sel == CF_SEL_OFF && !a.running && cf_auto_secs(&a) == 0);
-    n = cf_menu_children(&a, CF_ID_ROOT, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 16 && ids[0] == CF_ID_STATUS && ids[1] == CF_ID_SEP0 && ids[2] == CF_ID_INF && ids[12] == CF_ID_LANG && ids[15] == CF_ID_QUIT);
+    n = cf_menu_children(&a, CF_ID_ROOT, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 17 && ids[0] == CF_ID_STATUS && ids[1] == CF_ID_SEP0 && ids[2] == CF_ID_INF && ids[11] == CF_ID_AUTO && ids[12] == CF_ID_LOGIN && ids[13] == CF_ID_LANG && ids[16] == CF_ID_QUIT);
     CHECK(cf_menu_item(&a, CF_ID_STATUS, &it) && !it.enabled && !strcmp(it.label, "대기 중"));
     n = cf_menu_children(&a, CF_ID_AUTO, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 2 && ids[0] == CF_ID_AUTO_OFF);
     n = cf_menu_children(&a, CF_ID_CUSTOM, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 0);
@@ -81,6 +81,13 @@ static void t_app(void)
     CHECK(cf_menu_item(&a, CF_ID_AUTO_CUSTOM, &it) && it.checked && !strcmp(it.label, "사용자 지정… (12시간 50분)"));
     CHECK(cf_menu_item(&a, CF_ID_AUTO_OFF, &it) && !it.checked);
     CHECK(cf_app_click(&a, CF_ID_AUTO_OFF) == CF_ACT_MENU && cf_auto_secs(&a) == 0);
+    /* 로그인 시 실행(DR-15) — 진실 원천은 OS 상태: 플랫폼이 login_on을 채우고, 클릭은 뒤집기만 한다 · 설정 파일엔 안 들어간다 */
+    CHECK(cf_menu_item(&a, CF_ID_LOGIN, &it) && it.kind == CF_KIND_CHECK && !it.checked && it.enabled && !strcmp(it.label, "로그인 시 실행"));
+    CHECK(cf_app_click(&a, CF_ID_LOGIN) == CF_ACT_LOGIN && a.login_on == 1);
+    CHECK(cf_menu_item(&a, CF_ID_LOGIN, &it) && it.checked);
+    CHECK(cf_app_click(&a, CF_ID_LOGIN) == CF_ACT_LOGIN && a.login_on == 0);
+    a.login_on = 1; cf_conf_format(&a, buf, sizeof buf); CHECK(!strstr(buf, "login")); a.login_on = 0;
+    CHECK(!strcmp(cf_str(CF_LANG_EN, CF_STR_LOGIN), "Start at login") && !strcmp(cf_str(CF_LANG_JA, CF_STR_LOGIN), "ログイン時に起動") && !strcmp(cf_str(CF_LANG_ZH, CF_STR_LOGIN), "登录时启动"));
     CHECK(cf_app_click(&a, CF_ID_ABOUT) == CF_ACT_ABOUT);
     CHECK(cf_app_click(&a, CF_ID_QUIT) == CF_ACT_QUIT);
     CHECK(cf_app_click(&a, 999) == CF_ACT_NONE);
