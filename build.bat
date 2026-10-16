@@ -20,7 +20,7 @@ cl /nologo /utf-8 /O1 /GS- /Oi- /DUNICODE /D_UNICODE /DCF_VERSION=\"%VERSION%\" 
    src\core\icon_idle.c src\core\timer.c src\core\util.c build\nexa-coffee.res ^
    /Fo:build\ /Fe:dist\nexa-coffee-x64.exe ^
    /link /SUBSYSTEM:WINDOWS /ENTRY:start /NODEFAULTLIB /OPT:REF /OPT:ICF ^
-   kernel32.lib user32.lib shell32.lib gdi32.lib
+   kernel32.lib user32.lib shell32.lib gdi32.lib advapi32.lib
 if errorlevel 1 exit /b 1
 echo.
 echo 빌드 완료: dist\nexa-coffee-x64.exe

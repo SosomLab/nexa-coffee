@@ -59,7 +59,7 @@ VER_TRIPLE := $(subst ., ,$(VERSION))
 RCDEF := -DCF_VER_MAJOR=$(word 1,$(VER_TRIPLE)) -DCF_VER_MINOR=$(word 2,$(VER_TRIPLE)) -DCF_VER_PATCH=$(word 3,$(VER_TRIPLE))
 WCFLAGS := -std=c99 $(CFLAGS_MIN) -s -mwindows -nostdlib -DUNICODE -D_UNICODE -DCF_VERSION=\"$(VERSION)\" \
            -fno-stack-check -fno-builtin -fno-tree-loop-distribute-patterns -finput-charset=UTF-8 $(WARN)
-WLIBS := -lkernel32 -luser32 -lshell32 -lgdi32
+WLIBS := -lkernel32 -luser32 -lshell32 -lgdi32 -ladvapi32
 WSRC := src/plat/win.c $(CORE)
 
 win: dist/nexa-coffee-x64.exe dist/nexa-coffee-x86.exe

@@ -11,6 +11,9 @@
  * - 입력 창(일·시·분)은 툴킷 없이 **외부 대화창 도구**를 자식 프로세스로 띄운다: yad → zenity → kdialog 순.
  *   결과는 파이프로 받아 메인 poll 루프에서 비동기 처리(D-Bus 응답이 막히지 않는다). 도구가 없으면 알림으로 안내.
  *   About = zenity/kdialog 메시지 창, 없으면 org.freedesktop.Notifications 알림.
+ * - 로그인 시 실행(DR-15) = XDG autostart `~/.config/autostart/nexa-coffee.desktop`(Exec = /proc/self/exe 절대 경로).
+ *   packaging/linux/install.sh --autostart가 만드는 것과 같은 파일·같은 내용이라 uninstall.sh가 함께 지운다.
+ *   진실 원천은 그 파일의 존재(설정 파일에 저장하지 않는다) — 메뉴 속성을 줄 때마다 stat하고, 끄기 = 삭제.
  * - 이식 참고: nexa-clip `nclip-plat/src/tray.rs::sni`(zbus 구현)의 속성·메뉴 계약을 C로 옮겼다.
  */
 #define _GNU_SOURCE
@@ -101,6 +104,41 @@ static void conf_save(void)
     if (fd < 0) return;
     (void)!write(fd, buf, n);
     close(fd);
+}
+
+/* ── 로그인 시 실행(XDG autostart · install.sh --autostart와 같은 파일) ── */
+static void autostart_path(char *out, u32 cap)
+{
+    const char *x = getenv("XDG_CONFIG_HOME"), *h = getenv("HOME");
+    if (x && *x) snprintf(out, cap, "%s/autostart/nexa-coffee.desktop", x);
+    else snprintf(out, cap, "%s/.config/autostart/nexa-coffee.desktop", h ? h : "/tmp");
+}
+static int login_get(void)
+{
+    char p[1024];
+    struct stat st;
+    autostart_path(p, sizeof p);
+    return stat(p, &st) == 0;
+}
+static void login_set(int on)
+{
+    char p[1024], exe[1024];
+    ssize_t n;
+    FILE *f;
+    autostart_path(p, sizeof p);
+    if (!on) { unlink(p); return; }
+    n = readlink("/proc/self/exe", exe, sizeof exe - 1);
+    if (n <= 0) return;
+    exe[n] = 0;
+    { char *slash = strrchr(p, '/'); if (slash) { *slash = 0; mkdir(p, 0700); *slash = '/'; } }
+    f = fopen(p, "w");
+    if (!f) return;
+    /* packaging/linux/nexa-coffee.desktop + Exec 절대 경로 + GNOME 자동 시작 플래그(install.sh --autostart와 같은 모양) */
+    fprintf(f, "[Desktop Entry]\nType=Application\nName=Nexa Coffee\nName[ko]=Nexa Coffee\n"
+               "Comment=Keep the computer awake from the tray\nComment[ko]=트레이에서 절전·화면보호기 진입을 막는다\n"
+               "Exec=%s\nIcon=nexa-coffee\nTerminal=false\nCategories=Utility;\nStartupNotify=false\n"
+               "X-GNOME-Autostart-enabled=true\n", exe);
+    fclose(f);
 }
 
 /* ── 아이콘 ── */
@@ -275,6 +313,7 @@ static void write_item_props(DbMsg *m, int id)
     db_w_arr_open(m, 8, &a);
     if (id == CF_ID_ROOT) { dict_s(m, "children-display", "submenu"); db_w_arr_close(m, &a); return; }
     if (id == CF_ID_STATUS) refresh_remaining();
+    if (id == CF_ID_LOGIN) app.login_on = login_get(); /* 진실 원천 = autostart 파일(install.sh나 사용자가 바꿨어도 맞다) */
     if (!cf_menu_item(&app, id, &it)) { db_w_arr_close(m, &a); return; }
     if (it.kind == CF_KIND_SEPARATOR) { dict_s(m, "type", "separator"); db_w_arr_close(m, &a); return; }
     for (i = 0; it.label[i] && n < sizeof label - 3; i++) { /* dbusmenu는 '_'를 니모닉으로 먹는다 */
@@ -552,6 +591,7 @@ static void act(int action)
     case CF_ACT_STOP:  conf_save(); job_stop();  break;
     case CF_ACT_MENU:  conf_save(); emit_layout_updated(); break;
     case CF_ACT_LANG:  conf_save(); emit_layout_updated(); emit0(ITEM_PATH, SNI_IFACE, "NewToolTip"); emit0(ITEM_PATH, SNI_IFACE, "NewTitle"); break;
+    case CF_ACT_LOGIN: login_set(app.login_on); emit_layout_updated(); break; /* 설정 파일엔 안 쓴다(DR-15) */
     case CF_ACT_QUIT:  quit = 1; break;
     case CF_ACT_DIALOG_CUSTOM: show_dialog(CF_DLG_CUSTOM); break;
     case CF_ACT_DIALOG_AUTO:   show_dialog(CF_DLG_AUTO); break;
@@ -622,6 +662,7 @@ static void handle_menu(DbConn *c, DbRead *r)
         i32 id = db_r_i32(r);
         const char *name = db_r_str(r);
         CfMenuItem it;
+        if (id == CF_ID_LOGIN) app.login_on = login_get();
         if (!cf_menu_item(&app, id, &it)) { db_reply_error(c, r, "org.freedesktop.DBus.Error.InvalidArgs", "No such item"); return; }
         db_reply_init(&m, r, "v");
         if (!strcmp(name, "label"))             { db_w_variant(&m, "s"); db_w_str(&m, it.label); }

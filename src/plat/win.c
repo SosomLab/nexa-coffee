@@ -1,7 +1,10 @@
 /*
  * win.c — Windows 플랫폼 계층. 순수 Win32 · CRT 미링크(nexa-shortcut nShiftSpace 원칙 계승).
  *
- * - 라이브러리: kernel32 · user32 · shell32 · gdi32 만. 진입점 start(링커 -e start / /ENTRY:start).
+ * - 라이브러리: kernel32 · user32 · shell32 · gdi32 · advapi32(로그인 시 실행 Run 키) 만. 진입점 start(링커 -e start / /ENTRY:start).
+ * - 로그인 시 실행(DR-15) = HKCU\Software\Microsoft\Windows\CurrentVersion\Run 값 "Nexa Coffee" = "<현재 exe 경로>".
+ *   진실 원천은 레지스트리(설정 파일에 저장하지 않는다) — 메뉴를 열 때마다 읽고, 켤 때마다 현재 경로로 다시 쓴다(포터블 exe 이동 대응).
+ *   ★ 값 이름은 설치본(packaging/windows/installer.nsi · "로그인 시 실행" 작업·제거 시 삭제)과 같아야 한다.
  * - 트레이 = Shell_NotifyIcon. 아이콘 = 코어 RGBA → 32bpp DIB(premultiplied BGRA) → CreateIconIndirect.
  *   크기 = SM_CXSMICON(DPI 반영 · Per-Monitor V2를 동적으로 켠다).
  * - 절전 방지 = SetThreadExecutionState(ES_CONTINUOUS|ES_SYSTEM_REQUIRED|ES_DISPLAY_REQUIRED)
@@ -91,6 +94,35 @@ static void conf_save(void)
     if (h == INVALID_HANDLE_VALUE) return;
     WriteFile(h, buf, n, &w, NULL);
     CloseHandle(h);
+}
+
+/* ── 로그인 시 실행(HKCU Run 키 · installer.nsi와 값 이름 공유) ── */
+#define RUN_KEY   L"Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+#define RUN_VALUE L"Nexa Coffee"
+static int login_get(void)
+{
+    HKEY k;
+    DWORD type = 0, n = 0;
+    LSTATUS r;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, RUN_KEY, 0, KEY_QUERY_VALUE, &k) != ERROR_SUCCESS) return 0;
+    r = RegQueryValueExW(k, RUN_VALUE, NULL, &type, NULL, &n);
+    RegCloseKey(k);
+    return r == ERROR_SUCCESS && (type == REG_SZ || type == REG_EXPAND_SZ) && n > 2;
+}
+static void login_set(int on)
+{
+    HKEY k;
+    WCHAR v[MAX_PATH + 2];
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, RUN_KEY, 0, NULL, 0, KEY_SET_VALUE, NULL, &k, NULL) != ERROR_SUCCESS) return;
+    if (on) {
+        v[0] = L'"';
+        GetModuleFileNameW(NULL, v + 1, MAX_PATH);
+        lstrcatW(v, L"\"");
+        RegSetValueExW(k, RUN_VALUE, 0, REG_SZ, (const BYTE *)v, (DWORD)((lstrlenW(v) + 1) * sizeof(WCHAR)));
+    } else {
+        RegDeleteValueW(k, RUN_VALUE);
+    }
+    RegCloseKey(k);
 }
 
 /* ── 아이콘 ── */
@@ -279,6 +311,7 @@ static void show_menu(void)
     POINT pt;
     HMENU m;
     refresh_remaining();
+    g_app.login_on = login_get(); /* 진실 원천 = 레지스트리(설치본·사용자가 바깥에서 바꿨어도 메뉴가 맞다) */
     m = build_menu(CF_ID_ROOT);
     g_menu = m;
     SetTimer(g_hwnd, TIMER_MENU, 1000, NULL);
@@ -473,6 +506,7 @@ static void act(int action)
     case CF_ACT_STOP:  conf_save(); job_stop();  break;
     case CF_ACT_MENU:  conf_save(); break;
     case CF_ACT_LANG:  conf_save(); if (g_app.running) job_tick(); else show_idle(FALSE); break; /* 툴팁 문구 갱신 · 메뉴는 열 때 새로 만든다 */
+    case CF_ACT_LOGIN: login_set(g_app.login_on); break; /* 설정 파일엔 안 쓴다(DR-15) */
     case CF_ACT_QUIT:  DestroyWindow(g_hwnd); break;
     case CF_ACT_DIALOG_CUSTOM: show_dialog(CF_DLG_CUSTOM); break;
     case CF_ACT_DIALOG_AUTO:   show_dialog(CF_DLG_AUTO); break;

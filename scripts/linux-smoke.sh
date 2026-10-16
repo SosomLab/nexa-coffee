@@ -112,6 +112,28 @@ has "$out" 'string "끄기"'
 has "$out" 'string "사용자 지정…"'
 click 20
 wait_conf 'auto=0,0,0'
+echo "== start at login (XDG autostart · DR-15 · 진실 원천 = 파일)"
+AS="$XDG_CONFIG_HOME/autostart/nexa-coffee.desktop"
+out=$(call /MenuBar com.canonical.dbusmenu.GetGroupProperties array:int32:17 array:string:)
+has "$out" 'string "로그인 시 실행"'
+has "$out" 'string "checkmark"'
+has "$out" 'int32 0'
+[ ! -e "$AS" ] || fail "autostart exists before click"
+if [ -e /proc/self/exe ]; then   # /proc/self/exe로 Exec 절대 경로를 쓴다 — macOS 위 스모크에선 건너뛴다
+  click 17
+  i=0; until [ -f "$AS" ]; do i=$((i+1)); [ $i -lt 30 ] || fail "autostart not written"; sleep 0.1; done
+  grep -qx "Exec=$(readlink -f "$BIN")" "$AS" || fail "autostart Exec"
+  grep -qx "X-GNOME-Autostart-enabled=true" "$AS" || fail "autostart flag"
+  call /MenuBar com.canonical.dbusmenu.GetGroupProperties array:int32:17 array:string: | grep 'int32 1' >/dev/null || fail "login checked"
+  grep -q 'login' "$CONF" && fail "login_on must not be saved in config" || true
+  click 17
+  i=0; while [ -e "$AS" ]; do i=$((i+1)); [ $i -lt 30 ] || fail "autostart not removed"; sleep 0.1; done
+  call /MenuBar com.canonical.dbusmenu.GetGroupProperties array:int32:17 array:string: | grep 'int32 0' >/dev/null || fail "login unchecked"
+  # 바깥(install.sh --autostart)에서 만든 파일도 메뉴가 그대로 반영한다
+  mkdir -p "$(dirname "$AS")"; printf '[Desktop Entry]\nExec=/opt/x/nexa-coffee\n' > "$AS"
+  call /MenuBar com.canonical.dbusmenu.GetGroupProperties array:int32:17 array:string: | grep 'int32 1' >/dev/null || fail "external autostart not reflected"
+  rm -f "$AS"
+fi
 echo "== language submenu (ja → ko)"
 out=$(call /MenuBar com.canonical.dbusmenu.GetLayout int32:16 int32:-1 array:string:)
 has "$out" 'string "English"'

@@ -12,6 +12,9 @@
  *   텍스트 시스템 캐시 +5 MB가 프로세스 안에서는 안 돌아옴). 자기 자신을 `--dialog`/`--about`로 NSTask 실행,
  *   결과 "d h m"은 stdout 파이프로. 자식이 끝나면 캐시도 함께 사라져 부모는 대기 6 MB를 유지한다.
  *   Linux(zenity 자식 프로세스)·Windows(CreateProcess)와 같은 구조.
+ * - 로그인 시 실행(DR-15) = ~/Library/LaunchAgents/com.sosomlab.nexa-coffee.plist(RunAtLoad · ProgramArguments = 번들 실행 파일).
+ *   진실 원천은 그 파일의 존재(설정 파일에 저장하지 않는다) — 메뉴를 열 때마다 확인하고, 끄기 = 삭제.
+ *   macOS 13+는 처음 만들 때 "백그라운드 항목이 추가됨" 알림을 띄운다(정상). 최소 지원이 11이라 SMAppService(13+)는 쓰지 않는다.
  */
 #import <AppKit/AppKit.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
@@ -85,6 +88,24 @@ static i64 now_ms(void)
     if (fd < 0) return;
     (void)!write(fd, buf, n);
     close(fd);
+}
+
+/* ── 로그인 시 실행(LaunchAgent plist) ── */
+static NSString *agentPath(void)
+{
+    return [NSHomeDirectory() stringByAppendingPathComponent:@"Library/LaunchAgents/com.sosomlab.nexa-coffee.plist"];
+}
+- (int)loginGet { return [NSFileManager.defaultManager fileExistsAtPath:agentPath()]; }
+- (void)loginSet:(int)on
+{
+    NSString *p = agentPath();
+    if (!on) { [NSFileManager.defaultManager removeItemAtPath:p error:nil]; return; }
+    NSString *exe = NSBundle.mainBundle.executablePath ?: NSProcessInfo.processInfo.arguments.firstObject;
+    NSDictionary *plist = @{ @"Label": @"com.sosomlab.nexa-coffee", @"ProgramArguments": @[ exe ],
+                             @"RunAtLoad": @YES, @"ProcessType": @"Interactive",
+                             @"EnvironmentVariables": @{ @"MallocSpaceEfficient": @"1" } };
+    [NSFileManager.defaultManager createDirectoryAtPath:p.stringByDeletingLastPathComponent withIntermediateDirectories:YES attributes:nil error:nil];
+    [plist writeToFile:p atomically:YES];
 }
 
 /* ── 아이콘 ── */
@@ -222,7 +243,7 @@ static NSBitmapImageRep *repFromRGBA(const u8 *rgba, int px, CGFloat pt)
     }
 }
 - (void)refreshRemaining { app.remaining_s = deadline ? (deadline - now_ms() + 999) / 1000 : 0; }
-- (void)menuNeedsUpdate:(NSMenu *)m { [self refreshRemaining]; [self fill:m parent:CF_ID_ROOT]; }
+- (void)menuNeedsUpdate:(NSMenu *)m { [self refreshRemaining]; app.login_on = [self loginGet]; [self fill:m parent:CF_ID_ROOT]; }
 /* 메뉴가 열린 동안 맨 위 항목을 1초마다 갱신(사용자 요청 09-13) — 메뉴 추적 모드에서도 도는 common-modes 타이머 */
 - (void)menuWillOpen:(NSMenu *)m
 {
@@ -249,6 +270,7 @@ static NSBitmapImageRep *repFromRGBA(const u8 *rgba, int px, CGFloat pt)
     case CF_ACT_STOP:  [self confSave]; [self stopJob];  break;
     case CF_ACT_MENU:  [self confSave]; break;
     case CF_ACT_LANG:  [self confSave]; if (app.running) [self tickNow]; else [self showIdle]; break; /* 툴팁 갱신 · 메뉴는 열 때 새로 만든다 */
+    case CF_ACT_LOGIN: [self loginSet:app.login_on]; break; /* 설정 파일엔 안 쓴다(DR-15) */
     case CF_ACT_QUIT:  [self stopJob]; [NSApp terminate:nil]; break;
     case CF_ACT_DIALOG_CUSTOM: [self showDialog:CF_DLG_CUSTOM]; break;
     case CF_ACT_DIALOG_AUTO:   [self showDialog:CF_DLG_AUTO]; break;

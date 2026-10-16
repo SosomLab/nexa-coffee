@@ -27,7 +27,10 @@ cask "nexa-coffee" do
                    sudo: false
   end
 
-  zap trash: "~/Library/Application Support/nexa-coffee"
+  zap trash: [
+    "~/Library/Application Support/nexa-coffee",
+    "~/Library/LaunchAgents/com.sosomlab.nexa-coffee.plist", # 메뉴 "로그인 시 실행"이 만든 LaunchAgent(DR-15)
+  ]
 
   caveats <<~EOS
     This app is not code-signed or notarized (v1, no certificate).
@@ -36,6 +39,6 @@ cask "nexa-coffee" do
       https://github.com/SosomLab/nexa-coffee/releases
 
     Nexa Coffee lives in the menu bar (no Dock icon). To start it at login,
-    add "Nexa Coffee.app" to System Settings → General → Login Items.
+    tick "Start at login" in its menu (creates ~/Library/LaunchAgents/com.sosomlab.nexa-coffee.plist).
   EOS
 end
