@@ -1,5 +1,14 @@
 # STATUS — 지금 상태
 
+## 10-17 (2차) — v0.1.4 배포 · Windows 설치본/포터블 채널 분리 첫 적용 (사용자 요청 "새 버전 릴리즈 및 패키지 게시")
+
+- **[v0.1.4](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.4) 배포** — 앱 코드는 0.1.3과 같고 Windows 배포 구성만 바뀌었다(DR-16 10-17 보강). PR #2 CI → main ff → `37eb96e` VERSION + 노트 → main CI → 태그 → release run 38929404261 전부 success.
+- **자산 8종** — `windows-setup.exe` 171,646 B · **`windows-x64-portable.zip` 18,510 · `windows-x86-portable.zip` 21,256(이름 변경)** · macOS zip · Linux tar.gz · .deb · .rpm · SHA256SUMS. Windows 3종 SHA256 일치·zip 내용(exe+LICENSE)·setup 무인 설치/제거 ✅.
+- **채널(패키지별 대기 판정이 의도대로 동작)** — winget: `SosomLab.NexaCoffee`는 #436346(0.1.1) 대기로 건너뜀 · **`SosomLab.NexaCoffee.Portable` 첫 PR [#454127](https://github.com/microsoft/winget-pkgs/pull/454127)** ✅ · choco: `nexa-coffee`는 0.1.3 모더레이션 대기로 건너뜀 · **`nexa-coffee-portable` 0.1.4 첫 push ✅(Submitted)** · brew 탭 0.1.4 ✅ · pkg.sosomlab.com APT 0.1.4 ✅.
+- **사고·복구**: setup 실기가 이 PC에 사용자가 깔아 둔 설치본(로그인 시 실행 켜짐 · 실행 중)을 제거했다 → 즉시 0.1.4 `/S /AUTOSTART=1` 재설치·실행으로 복원(설정 파일은 제거가 남기는 구조라 보존). 다음부터 실기 전 `%LOCALAPPDATA%\Programs\NexaCoffee` 존재를 먼저 확인한다.
+- **남음**: winget #436346·#454127 · choco 0.1.3·nexa-coffee-portable 검수(T-6) · 사람 실기(T-20 · 18 ③).
+- 상세: [journal/2026-10-17](journal/2026-10-17.md#3차--v014-배포--설치본포터블-분리-첫-적용).
+
 ## 10-17 — v0.1.3 배포 (사용자 요청 "새 버전 릴리즈 및 패키지 게시" · Windows PC · 두 세션 협업)
 
 - **[v0.1.3](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.3) 배포** — 10-16 작업(로그인 시 실행 메뉴 · Windows 설치본 · 언어 "시스템")을 담은 첫 릴리스. release run 38924013370 전부 success.

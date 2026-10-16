@@ -14,7 +14,8 @@
 
 - 조직: SosomLab · 개발자: Sangyong Bae · kiros33@gmail.com · 저장소: <https://github.com/SosomLab/nexa-coffee>
 - 라이선스: **MIT**(누구나 무료 — nexa-shortcut과 동일. beep/clip/dir2의 PolyForm NC와 **다르다**).
-- 현 단계: **v0.1.3 배포됨(10-17)** — Release 자산 8종(**`windows-setup.exe` 신규**) · brew 탭 ✓ · choco **0.1.3 제출(모더레이션 대기)** · **pkg.sosomlab.com APT·RPM ✓**(linux-repo publish 자동) · winget [PR #436346](https://github.com/microsoft/winget-pkgs/pull/436346)(0.1.1) 머지 대기라 가드가 건너뜀. 0.1.3 = 트레이 메뉴 **"로그인 시 실행"**(3-OS · DR-15 · 진실 원천 = OS 상태) · **Windows 설치본**(NSIS · DR-16 · "로그인 시 실행" 체크박스 기본 해제 · `/S` · `/AUTOSTART=1`) · 언어 ▸ **"시스템 (OS 언어)"**(DR-13 보강). 두 세션(개발·협업) 분담으로 진행(journal 10-16).
+- 현 단계: **v0.1.4 배포됨(10-17)** — Windows 배포를 **설치본/포터블로 분리**한 첫 릴리스(앱 코드는 0.1.3과 같음 · DR-16). 자산 `windows-setup.exe` · `windows-{x64,x86}-portable.zip` · brew 0.1.4 ✓ · pkg.sosomlab.com 0.1.4 ✓ · 새 winget `SosomLab.NexaCoffee.Portable` [PR #454127](https://github.com/microsoft/winget-pkgs/pull/454127) · 새 choco `nexa-coffee-portable` 0.1.4 제출 · 기존 `SosomLab.NexaCoffee`([#436346](https://github.com/microsoft/winget-pkgs/pull/436346) 0.1.1)·`nexa-coffee`(0.1.3 검수)는 대기라 건너뜀.
+  - 0.1.3(10-17) = 트레이 메뉴 **"로그인 시 실행"**(3-OS · DR-15 · 진실 원천 = OS 상태) · **Windows 설치본**(NSIS · DR-16 · "로그인 시 실행" 체크박스 기본 해제 · `/S` · `/AUTOSTART=1`) · 언어 ▸ **"시스템 (OS 언어)"**(DR-13 보강). 두 세션(개발·협업) 분담으로 진행(journal 10-16).
   - 0.1.2(09-26) = **T-19**(Linux 늦게 뜬 트레이 워처 SIGSEGV) 수정 · 16px · Windows 배율 · install.sh. choco 0.1.2 승인 ✓(10-09).
   - **Windows 실기 사실상 완료**(09-13·09-17): 트레이·툴팁·메뉴 라디오·열린 메뉴 1초 갱신·`powercfg`·i18n(CJK·언어 메뉴·입력 창 라벨 폭)·T-13 메모리·**DR-14 파이프 끝단**. 남은 둘(아이콘 DPI·TaskbarCreated)은 화면 배율·셸을 건드려야 해 [18 실기 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows)로 넘겼다.
   - **v1은 코드 서명이 없다** — SmartScreen·Gatekeeper 경고의 원인이자, 0.1.0 x86이 Defender 오탐(`Trojan:Win32/Tecabans.STV!cl`)으로 격리된 근본 원인. 0.1.1에서 **PE 버전 리소스**를 넣어 완화했다(09-17 실측: 0.1.0 x86 격리 / 0.1.1 x86 통과).
@@ -64,9 +65,9 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux(tar.gz 설�
 
 ## 5. 다음 단계
 
-0. **채널 마무리(T-6)** — choco 0.1.3 모더레이션 결과 확인 · winget #436346(0.1.1) 머지 대기 → 머지되면 최신 버전 제출(winget을 설치본으로 바꿀지는 T-22). 남은 사람 손: pkg.sosomlab.com apt/dnf 설치 실기(T-20).
+0. **채널 마무리(T-6)** — 검수 대기: winget #436346(0.1.1)·#454127(Portable 0.1.4) · choco `nexa-coffee` 0.1.3·`nexa-coffee-portable` 0.1.4. 기존 ID가 풀리면 `publish-windows-packages` dispatch(`tag=v0.1.4`)로 설치본 제출. ⚠️ 설치본 실기 전엔 사용자 설치본(`%LOCALAPPDATA%\Programs\NexaCoffee`) 유무를 먼저 확인(10-17 사고). 남은 사람 손: pkg.sosomlab.com apt/dnf 설치 실기(T-20).
 1. **실기 확인(사람)** — Windows: [18 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows) ③ 설치본(마법사 언어별 문구 · 체크 → 재로그인 트레이) · ① 배율(T-18) · ② TaskbarCreated. macOS·Linux: 메뉴 "로그인 시 실행" 토글 + 재로그인 · Linux GNOME 16px · T-19 트레이 복귀.
 2. macOS — 언어 메뉴(시스템 항목 포함) 실기(T-11) · 화면보호기 실측(T-4). Linux — KDE Plasma · 입력 창 실제 클릭(T-3).
-3. 결정 대기 — winget/choco 설치본 전환 여부(T-22) · linux-repo 등록 확인 단계(T-21) · 툴팁 종료 시각(T-8) · cask DSL(T-15). ja/zh 원어민 검토(T-12).
+3. 결정 대기 — linux-repo 등록 확인 단계(T-21) · 툴팁 종료 시각(T-8) · cask DSL(T-15). ja/zh 원어민 검토(T-12).
 
 > 자동 검증: `make test` · `scripts/linux-smoke.sh`(가짜 워처·logind) · `scripts/test-install.sh` — 모두 CI linux. 릴리스 절차는 [packaging/README](packaging/README.md#릴리스-절차)(노트 → VERSION → 태그).

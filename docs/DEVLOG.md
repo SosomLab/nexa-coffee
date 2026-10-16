@@ -1,5 +1,6 @@
 # DEVLOG — 날짜별 요약(최신 위)
 
+- **2026-10-17 (2차)** — **v0.1.4 배포 · Windows 설치본/포터블 분리 첫 적용**(`bc9b349` 분리 · `38bccce` 문서 · `37eb96e` VERSION → 태그 → release run 38929404261 전부 success). 자산 `-portable.zip` 이름 변경 · winget `SosomLab.NexaCoffee.Portable` 첫 PR #454127 · choco `nexa-coffee-portable` 첫 push · 기존 ID는 직전 제출 대기로 건너뜀(패키지별 판정 ✅). setup 실기가 사용자 설치본을 지워 즉시 복원.
 - **2026-10-17** — **v0.1.3 배포**(`e0c37c8` VERSION + 노트 → 태그 → release run 38924013370 전부 success). 자산 8종(신규 `windows-setup.exe` 171,636 B) · brew 탭 0.1.3 · pkg.sosomlab.com 0.1.3 · choco 0.1.3 push(모더레이션 대기) · winget 건너뜀(#436346 대기). → [journal](journal/2026-10-17.md)
 
 - **2026-10-16** — **로그인 시 실행 메뉴 토글(3-OS · DR-15)** · **Windows 설치본(NSIS · DR-16 · `windows-setup.exe`)** · **언어 ▸ "시스템 (OS 언어)"(DR-13 보강)**. Windows 실기 ✅ · exe 33,280 B · setup 92,670 B. "언어 변환 안 됨"은 재현 안 됨(저장된 `lang=en`). linux-repo 등록 확인 권고 → T-21. 두 세션 협업(개발/문서). → [journal](journal/2026-10-16.md)
