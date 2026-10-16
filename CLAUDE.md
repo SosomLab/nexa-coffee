@@ -15,6 +15,7 @@
 - 조직: SosomLab · 개발자: Sangyong Bae · kiros33@gmail.com · 저장소: <https://github.com/SosomLab/nexa-coffee>
 - 라이선스: **MIT**(누구나 무료 — nexa-shortcut과 동일. beep/clip/dir2의 PolyForm NC와 **다르다**).
 - 현 단계: **v0.1.2 배포됨(09-26)** — Release · brew 탭 ✓ · choco **0.1.2 승인 ✓(10-09 확인)** · **pkg.sosomlab.com APT·RPM ✓(10-09 · SosomLab/linux-repo)** · winget [PR #436346](https://github.com/microsoft/winget-pkgs/pull/436346)(0.1.1) 머지 대기. 0.1.2 = **T-19**(Linux 늦게 뜬 트레이 워처 SIGSEGV) 수정 · 16px · Windows 배율 · install.sh.
+  - **10-16(main · 미릴리스)**: 트레이 메뉴 **"로그인 시 실행"**(3-OS · DR-15 · 진실 원천 = OS 상태) · **Windows 설치본** `nexa-coffee-<v>-windows-setup.exe`(NSIS · DR-16 · "로그인 시 실행" 체크박스 기본 해제 · `/S` · `/AUTOSTART=1`) · 언어 ▸ **"시스템 (OS 언어)"**(DR-13 보강 · OS 언어 변경 즉시 반영). Windows 실기(MSVC · 메뉴 토글 · 설치/재설치/제거) ✓ · Linux 스모크·macOS 빌드는 PR #1 CI ✓. 두 세션(개발·협업) 분담으로 진행(journal 10-16).
   - **Windows 실기 사실상 완료**(09-13·09-17): 트레이·툴팁·메뉴 라디오·열린 메뉴 1초 갱신·`powercfg`·i18n(CJK·언어 메뉴·입력 창 라벨 폭)·T-13 메모리·**DR-14 파이프 끝단**. 남은 둘(아이콘 DPI·TaskbarCreated)은 화면 배율·셸을 건드려야 해 [18 실기 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows)로 넘겼다.
   - **v1은 코드 서명이 없다** — SmartScreen·Gatekeeper 경고의 원인이자, 0.1.0 x86이 Defender 오탐(`Trojan:Win32/Tecabans.STV!cl`)으로 격리된 근본 원인. 0.1.1에서 **PE 버전 리소스**를 넣어 완화했다(09-17 실측: 0.1.0 x86 격리 / 0.1.1 x86 통과).
 
@@ -40,7 +41,9 @@
 | DR-7 | 작업 종료 시 메모리 회수 — 아이콘 버퍼 free + OS별 반납(`SetProcessWorkingSetSize` / `malloc_zone_pressure_relief` / `malloc_trim`) |
 | DR-14 | **창은 자식 프로세스**(입력 창·About) — 자기 자신 `--dialog`/`--about` 재실행 · stdout 파이프. 프레임워크 텍스트 캐시가 프로세스 안에선 안 돌아와서(09-13 실측) |
 | DR-8 | 덮개 닫힘은 Windows·macOS에선 관리자 정책 영역 — 앱이 손대지 않고 문서에 명시. Linux만 logind로 막는다 |
-| DR-13 | i18n = 코어 문구 블록(언어당 NUL 구분 문자열 1개 · 포인터 테이블 없음). "언어 ▸" 메뉴에서 고른 뒤에만 `lang=` 저장, 아니면 OS 로케일 자동 |
+| DR-13 | i18n = 코어 문구 블록(언어당 NUL 구분 문자열 1개 · 포인터 테이블 없음). "언어 ▸" 메뉴에서 고른 뒤에만 `lang=` 저장, 아니면 OS 로케일 자동. **10-16 보강**: 서브메뉴 맨 위 "시스템 (OS 언어)"(id 29) — 고르면 `lang=` 제거 · OS 언어 변경을 Win/mac은 즉시 반영(Linux는 시작 시 고정) |
+| DR-15 | **로그인 시 실행** = 앱 메뉴 체크 토글(3-OS) + Windows 설치본 옵션. 설정에 저장하지 않고 **OS 상태**를 읽는다 — Win HKCU Run 값 `Nexa Coffee` · mac `~/Library/LaunchAgents/com.sosomlab.nexa-coffee.plist` · Linux `~/.config/autostart/nexa-coffee.desktop`(install.sh --autostart와 같은 파일) |
+| DR-16 | **Windows 설치본 = NSIS**(`packaging/windows/installer.nsi` · nexa-clip 이식) — 사용자 단위(HKCU · `%LOCALAPPDATA%\Programs\NexaCoffee`) · x64/x86 한 파일 · 실행 중 인스턴스는 WM_CLOSE로 종료. winget/choco는 포터블 유지(전환은 T-22 사용자 결정) |
 
 ## 3. 구조
 
@@ -48,7 +51,7 @@
 src/core/   coffee.h · util.c · timer.c · font.c · draw.c · icon_idle.c · icon_active.c · app.c   ← 플랫폼 비종속
 src/plat/   win.c(Win32 · CRT 없음) · mac.m(AppKit+IOKit) · linux.c(SNI·dbusmenu·억제) · dbus.c/h(미니 D-Bus)
 test/       test_core.c(단위) · icon_dump.c(PAM 덤프)     scripts/  linux-smoke.sh(D-Bus 계약) · dbus-test.conf · linux-docker.sh
-packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux(tar.gz 설치 스크립트 · build-pkgs.sh = deb/rpm) · homebrew · winget · choco
+packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux(tar.gz 설치 스크립트 · build-pkgs.sh = deb/rpm) · windows(NSIS installer.nsi) · homebrew · winget · choco
 ```
 
 ## 4. 작업 규약
@@ -61,9 +64,9 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux(tar.gz 설�
 
 ## 5. 다음 단계
 
-0. **채널 마무리(T-6)** — winget #436346(0.1.1) 머지 대기 → 머지되면 0.1.2 제출. choco 0.1.2 · pkg.sosomlab.com은 끝(다음 태그부터 release.yml이 brew·winget·choco·linux-packages를 모두 부른다). 남은 사람 손: pkg.sosomlab.com apt/dnf 설치 실기(T-20). winget 검수는 PR 라벨로 본다.
-1. **v0.1.2 실기 확인(사람)** — Linux: GNOME 패널 16px 숫자 선명도 · AppIndicator 확장 끄고 켜기/재로그인(`--autostart`)에서 트레이 복귀(T-19). Windows: [18 실기 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows)(배율 → T-18 · TaskbarCreated).
-2. macOS — 언어 메뉴 실기(T-11) · 화면보호기 실측(T-4). Linux — KDE Plasma · 입력 창 실제 클릭(T-3).
-3. 결정 대기 — 앱 메뉴 "로그인 시 실행" 토글(T-5 · 3-OS) · 툴팁 종료 시각(T-8) · cask DSL(T-15). ja/zh 원어민 검토(T-12).
+0. **0.1.3 릴리스 여부(사용자 결정)** — 10-16 작업(로그인 토글 · 설치본 · 시스템 언어)은 main에 있고 미릴리스. 태그를 내면 release.yml이 setup.exe까지 만든다. **채널 마무리(T-6)** — winget #436346(0.1.1) 머지 대기 → 머지되면 최신 버전 제출. 남은 사람 손: pkg.sosomlab.com apt/dnf 설치 실기(T-20).
+1. **실기 확인(사람)** — Windows: [18 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows) ③ 설치본(마법사 언어별 문구 · 체크 → 재로그인 트레이) · ① 배율(T-18) · ② TaskbarCreated. macOS·Linux: 메뉴 "로그인 시 실행" 토글 + 재로그인 · Linux GNOME 16px · T-19 트레이 복귀.
+2. macOS — 언어 메뉴(시스템 항목 포함) 실기(T-11) · 화면보호기 실측(T-4). Linux — KDE Plasma · 입력 창 실제 클릭(T-3).
+3. 결정 대기 — winget/choco 설치본 전환 여부(T-22) · linux-repo 등록 확인 단계(T-21) · 툴팁 종료 시각(T-8) · cask DSL(T-15). ja/zh 원어민 검토(T-12).
 
 > 자동 검증: `make test` · `scripts/linux-smoke.sh`(가짜 워처·logind) · `scripts/test-install.sh` — 모두 CI linux. 릴리스 절차는 [packaging/README](packaging/README.md#릴리스-절차)(노트 → VERSION → 태그).

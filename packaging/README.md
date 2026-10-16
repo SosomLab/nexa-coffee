@@ -4,7 +4,7 @@
 
 | 채널 | 파일 | 워크플로 | 게이트 |
 | --- | --- | --- | --- |
-| GitHub Releases | `.github/workflows/release.yml` — `v*` 태그 → mac universal zip · Windows x64/x86 zip · Linux x64 tar.gz + `SHA256SUMS.txt` | release | — |
+| GitHub Releases | `.github/workflows/release.yml` — `v*` 태그 → mac universal zip · Windows x64/x86 zip · Windows 설치본 `windows-setup.exe`(NSIS · 10-16~) · Linux x64 tar.gz + `SHA256SUMS.txt` | release | — |
 | Homebrew(Cask + Linux Formula) | `homebrew/nexa-coffee.rb` · `homebrew/nexa-coffee-portable.rb` → `kiros33/homebrew-tap` | `homebrew.yml`(release가 호출) | 시크릿 `TAP_TOKEN` |
 | winget | `winget/*.yaml` → microsoft/winget-pkgs PR(`SosomLab.NexaCoffee` · 포터블 zip) | `publish-windows-packages.yml` | 변수 `WINGET_PUBLISH=true` + 시크릿 `WINGET_TOKEN` · 열린 PR 있으면 대기 · `channels`로 채널 선택 |
 | Chocolatey | `choco/` → `choco push`(`nexa-coffee` · 포터블 zip · `.gui` shim) | 〃 | 변수 `CHOCO_PUSH=true` + 시크릿 `CHOCO_API_KEY` · 직전 버전 미공개면 대기 |

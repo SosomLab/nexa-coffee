@@ -2,6 +2,7 @@
 
 | 브랜치 | 생성 | 병합 | 커밋 수 | 요약 |
 | --- | --- | --- | --- | --- |
+| feat/login-toggle-win-installer | 2026-10-16 | 2026-10-17 → main(ff · PR #1 CI green 확인 후) | 8 | **로그인 시 실행 메뉴 토글(3-OS · DR-15)** · **Windows 설치본 NSIS(DR-16)** · 언어 ▸ "시스템 (OS 언어)"(DR-13 보강) · 문서 3커밋(10-16 1~3차 + 진행사항 최신화) · 두 세션 협업 |
 | docs/1009-consolidate | 2026-10-09 | 2026-10-09 → main(ff) | 1 | 10-09 진행사항 최신화 — journal 정리(설계표·결과·채널 상태) · STATUS/DEVLOG 압축 · TODO(T-6 · T-20) · MILESTONES M5 · CLAUDE.md · choco 0.1.2 승인 반영 |
 | feat/linux-repo | 2026-10-09 | 2026-10-09 → main(ff · rebase 후) | 2 | pkg.sosomlab.com(APT·RPM) 채널 — `build-pkgs.sh` · `linux-packages.yml`(release.yml이 호출) · v0.1.2 덧붙임 · 결과 기록 |
 | docs/0929-choco-012 | 2026-09-29 | 2026-09-29 → main(ff) | 1 | choco 0.1.0 승인(09-28) · 0.1.2 제출 기록 · 새 버전 불필요 판단 |
