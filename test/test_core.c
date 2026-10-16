@@ -153,9 +153,11 @@ static void t_app(void)
         CfDisplay dd;
         int l, id;
         cf_app_init(&a, CF_LANG_KO);
-        n = cf_menu_children(&a, CF_ID_LANG, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 4 && ids[0] == CF_ID_LANG0 && ids[3] == CF_ID_LANG0 + CF_LANG_ZH);
+        n = cf_menu_children(&a, CF_ID_LANG, ids, CF_MENU_MAX_CHILDREN); CHECK(n == 5 && ids[0] == CF_ID_LANG_SYS && ids[1] == CF_ID_LANG0 && ids[4] == CF_ID_LANG0 + CF_LANG_ZH);
         CHECK(cf_menu_item(&a, CF_ID_LANG, &it) && it.kind == CF_KIND_SUBMENU && !strcmp(it.label, "언어"));
-        CHECK(cf_menu_item(&a, CF_ID_LANG0 + CF_LANG_KO, &it) && it.kind == CF_KIND_RADIO && it.checked && !strcmp(it.label, "한국어"));
+        /* 고르기 전 = 시스템(OS 언어)이 체크 · 명시 항목은 OS 언어와 같아도 체크 안 됨 */
+        CHECK(cf_menu_item(&a, CF_ID_LANG_SYS, &it) && it.kind == CF_KIND_RADIO && it.checked && !strcmp(it.label, "시스템 (한국어)"));
+        CHECK(cf_menu_item(&a, CF_ID_LANG0 + CF_LANG_KO, &it) && it.kind == CF_KIND_RADIO && !it.checked && !strcmp(it.label, "한국어"));
         CHECK(cf_menu_item(&a, CF_ID_LANG0 + CF_LANG_EN, &it) && !it.checked && !strcmp(it.label, "English"));
         CHECK(cf_menu_item(&a, CF_ID_LANG0 + CF_LANG_JA, &it) && !strcmp(it.label, "日本語"));
         CHECK(cf_menu_item(&a, CF_ID_LANG0 + CF_LANG_ZH, &it) && !strcmp(it.label, "中文"));
@@ -167,6 +169,19 @@ static void t_app(void)
         CHECK(cf_menu_item(&a, CF_ID_LANG, &it) && !strcmp(it.label, "言語"));
         CHECK(cf_menu_item(&a, CF_ID_AUTO, &it) && !strcmp(it.label, "起動時に自動開始"));
         cf_conf_format(&a, buf, sizeof buf); CHECK(strstr(buf, "\nlang=ja\n"));
+        CHECK(cf_menu_item(&a, CF_ID_LANG_SYS, &it) && !it.checked && !strcmp(it.label, "システム (한국어)")); /* 괄호는 늘 OS 언어 */
+        CHECK(cf_menu_item(&a, CF_ID_LANG0 + CF_LANG_JA, &it) && it.checked);
+        /* OS 언어가 바뀌어도 명시 선택 중엔 안 따라간다 · 시스템으로 돌아가면 OS 언어 + 설정에서 lang= 제거 */
+        CHECK(cf_set_os_lang(&a, CF_LANG_ZH) == 0 && a.lang == CF_LANG_JA && a.os_lang == CF_LANG_ZH);
+        CHECK(cf_menu_item(&a, CF_ID_LANG_SYS, &it) && !strcmp(it.label, "システム (中文)"));
+        CHECK(cf_app_click(&a, CF_ID_LANG_SYS) == CF_ACT_LANG && a.lang == CF_LANG_ZH && !a.lang_set);
+        cf_conf_format(&a, buf, sizeof buf); CHECK(!strstr(buf, "lang="));
+        CHECK(cf_menu_item(&a, CF_ID_LANG_SYS, &it) && it.checked && !strcmp(it.label, "系统 (中文)"));
+        CHECK(cf_set_os_lang(&a, CF_LANG_KO) == 1 && a.lang == CF_LANG_KO); /* 자동 모드면 즉시 */
+        CHECK(cf_set_os_lang(&a, 99) == 1 && a.lang == CF_LANG_EN);        /* 모르는 값은 EN */
+        cf_set_os_lang(&a, CF_LANG_KO);
+        CHECK(cf_app_click(&a, CF_ID_LANG0 + CF_LANG_JA) == CF_ACT_LANG); /* 아래 검사들은 ja 상태·lang=ja 버퍼를 기대한다 */
+        cf_conf_format(&a, buf, sizeof buf);
         {
             CfApp b; cf_app_init(&b, CF_LANG_EN);
             cf_conf_parse(&b, buf, (u32)strlen(buf)); CHECK(b.lang == CF_LANG_JA && b.lang_set);

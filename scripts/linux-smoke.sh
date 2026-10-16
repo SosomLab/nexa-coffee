@@ -136,8 +136,16 @@ if [ -e /proc/self/exe ]; then   # /proc/self/exe로 Exec 절대 경로를 쓴�
 fi
 echo "== language submenu (ja → ko)"
 out=$(call /MenuBar com.canonical.dbusmenu.GetLayout int32:16 int32:-1 array:string:)
+has "$out" 'string "시스템 (한국어)"'   # 맨 위 = OS 언어를 따르는 항목(LANG=ko_KR) · 고르기 전엔 이게 체크
 has "$out" 'string "English"'
 has "$out" 'string "日本語"'
+call /MenuBar com.canonical.dbusmenu.GetGroupProperties array:int32:29 array:string: | grep 'int32 1' >/dev/null || fail "system lang checked by default"
+click 32
+wait_conf 'lang=ja'
+call /MenuBar com.canonical.dbusmenu.GetGroupProperties array:int32:29 array:string: | grep 'string "システム (한국어)"' >/dev/null || fail "system label in ja"
+click 29   # 시스템으로 돌아가기 → lang= 이 설정에서 빠지고 즉시 한국어
+i=0; while grep -q 'lang=' "$CONF" 2>/dev/null; do i=$((i+1)); [ $i -lt 30 ] || fail "lang= still in config after System"; sleep 0.1; done
+call /MenuBar com.canonical.dbusmenu.GetGroupProperties array:int32:13 array:string: | grep 'string "종료"' >/dev/null || fail "ko quit after System"
 click 32
 wait_conf 'lang=ja'
 call /MenuBar com.canonical.dbusmenu.GetGroupProperties array:int32:13 array:string: | grep 'string "終了"' >/dev/null || fail "ja quit"

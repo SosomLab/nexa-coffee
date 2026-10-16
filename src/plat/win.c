@@ -543,7 +543,9 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_DISPLAYCHANGE:
     case WM_SETTINGCHANGE:
         /* 배율 변경(T-18) — 동작 중엔 다음 틱이 새 크기로 그리지만 대기 중엔 계기가 없다.
-         * show_idle은 크기가 같으면 아이콘을 다시 만들지 않으므로(툴팁만 NIM_MODIFY) 잦은 WM_SETTINGCHANGE도 싸다. */
+         * show_idle은 크기가 같으면 아이콘을 다시 만들지 않으므로(툴팁만 NIM_MODIFY) 잦은 WM_SETTINGCHANGE도 싸다.
+         * OS 표시 언어가 바뀌면(자동 모드) 툴팁이 여기서 바뀌고 메뉴는 다음에 열 때 새 언어다. */
+        if (msg == WM_SETTINGCHANGE) cf_set_os_lang(&g_app, os_lang());
         if (g_app.running) job_tick(); else show_idle(FALSE);
         return msg == WM_SETTINGCHANGE ? DefWindowProcW(hwnd, msg, wp, lp) : 0;
     case WM_DESTROY:
@@ -555,6 +557,17 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         return 0;
     default:
         return DefWindowProcW(hwnd, msg, wp, lp);
+    }
+}
+
+/* OS 표시 언어 → CF_LANG_*. 메뉴 "시스템 (한국어)"의 괄호이자 자동 모드의 언어. WM_SETTINGCHANGE마다 다시 묻는다. */
+static int os_lang(void)
+{
+    switch (PRIMARYLANGID(GetUserDefaultUILanguage())) {
+    case LANG_KOREAN:   return CF_LANG_KO;
+    case LANG_JAPANESE: return CF_LANG_JA;
+    case LANG_CHINESE:  return CF_LANG_ZH;
+    default:            return CF_LANG_EN;
     }
 }
 
@@ -581,12 +594,7 @@ void start(void)
     if (GetLastError() == ERROR_ALREADY_EXISTS) ExitProcess(0);
 
     enable_dpi();
-    switch (PRIMARYLANGID(GetUserDefaultUILanguage())) {
-    case LANG_KOREAN:   lang = CF_LANG_KO; break;
-    case LANG_JAPANESE: lang = CF_LANG_JA; break;
-    case LANG_CHINESE:  lang = CF_LANG_ZH; break;
-    default:            lang = CF_LANG_EN; break;
-    }
+    lang = os_lang();
     cf_app_init(&g_app, lang);
     conf_init();
     conf_load();

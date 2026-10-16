@@ -104,6 +104,7 @@ enum {
     CF_ID_LANG,              /* 서브메뉴: English / 한국어 / 日本語 / 中文 */
     CF_ID_LOGIN,             /* 체크: 로그인 시 실행(DR-15 · 진실 원천 = OS 상태 · 설정에 저장 안 함) */
     CF_ID_AUTO_OFF = 20, CF_ID_AUTO_CUSTOM,
+    CF_ID_LANG_SYS = 29,     /* 언어 ▸ "시스템 (한국어)" — OS 언어를 따른다(lang_set=0 · 설정에서 lang= 제거) */
     CF_ID_LANG0 = 30         /* 30+CF_LANG_* */
 };
 #define CF_MAX_DAYS 99
@@ -119,8 +120,9 @@ typedef struct {
 } CfMenuItem;
 
 typedef struct {
-    int lang;        /* CF_LANG_* */
-    int lang_set;    /* 사용자가 메뉴에서 골랐다(설정에 저장) — 아니면 OS 로케일 자동 */
+    int lang;        /* CF_LANG_* — 지금 쓰는 언어 */
+    int lang_set;    /* 사용자가 메뉴에서 골랐다(설정에 저장) — 아니면 OS 로케일 자동(= os_lang) */
+    int os_lang;     /* OS 표시 언어(CF_LANG_*) — 플랫폼이 시작 때 주고 바뀌면 cf_set_os_lang으로 갱신. "시스템 (…)" 라벨의 괄호 */
     int sel;         /* 현재 선택(CF_SEL_*) — running이 0이면 OFF */
     int running;     /* 작업 진행 중 */
     int cust_d, cust_h, cust_m; /* 사용자 지정 일·시·분(마지막 입력) */
@@ -146,7 +148,10 @@ enum {
 /* 입력 창 모드 */
 enum { CF_DLG_CUSTOM = 0, CF_DLG_AUTO = 1 };
 
+/* lang = OS 표시 언어(os_lang이자 초기 lang). 설정에 lang=이 있으면 cf_conf_parse가 lang을 덮고 lang_set=1. */
 void cf_app_init(CfApp *a, int lang);
+/* OS 표시 언어가 바뀌었다(플랫폼 통지) — os_lang 갱신 · 자동 모드(lang_set=0)면 lang도 바꾼다. 반환 1 = 표시 언어가 바뀌어 메뉴·툴팁을 다시 그려야 한다. */
+int  cf_set_os_lang(CfApp *a, int lang);
 /* 선택의 초. INF = -1 · OFF = 0. */
 i64  cf_sel_secs(const CfApp *a);
 /* 자동 시작 초(0 = 끔). */

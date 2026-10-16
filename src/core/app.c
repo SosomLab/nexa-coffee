@@ -2,7 +2,7 @@
  *
  * 메뉴(사용자 확정 09-12 2차 · 09-13 언어):
  *   무제한 · 12시간 · 6시간 · 2시간 · 1시간 · 30분 · 사용자 지정… · 끄기
- *   ─ 실행 시 자동 시작 ▸ (끄기 / 사용자 지정…) · ☐ 로그인 시 실행 · 언어 ▸ (English / 한국어 / 日本語 / 中文) ─ 정보 · 종료
+ *   ─ 실행 시 자동 시작 ▸ (끄기 / 사용자 지정…) · ☐ 로그인 시 실행 · 언어 ▸ (시스템 (OS 언어) / English / 한국어 / 日本語 / 中文) ─ 정보 · 종료
  * 문구는 언어당 NUL로 구분한 문자열 블록 하나(포인터 테이블·재배치 없음 · id번째까지 걸어간다 — 메뉴 열 때만 쓰므로 충분).
  * "사용자 지정…"과 "자동 시작 ▸ 사용자 지정…"은 같은 입력 창(일·시·분 숫자 + 시작/저장 버튼)을 쓴다.
  * 창을 그리는 것은 플랫폼 몫 — 여기서는 초기값·검증·결과 반영만.
@@ -20,7 +20,7 @@ enum {
     S_DLG_CUSTOM, S_DLG_AUTO, S_DAYS, S_HOURS, S_MINUTES, S_START, S_SAVE, S_CANCEL, S_ABOUT,
     S_ABOUT_DESC, S_ABOUT_LICENSE,
     S_SEC1, S_SECN, S_MIN1, S_MINN, S_HOUR1, S_HOURN, S_DAY1, S_DAYN, /* CF_UNIT_* 순서 */
-    S_LANG, S_WHY, S_LOGIN, S_COUNT
+    S_LANG, S_WHY, S_LOGIN, S_SYSTEM, S_COUNT
 };
 /* 각 항목은 줄 하나 · "\0"으로 끝난다(리터럴 이어붙이기는 이스케이프 처리 뒤라 "\0" 뒤에 숫자가 와도 안전). */
 static const char STR_EN[] =
@@ -31,7 +31,7 @@ static const char STR_EN[] =
     "About Nexa Coffee…\0"
     "Keeps the computer awake from the tray.\0" "© 2026 SosomLab · MIT License\0"
     " second\0" " seconds\0" " minute\0" " minutes\0" " hour\0" " hours\0" " day\0" " days\0"
-    "Language\0" "User asked to keep the system awake\0" "Start at login";
+    "Language\0" "User asked to keep the system awake\0" "Start at login\0" "System";
 static const char STR_KO[] =
     "Nexa Coffee\0" "대기 중\0" "종료\0" "실행 시 자동 시작\0"
     "무제한\0" "12시간\0" "6시간\0" "2시간\0" "1시간\0" "30분\0" "사용자 지정…\0" "끄기\0"
@@ -40,7 +40,7 @@ static const char STR_KO[] =
     "Nexa Coffee 정보…\0"
     "트레이에서 PC가 잠들지 않게 합니다.\0" "© 2026 SosomLab · MIT 라이선스\0"
     "초\0" "초\0" "분\0" "분\0" "시간\0" "시간\0" "일\0" "일\0"
-    "언어\0" "사용자가 절전 방지를 켰습니다\0" "로그인 시 실행";
+    "언어\0" "사용자가 절전 방지를 켰습니다\0" "로그인 시 실행\0" "시스템";
 static const char STR_JA[] =
     "Nexa Coffee\0" "待機中\0" "終了\0" "起動時に自動開始\0"
     "無制限\0" "12時間\0" "6時間\0" "2時間\0" "1時間\0" "30分\0" "カスタム…\0" "オフ\0"
@@ -49,7 +49,7 @@ static const char STR_JA[] =
     "Nexa Coffee について…\0"
     "トレイからPCをスリープさせません。\0" "© 2026 SosomLab · MIT ライセンス\0"
     "秒\0" "秒\0" "分\0" "分\0" "時間\0" "時間\0" "日\0" "日\0"
-    "言語\0" "ユーザーがスリープ防止を有効にしました\0" "ログイン時に起動";
+    "言語\0" "ユーザーがスリープ防止を有効にしました\0" "ログイン時に起動\0" "システム";
 static const char STR_ZH[] =
     "Nexa Coffee\0" "空闲\0" "退出\0" "启动时自动开始\0"
     "无限制\0" "12小时\0" "6小时\0" "2小时\0" "1小时\0" "30分钟\0" "自定义…\0" "关闭\0"
@@ -58,7 +58,7 @@ static const char STR_ZH[] =
     "关于 Nexa Coffee…\0"
     "从托盘防止电脑休眠。\0" "© 2026 SosomLab · MIT 许可证\0"
     "秒\0" "秒\0" "分钟\0" "分钟\0" "小时\0" "小时\0" "天\0" "天\0"
-    "语言\0" "用户已开启防休眠\0" "登录时启动";
+    "语言\0" "用户已开启防休眠\0" "登录时启动\0" "系统";
 static const char *const STRS[CF_LANG_COUNT] = { STR_EN, STR_KO, STR_JA, STR_ZH };
 /* 언어 이름은 늘 그 언어로 · 설정 태그는 lang*3 */
 static const char LANG_NAME[] = "English\0" "한국어\0" "日本語\0" "中文";
@@ -105,9 +105,18 @@ const char *cf_str(int lang, int id)
 void cf_app_init(CfApp *a, int lang)
 {
     cf_memset(a, 0, sizeof *a);
-    a->lang = lang;
+    a->lang = a->os_lang = lang;
     a->sel = CF_SEL_OFF;
     a->cust_h = 1;
+}
+
+int cf_set_os_lang(CfApp *a, int lang)
+{
+    int before = a->lang;
+    if ((unsigned)lang >= CF_LANG_COUNT) lang = CF_LANG_EN;
+    a->os_lang = lang;
+    if (!a->lang_set) a->lang = lang; /* 자동 모드면 바로 따라간다 */
+    return a->lang != before;
 }
 
 static i64 dhm_secs(int d, int h, int m) { return (i64)d * 86400 + (i64)h * 3600 + (i64)m * 60; }
@@ -143,6 +152,7 @@ int cf_app_click(CfApp *a, int id)
     int s = sel_of_id(id);
     if (s >= 0) { a->sel = s; a->running = 1; return CF_ACT_START; }
     if (id >= CF_ID_LANG0 && id < CF_ID_LANG0 + CF_LANG_COUNT) { a->lang = id - CF_ID_LANG0; a->lang_set = 1; return CF_ACT_LANG; }
+    if (id == CF_ID_LANG_SYS) { a->lang_set = 0; a->lang = a->os_lang; return CF_ACT_LANG; } /* 설정에서 lang= 이 빠진다 */
     switch (id) {
     case CF_ID_CUSTOM:      return CF_ACT_DIALOG_CUSTOM;
     case CF_ID_OFF:         a->running = 0; a->sel = CF_SEL_OFF; return CF_ACT_STOP;
@@ -202,7 +212,7 @@ int cf_menu_children(const CfApp *a, int parent, int *ids, int max)
     (void)a;
     if (parent == CF_ID_ROOT) { src = root;  count = (int)(sizeof root / sizeof root[0]); }
     if (parent == CF_ID_AUTO) { src = autom; count = (int)(sizeof autom / sizeof autom[0]); }
-    if (parent == CF_ID_LANG) { for (i = 0; i < CF_LANG_COUNT && n < max; i++) ids[n++] = CF_ID_LANG0 + i; return n; }
+    if (parent == CF_ID_LANG) { if (n < max) ids[n++] = CF_ID_LANG_SYS; for (i = 0; i < CF_LANG_COUNT && n < max; i++) ids[n++] = CF_ID_LANG0 + i; return n; }
     for (i = 0; i < count && n < max; i++) ids[n++] = src[i];
     return n;
 }
@@ -239,7 +249,12 @@ int cf_menu_item(const CfApp *a, int id, CfMenuItem *out)
     cf_memset(out, 0, sizeof *out);
     out->enabled = 1;
     if (id >= CF_ID_LANG0 && id < CF_ID_LANG0 + CF_LANG_COUNT) {
-        set(out, CF_KIND_RADIO, a->lang == id - CF_ID_LANG0, nth(LANG_NAME, id - CF_ID_LANG0));
+        set(out, CF_KIND_RADIO, a->lang_set && a->lang == id - CF_ID_LANG0, nth(LANG_NAME, id - CF_ID_LANG0));
+        return 1;
+    }
+    if (id == CF_ID_LANG_SYS) { /* "시스템 (한국어)" — 괄호 = OS 표시 언어(nexa-sql 언어 메뉴와 같은 기준) */
+        set(out, CF_KIND_RADIO, !a->lang_set, s_(L, S_SYSTEM));
+        paren(out, nth(LANG_NAME, (unsigned)a->os_lang < CF_LANG_COUNT ? a->os_lang : 0));
         return 1;
     }
     if (s >= 0) {

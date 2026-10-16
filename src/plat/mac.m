@@ -335,6 +335,8 @@ static NSBitmapImageRep *repFromRGBA(const u8 *rgba, int px, CGFloat pt)
     menu.delegate = self;
     item.menu = menu;
     [self showIdle];
+    /* OS 표시 언어가 바뀌면(시스템 설정 → 언어) 자동 모드는 즉시 따라간다 — 툴팁은 여기서, 메뉴는 다음에 열 때 */
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(localeChanged:) name:NSCurrentLocaleDidChangeNotification object:nil];
     malloc_zone_pressure_relief(NULL, 0); /* 초기화가 남긴 여유 페이지 반납 */
 
     /* 디버그: NEXA_COFFEE_SHOW=custom|auto|about|menu 이면 해당 창을 바로 띄운다(스크린샷 검증용 · 비용 0) */
@@ -348,6 +350,12 @@ static NSBitmapImageRep *repFromRGBA(const u8 *rgba, int px, CGFloat pt)
     }
     /* 첫 실행 자동 시작(사용자 확정): 옵션 켜짐 + 시간 지정 */
     if (cf_auto_secs(&app) > 0) { app.cust_d = app.auto_d; app.cust_h = app.auto_h; app.cust_m = app.auto_m; app.sel = CF_SEL_CUSTOM; app.running = 1; [self startJob]; }
+}
+- (void)localeChanged:(NSNotification *)note
+{
+    if (cf_set_os_lang(&app, cf_lang_of([[[NSLocale preferredLanguages] firstObject] UTF8String]))) {
+        if (app.running) [self tickNow]; else [self showIdle];
+    }
 }
 - (void)applicationWillTerminate:(NSNotification *)note { [self inhibit:NO]; }
 @end
