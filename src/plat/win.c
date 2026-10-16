@@ -61,6 +61,7 @@ static int             g_child_mode;
 static int             g_dlg_init[3]; /* 자식: 입력 창 초기값 */
 
 static void to_wide(const char *utf8, WCHAR *out, int cap);
+static int  os_lang(void); /* wnd_proc(WM_SETTINGCHANGE)가 정의보다 먼저 부른다 — gcc C99는 암묵 선언을 오류로 본다(CI 10-17) */
 
 /* ── 메모리 ── */
 static void *xalloc(u32 n) { return HeapAlloc(GetProcessHeap(), 0, n); }
