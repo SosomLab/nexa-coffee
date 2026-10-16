@@ -31,6 +31,17 @@ jobs:
           sed -e "s/@VERSION@/$v/g" -e "s/@VIVERSION@/$v.0/g" packaging/windows/installer.nsi > build/nsis/installer.nsi
           makensis -V2 -INPUTCHARSET UTF8 build/nsis/installer.nsi
           ls -la "build/nsis/nexa-coffee-$v-windows-setup.exe"
+      - name: 패키지 매니페스트 렌더링(설치본·포터블 winget/choco · brew — 릴리스 자산 이름 그대로)
+        run: |
+          set -e
+          v=$(cat VERSION); a=build/assets; rm -rf "$a" build/manifests; mkdir -p "$a"
+          cp "build/nsis/nexa-coffee-$v-windows-setup.exe" "$a/"
+          for f in windows-x64-portable.zip windows-x86-portable.zip macos-universal.zip linux-x64.tar.gz; do echo "$f" > "$a/nexa-coffee-$v-$f"; done
+          bash packaging/render-manifests.sh "$v" "$a" build/manifests
+          for p in SosomLab/NexaCoffee/$v/SosomLab.NexaCoffee SosomLab/NexaCoffee/Portable/$v/SosomLab.NexaCoffee.Portable; do
+            ls "build/manifests/winget/manifests/s/$p.installer.yaml" >/dev/null
+          done
+          ls build/manifests/choco/nexa-coffee/nexa-coffee.nuspec build/manifests/choco/nexa-coffee-portable/nexa-coffee-portable.nuspec
       - name: 크기 예산(초경량 회귀 검사)
         run: |
           set -e

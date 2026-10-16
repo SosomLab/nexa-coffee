@@ -16,38 +16,47 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 sha() {
   local f="$ASSETS/$1"
   [ -f "$f" ] || { echo "::error::자산 없음: $1" >&2; exit 1; }
-  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$f" | cut -d' ' -f1; else shasum -a 256 "$f" | cut -d' ' -f1; fi
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum < "$f" | cut -d" " -f1; else shasum -a 256 < "$f" | cut -d" " -f1; fi
 }
 
 V="$VERSION"
-SHA_WIN_X64=$(sha "nexa-coffee-$V-windows-x64.zip")
-SHA_WIN_X86=$(sha "nexa-coffee-$V-windows-x86.zip")
+# Windows — 설치본(setup.exe · x64/x86 한 파일)과 포터블 zip은 서로 다른 패키지다(10-17 분리 · DR-16).
+SHA_WIN_SETUP=$(sha "nexa-coffee-$V-windows-setup.exe")
+SHA_WIN_X64=$(sha "nexa-coffee-$V-windows-x64-portable.zip")
+SHA_WIN_X86=$(sha "nexa-coffee-$V-windows-x86-portable.zip")
 SHA_MAC=$(sha     "nexa-coffee-$V-macos-universal.zip")
 SHA_LINUX=$(sha   "nexa-coffee-$V-linux-x64.tar.gz")
 DATE=$(date -u +%Y-%m-%d)
 
 fill() {
   sed -e "s/@VERSION@/$V/g" -e "s/@DATE@/$DATE/g" \
-      -e "s/@SHA_WIN_X64@/$SHA_WIN_X64/g" -e "s/@SHA_WIN_X86@/$SHA_WIN_X86/g" \
+      -e "s/@SHA_WIN_SETUP@/$SHA_WIN_SETUP/g" -e "s/@SHA_WIN_X64@/$SHA_WIN_X64/g" -e "s/@SHA_WIN_X86@/$SHA_WIN_X86/g" \
       -e "s/@SHA_MAC@/$SHA_MAC/g" -e "s/@SHA_LINUX@/$SHA_LINUX/g" "$1" > "$2"
 }
 
 mkdir -p "$OUT"
 
-# ── winget(포터블 zip) — microsoft/winget-pkgs 경로 규약: manifests/s/SosomLab/NexaCoffee/<버전>/ ──
-id="SosomLab.NexaCoffee"
-dir="$OUT/winget/manifests/s/SosomLab/NexaCoffee/$V"
-mkdir -p "$dir"
-fill "$here/winget/version.yaml"   "$dir/$id.yaml"
-fill "$here/winget/locale.yaml"    "$dir/$id.locale.en-US.yaml"
-fill "$here/winget/installer.yaml" "$dir/$id.installer.yaml"
+# ── winget — microsoft/winget-pkgs 경로 규약: ID의 점을 폴더로(SosomLab.NexaCoffee.Portable → s/SosomLab/NexaCoffee/Portable/<버전>/) ──
+#    설치본 SosomLab.NexaCoffee ← packaging/winget/ · 포터블 SosomLab.NexaCoffee.Portable ← packaging/winget-portable/
+emit_winget() {
+  local id=$1 src=$2 dir="$OUT/winget/manifests/s/$(echo "$1" | tr '.' '/')/$V"
+  mkdir -p "$dir"
+  fill "$here/$src/version.yaml"   "$dir/$id.yaml"
+  fill "$here/$src/locale.yaml"    "$dir/$id.locale.en-US.yaml"
+  fill "$here/$src/installer.yaml" "$dir/$id.installer.yaml"
+}
+emit_winget SosomLab.NexaCoffee          winget
+emit_winget SosomLab.NexaCoffee.Portable winget-portable
 
-# ── Chocolatey — 그대로 `choco pack` 가능한 형태 ──
-dir="$OUT/choco/nexa-coffee"
-mkdir -p "$dir/tools"
-fill "$here/choco/nexa-coffee.nuspec"                "$dir/nexa-coffee.nuspec"
-fill "$here/choco/tools/chocolateyinstall.ps1"       "$dir/tools/chocolateyinstall.ps1"
-cp   "$here/choco/tools/chocolateybeforemodify.ps1"  "$dir/tools/chocolateybeforemodify.ps1"
+# ── Chocolatey — 그대로 `choco pack` 가능한 형태. 설치본 nexa-coffee ← choco/ · 포터블 nexa-coffee-portable ← choco-portable/ ──
+emit_choco() {
+  local id=$1 src=$2 dir="$OUT/choco/$1" f
+  mkdir -p "$dir/tools"
+  fill "$here/$src/$id.nuspec" "$dir/$id.nuspec"
+  for f in "$here/$src/tools/"*.ps1; do fill "$f" "$dir/tools/$(basename "$f")"; done
+}
+emit_choco nexa-coffee          choco
+emit_choco nexa-coffee-portable choco-portable
 
 # ── Homebrew(탭 저장소 배치 그대로: Casks/ · Formula/) ──
 mkdir -p "$OUT/homebrew/Casks" "$OUT/homebrew/Formula"

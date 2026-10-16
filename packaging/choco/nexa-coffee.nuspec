@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Chocolatey 패키지(포터블 zip) — 버전·해시는 render-manifests.sh가 채운다. nexa-shortcut 선례. -->
+<!-- Chocolatey 패키지 — **설치본**(NSIS setup.exe · 10-17 포터블 nexa-coffee-portable과 분리 · DR-16). 버전·해시는 render-manifests.sh가 채운다.
+     0.1.3까지 이 id는 포터블 zip이었다 — 업그레이드하면 포터블 파일은 패키지 폴더와 함께 사라지고 설치본이 들어선다. -->
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>nexa-coffee</id>
     <version>@VERSION@</version>
-    <title>Nexa Coffee (Portable)</title>
+    <title>Nexa Coffee</title>
     <authors>SosomLab</authors>
     <owners>SosomLab</owners>
     <!-- LICENSE 첫 줄과 같게 — 없으면 choco 모더레이션 Requirement(virtualex 09-21). -->
@@ -17,7 +18,7 @@
     <iconUrl>https://cdn.jsdelivr.net/gh/SosomLab/nexa-coffee@v@VERSION@/packaging/branding/nexa-coffee-256.png</iconUrl>
     <licenseUrl>https://github.com/SosomLab/nexa-coffee/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <tags>nexa-coffee caffeine keep-awake sleep tray timer portable</tags>
+    <tags>nexa-coffee caffeine keep-awake sleep tray timer</tags>
     <summary>Tiny tray timer that keeps the PC awake</summary>
     <description>
 Nexa Coffee sits in the tray and shows the remaining time inside a ring icon.
@@ -26,10 +27,16 @@ sleep, hibernation, display-off and the screen saver until the timer ends.
 
 - Pure Win32, no C runtime, about 30 KB, one thread
 - Right-click menu, live countdown at the top of the menu
-- Optional auto-start duration on launch
+- Start at login (tray menu toggle) and an optional auto-start duration on launch
 - English, Korean, Japanese and Chinese UI
 
-Portable: the zip is extracted into the package tools folder and a shim `nexa-coffee-x64` (or `-x86`) is added to PATH.
+This package runs the official installer silently (per-user, no admin rights needed:
+`%LOCALAPPDATA%\Programs\NexaCoffee`, Start menu shortcut, Apps list entry).
+
+## Package parameters
+- `/AutoStart` - also turn on "Start at login" (`choco install nexa-coffee --params "'/AutoStart'"`).
+
+The portable build (zip, no installer) is the `nexa-coffee-portable` package.
     </description>
     <releaseNotes>https://github.com/SosomLab/nexa-coffee/releases/tag/v@VERSION@</releaseNotes>
   </metadata>

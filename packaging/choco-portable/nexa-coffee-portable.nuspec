@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chocolatey 패키지 — **포터블 zip**(nexa-coffee-portable · 10-17 설치본 nexa-coffee와 분리). 버전·해시는 render-manifests.sh가 채운다. -->
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>nexa-coffee-portable</id>
+    <version>@VERSION@</version>
+    <title>Nexa Coffee (Portable)</title>
+    <authors>SosomLab</authors>
+    <owners>SosomLab</owners>
+    <!-- LICENSE 첫 줄과 같게 — 없으면 choco 모더레이션 Requirement(virtualex 09-21). -->
+    <copyright>Copyright (c) 2026 SosomLab (Sangyong Bae)</copyright>
+    <projectUrl>https://github.com/SosomLab/nexa-coffee</projectUrl>
+    <packageSourceUrl>https://github.com/SosomLab/nexa-coffee/tree/main/packaging/choco-portable</packageSourceUrl>
+    <docsUrl>https://github.com/SosomLab/nexa-coffee#readme</docsUrl>
+    <bugTrackerUrl>https://github.com/SosomLab/nexa-coffee/issues</bugTrackerUrl>
+    <!-- CDN(jsDelivr) + 태그 고정 — raw.githubusercontent.com은 choco 모더레이션 요구사항 위반(virtualex 09-14). -->
+    <iconUrl>https://cdn.jsdelivr.net/gh/SosomLab/nexa-coffee@v@VERSION@/packaging/branding/nexa-coffee-256.png</iconUrl>
+    <licenseUrl>https://github.com/SosomLab/nexa-coffee/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <tags>nexa-coffee caffeine keep-awake sleep tray timer portable</tags>
+    <summary>Tiny tray timer that keeps the PC awake</summary>
+    <description>
+Nexa Coffee sits in the tray and shows the remaining time inside a ring icon.
+Pick unlimited, 12 h, 6 h, 2 h, 1 h, 30 min or a custom days/hours/minutes value and it prevents
+sleep, hibernation, display-off and the screen saver until the timer ends.
+
+- Pure Win32, no C runtime, about 30 KB, one thread
+- Right-click menu, live countdown at the top of the menu
+- Optional auto-start duration on launch
+- English, Korean, Japanese and Chinese UI
+
+Portable: the zip is extracted into the package tools folder and a shim `nexa-coffee-x64` (or `-x86`) is added to PATH.
+The installer version (Start menu, Apps list, optional start at login) is the `nexa-coffee` package.
+    </description>
+    <releaseNotes>https://github.com/SosomLab/nexa-coffee/releases/tag/v@VERSION@</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

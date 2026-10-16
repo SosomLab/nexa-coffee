@@ -1,8 +1,11 @@
 # publish-windows-packages — winget · Chocolatey 제출 (이식 원본: nexa-clip · 변수+시크릿 이중 게이트 + 검수 대기 자동 판정)
 #
-# | 채널 | 스위치 변수 | 시크릿 | 대기 판정 |
-# | winget | vars.WINGET_PUBLISH=true | WINGET_TOKEN | microsoft/winget-pkgs에 SosomLab.NexaCoffee 열린 PR이 있으면 대기 |
-# | Chocolatey | vars.CHOCO_PUSH=true | CHOCO_API_KEY | 공개 피드에 직전 릴리스 버전이 아직 없으면 대기(모더레이션 중) |
+# | 채널 | 스위치 변수 | 시크릿 | 대기 판정(패키지별) |
+# | winget | vars.WINGET_PUBLISH=true | WINGET_TOKEN | 그 ID(" <ID> version ")의 열린 우리 PR이 있으면 그 ID만 건너뜀 |
+# | Chocolatey | vars.CHOCO_PUSH=true | CHOCO_API_KEY | 그 패키지에 PackageStatus=Submitted 버전이 있으면 그 패키지만 건너뜀 |
+#
+# 패키지(10-17 분리 · DR-16): 설치본 = winget SosomLab.NexaCoffee · choco nexa-coffee(setup.exe)
+#                           포터블 = winget SosomLab.NexaCoffee.Portable · choco nexa-coffee-portable(-portable.zip)
 #
 # `channels`로 한 채널만 고를 수 있다(both·choco·winget). 모더레이션 지적을 고쳐 같은 버전을 다시 올릴 때 쓴다 —
 # 예: choco 수정 재push는 `channels=choco force=true`(force가 없으면 첫 제출이 대기 중이라 건너뛴다).
@@ -60,13 +63,8 @@ jobs:
           if [ "$ch" != "both" ] && [ "$ch" != "winget" ]; then
             echo "::notice::winget: channels=$ch — 건너뛴다."
           elif [ "${{ vars.WINGET_PUBLISH }}" = "true" ] && [ -n "${WINGET_TOKEN:-}" ]; then
+            # 검수 대기 판정은 **패키지별**로 winget 잡이 한다(10-17 설치본·포터블 분리 — 한 ID의 열린 PR이 다른 ID를 막지 않게).
             go=true
-            if [ "${{ inputs.force }}" != "true" ]; then
-              me=$(GH_TOKEN="$WINGET_TOKEN" gh api user -q .login)
-              open=$(GH_TOKEN="$WINGET_TOKEN" gh pr list -R microsoft/winget-pkgs --state open --author "$me" \
-                       --search "SosomLab.NexaCoffee" --json number,title -q '.[] | "#\(.number) \(.title)"' || true)
-              if [ -n "$open" ]; then echo "::warning::winget: 직전 제출이 검수 대기 중 — 건너뛴다."; echo "$open"; go=false; fi
-            fi
           fi
           echo "go=$go" >> "$GITHUB_OUTPUT"; echo "winget 제출: $go"
       - id: choco
@@ -78,22 +76,8 @@ jobs:
           if [ "$ch" != "both" ] && [ "$ch" != "choco" ]; then
             echo "::notice::choco: channels=$ch — 건너뛴다."
           elif [ "${{ vars.CHOCO_PUSH }}" = "true" ] && [ -n "${CHOCO_API_KEY:-}" ]; then
+            # 모더레이션 대기 판정은 **패키지별**로 chocolatey 잡이 한다(nexa-coffee · nexa-coffee-portable).
             go=true
-            if [ "${{ inputs.force }}" != "true" ]; then
-              cur="${{ inputs.tag }}"
-              prev=$(git tag -l 'v*' --sort=-v:refname | grep -v -- '-' | grep -vx "$cur" | head -1 || true)
-              if [ -n "$prev" ]; then
-                pv="${prev#v}"
-                url="https://community.chocolatey.org/api/v2/Packages()?\$filter=Id%20eq%20'nexa-coffee'%20and%20Version%20eq%20'$pv'"
-                # ⚠️ 피드는 **미승인 버전도 <entry>로 돌려준다**(IsApproved=false · PackageStatus=Submitted).
-                # 09-17: <entry> 유무로 봤다가 0.1.0 모더레이션 중인데 0.1.1을 밀어 403을 받았다. 승인 여부로 판정한다.
-                if ! curl -fsS "$url" | grep -q '<d:IsApproved m:type="Edm.Boolean">true</d:IsApproved>'; then
-                  echo "::warning::choco: nexa-coffee $pv 이(가) 아직 승인되지 않았다(모더레이션 대기) — 건너뛴다."; go=false
-                fi
-              else
-                echo "직전 정식 태그 없음 — 첫 제출."
-              fi
-            fi
           fi
           echo "go=$go" >> "$GITHUB_OUTPUT"; echo "choco 제출: $go"
 
@@ -104,6 +88,7 @@ jobs:
       CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
     steps:
       - uses: actions/checkout@v5
+        with: { fetch-depth: 0 } # 직전 태그로 패키지별 모더레이션 대기 판정
       - name: 릴리스 자산 내려받기
         shell: bash
         env: { GH_TOKEN: "${{ github.token }}" }
@@ -116,18 +101,39 @@ jobs:
           v="${TAG#v}"
           ./packaging/render-manifests.sh "$v" assets out
           mkdir -p out/choco/nupkg
-          choco pack out/choco/nexa-coffee/nexa-coffee.nuspec --version "$v" --outputdirectory out/choco/nupkg
+          # 설치본 nexa-coffee(setup.exe) · 포터블 nexa-coffee-portable(zip) — 10-17 분리(DR-16)
+          for id in nexa-coffee nexa-coffee-portable; do
+            choco pack "out/choco/$id/$id.nuspec" --version "$v" --outputdirectory out/choco/nupkg
+          done
           ls -l out/choco/nupkg
       - uses: actions/upload-artifact@v6
         with: { name: "chocolatey-${{ inputs.tag }}", path: out/choco/** }
       - name: choco push
         if: needs.guard.outputs.choco_go == 'true'
         shell: bash
-        env: { TAG: "${{ inputs.tag }}" }
+        env: { TAG: "${{ inputs.tag }}", FORCE: "${{ inputs.force }}" }
         run: |
           set -euo pipefail
-          choco push "out/choco/nupkg/nexa-coffee.${TAG#v}.nupkg" --source https://push.chocolatey.org/ --api-key "$CHOCO_API_KEY"
-          echo "제출 완료 — 커뮤니티 저장소는 검수를 거쳐야 노출된다."
+          v="${TAG#v}"
+          # 직전 정식 태그 3개 — 그 버전들 중 모더레이션 중인 것이 있으면 그 패키지는 건너뛴다(대기 중에 새 버전을 밀면 403 · 09-17)
+          prevs=$(git tag -l 'v*' --sort=-v:refname | grep -v -- '-' | grep -vx "$TAG" | head -3 | sed 's/^v//' || true)
+          for id in nexa-coffee nexa-coffee-portable; do
+            if [ "$FORCE" != "true" ]; then
+              # ⚠️ Id만으로 조회하면 피드는 **승인된 버전만** 준다(10-17 실측: 0.1.3 Submitted가 빠짐) → 버전을 지정해 묻는다.
+              #    버전을 지정하면 미승인도 <entry>로 온다(IsApproved=false · PackageStatus=Submitted) — 상태 값으로 판정한다.
+              #    그 패키지에 없는 버전(nexa-coffee-portable 첫 제출 등)은 빈 응답 → 대기 아님.
+              pending=
+              for pv in $prevs; do
+                url="https://community.chocolatey.org/api/v2/Packages()?\$filter=Id%20eq%20'$id'%20and%20Version%20eq%20'$pv'"
+                if curl -fsS "$url" | grep -q '<d:PackageStatus>Submitted</d:PackageStatus>'; then pending=$pv; break; fi
+              done
+              if [ -n "$pending" ]; then
+                echo "::warning::choco: $id $pending 이(가) 모더레이션 대기 중 — 건너뛴다(force=true로 무시)."; continue
+              fi
+            fi
+            choco push "out/choco/nupkg/$id.$v.nupkg" --source https://push.chocolatey.org/ --api-key "$CHOCO_API_KEY"
+            echo "$id $v 제출 완료 — 커뮤니티 저장소는 검수를 거쳐야 노출된다."
+          done
       - if: needs.guard.outputs.choco_go != 'true'
         shell: bash
         run: echo "::notice::choco push하지 않았다(스위치 꺼짐·키 없음·직전 제출 검수 대기). 아티팩트의 nupkg를 직접 push할 수 있다."
@@ -149,18 +155,20 @@ jobs:
         run: |
           set -euo pipefail
           ./packaging/render-manifests.sh "${TAG#v}" assets out
-          d=$(find out/winget -name '*.installer.yaml' -exec dirname {} \; | head -1)
-          echo "== $d · winget $(winget --version)"
-          # `winget validate`는 경고만 있어도 **exit 40**으로 끝난다 — 40은 실패가 아니므로 기록만 남기고 넘어간다.
-          # 09-17: 러너의 winget이 우리 ManifestVersion(1.12.0)보다 오래돼 스키마 헤더를 "예상 패턴과 다르다"고 본다
-          # (같은 파일이 로컬 winget 1.29에서는 경고 없이 통과 · PR #433980의 komac 매니페스트도 같은 URL을 쓴다).
-          set +e; v_out=$(winget validate --manifest "$d" 2>&1); rc=$?; set -e
-          echo "$v_out"
-          case "$rc" in
-            0)  ;;
-            40) echo "::warning::winget validate 경고(exit 40) — 위 내용 확인" ;;
-            *)  echo "::error::winget validate 실패(exit $rc)"; exit "$rc" ;;
-          esac
+          # 설치본 SosomLab.NexaCoffee · 포터블 SosomLab.NexaCoffee.Portable — 매니페스트 폴더 둘(10-17 분리)
+          for d in $(find out/winget -name '*.installer.yaml' -exec dirname {} \; | sort); do
+            echo "== $d · winget $(winget --version)"
+            # `winget validate`는 경고만 있어도 **exit 40**으로 끝난다 — 40은 실패가 아니므로 기록만 남기고 넘어간다.
+            # 09-17: 러너의 winget이 우리 ManifestVersion(1.12.0)보다 오래돼 스키마 헤더를 "예상 패턴과 다르다"고 본다
+            # (같은 파일이 로컬 winget 1.29에서는 경고 없이 통과 · PR #433980의 komac 매니페스트도 같은 URL을 쓴다).
+            set +e; v_out=$(winget validate --manifest "$d" 2>&1); rc=$?; set -e
+            echo "$v_out"
+            case "$rc" in
+              0)  ;;
+              40) echo "::warning::winget validate 경고(exit 40) — 위 내용 확인" ;;
+              *)  echo "::error::winget validate 실패(exit $rc)"; exit "$rc" ;;
+            esac
+          done
       - uses: actions/upload-artifact@v6
         with: { name: "winget-${{ inputs.tag }}", path: out/winget/** }
       # wingetcreate는 우리 포크의 master가 upstream과 맞지 않으면 "The forked repository could not be
@@ -181,17 +189,29 @@ jobs:
       - name: winget-pkgs PR
         if: needs.guard.outputs.winget_go == 'true'
         shell: bash
+        env: { FORCE: "${{ inputs.force }}" }
         run: |
           set -euo pipefail
           curl.exe -L -o wingetcreate.exe https://aka.ms/wingetcreate/latest
-          d=$(find out/winget -name '*.installer.yaml' -exec dirname {} \; | head -1)
-          # 09-13 첫 릴리스: GitHub API 일시 장애로 "Failed to connect to GitHub" → 3회 재시도(간격 60초). 그래도 실패하면
-          # 로컬에서 `komac submit <매니페스트 폴더> --yes`로 제출할 수 있다(0.1.0은 그렇게 PR #433980을 만들었다).
-          for i in 1 2 3; do
-            if ./wingetcreate.exe submit --token "$WINGET_TOKEN" "$d"; then echo "PR 생성 — microsoft/winget-pkgs의 자동 검증·리뷰를 거쳐야 노출된다."; exit 0; fi
-            echo "::warning::wingetcreate submit 실패($i/3) — 60초 뒤 재시도"; sleep 60
+          me=$(GH_TOKEN="$WINGET_TOKEN" gh api user -q .login)
+          # 열린 우리 PR 제목들("New package: SosomLab.NexaCoffee version 0.1.1" 꼴) — 패키지별 대기 판정에 쓴다
+          titles=$(GH_TOKEN="$WINGET_TOKEN" gh pr list -R microsoft/winget-pkgs --state open --author "$me" \
+                     --search "SosomLab.NexaCoffee" --json number,title -q '.[] | "#\(.number) \(.title)"' || true)
+          for d in $(find out/winget -name '*.installer.yaml' -exec dirname {} \; | sort); do
+            id=$(sed -n 's/^PackageIdentifier: *//p' "$d"/*.installer.yaml | head -1 | tr -d '\r')
+            # " <ID> version " 으로 찾는다 — "SosomLab.NexaCoffee version"은 ".Portable version" 제목과 겹치지 않는다
+            if [ "$FORCE" != "true" ] && printf '%s\n' "$titles" | grep -F -- " $id version " >/dev/null; then
+              echo "::warning::winget: $id 직전 제출이 검수 대기 중 — 건너뛴다."; printf '%s\n' "$titles" | grep -F -- " $id version "; continue
+            fi
+            # 09-13 첫 릴리스: GitHub API 일시 장애로 "Failed to connect to GitHub" → 3회 재시도(간격 60초). 그래도 실패하면
+            # 로컬에서 `komac submit <매니페스트 폴더> --yes`로 제출할 수 있다(0.1.0은 그렇게 PR #433980을 만들었다).
+            ok=0
+            for i in 1 2 3; do
+              if ./wingetcreate.exe submit --token "$WINGET_TOKEN" "$d"; then echo "$id PR 생성 — 자동 검증·리뷰를 거쳐야 노출된다."; ok=1; break; fi
+              echo "::warning::$id wingetcreate submit 실패($i/3) — 60초 뒤 재시도"; sleep 60
+            done
+            [ "$ok" = 1 ] || exit 1
           done
-          exit 1
       - if: needs.guard.outputs.winget_go != 'true'
         shell: bash
         run: echo "::notice::winget PR을 만들지 않았다(스위치 꺼짐·토큰 없음·직전 제출 검수 대기). 아티팩트를 직접 PR할 수 있다."

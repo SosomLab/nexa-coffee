@@ -1,5 +1,5 @@
 # release — `v*` 태그 push → 5 산출물 + SHA256SUMS + GitHub Release 공개. (nexa-shortcut/nexa-clip 정책 계승)
-# 산출물: macOS universal .app zip · Windows x64/x86 zip(mingw) + 설치본 setup.exe(NSIS · DR-16) · Linux x64 tar.gz(musl 정적).
+# 산출물: macOS universal .app zip · Windows 설치본 setup.exe(NSIS · DR-16) + 포터블 x64/x86 -portable.zip(mingw · 10-17 분리) · Linux x64 tar.gz(musl 정적).
 # 릴리스 공개 뒤 homebrew.yml(탭 갱신) · publish-windows-packages.yml(winget PR · choco push) · linux-packages.yml(.deb·.rpm → pkg.sosomlab.com)을 이어서 부른다.
 name: release
 on:
@@ -43,9 +43,10 @@ jobs:
           cp dist/nexa-coffee packaging/linux/nexa-coffee.desktop packaging/linux/install.sh packaging/linux/uninstall.sh packaging/branding/nexa-coffee-256.png LICENSE "out/nexa-coffee-$VERSION-linux-x64/"
           tar -C out -czf "out/nexa-coffee-$VERSION-linux-x64.tar.gz" "nexa-coffee-$VERSION-linux-x64"
           rm -rf "out/nexa-coffee-$VERSION-linux-x64"
-          # zip 루트에 exe + LICENSE(-j: 경로 없이) — winget NestedInstallerFiles · choco unzip 모두 루트 기준
-          zip -9 -j "out/nexa-coffee-$VERSION-windows-x64.zip" dist/nexa-coffee-x64.exe LICENSE
-          zip -9 -j "out/nexa-coffee-$VERSION-windows-x86.zip" dist/nexa-coffee-x86.exe LICENSE
+          # 포터블 zip(설치본과 별도 자산 · 10-17) — 루트에 exe + LICENSE(-j: 경로 없이).
+          # winget SosomLab.NexaCoffee.Portable(NestedInstallerFiles) · choco nexa-coffee-portable(unzip)이 루트 기준으로 본다.
+          zip -9 -j "out/nexa-coffee-$VERSION-windows-x64-portable.zip" dist/nexa-coffee-x64.exe LICENSE
+          zip -9 -j "out/nexa-coffee-$VERSION-windows-x86-portable.zip" dist/nexa-coffee-x86.exe LICENSE
       - name: Windows 설치본(NSIS · x64/x86 exe를 담은 setup.exe 하나)
         run: |
           set -e

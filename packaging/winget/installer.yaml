@@ -1,30 +1,32 @@
-# winget 매니페스트(포터블 zip) — 버전·해시는 render-manifests.sh가 채운다(손으로 적지 않는다).
+# winget 매니페스트 — **설치본**(SosomLab.NexaCoffee · NSIS setup.exe · 10-17 포터블과 분리 · DR-16).
+# 포터블 zip은 SosomLab.NexaCoffee.Portable(packaging/winget-portable/). 버전·해시는 render-manifests.sh가 채운다.
 # ★ 세 파일의 ManifestVersion은 반드시 같아야 한다(09-13: komac이 installer만 1.12.0으로 올려 검증 오류 → 전부 1.12.0으로 통일).
-# `winget validate`는 이 스키마 헤더가 없으면 경고를 내고 **종료 코드 40**으로 끝난다
-# (set -e인 워크플로가 거기서 죽는다 — 09-17 실측). ManifestVersion과 같은 값을 유지한다.
+# `winget validate`는 이 스키마 헤더가 없으면 경고를 내고 **종료 코드 40**으로 끝난다(09-17 실측).
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.12.0.schema.json
 PackageIdentifier: SosomLab.NexaCoffee
 PackageVersion: "@VERSION@"
 MinimumOSVersion: 10.0.0.0
-# zip 안의 exe 하나 — winget이 풀어서 shim(nexa-coffee)만 만든다(설치 흔적 없음). nexa-shortcut 선례.
-InstallerType: zip
-NestedInstallerType: portable
-Commands:
-  - nexa-coffee
+# setup.exe 하나가 x64·x86 exe를 모두 담고 설치 시 OS 비트에 맞는 것을 놓는다 → 두 아키텍처가 같은 URL·해시.
+# NSIS(nullsoft) — winget이 무인 설치에 /S를 붙인다. 사용자 단위 설치(HKCU · %LOCALAPPDATA%\Programs\NexaCoffee · 관리자 권한 없음).
+InstallerType: nullsoft
+Scope: user
+InstallModes:
+  - interactive
+  - silent
 UpgradeBehavior: install
+# 제거 정보 키 이름(HKCU\...\Uninstall\NexaCoffee) — installer.nsi의 UNINSTKEY와 같다. winget이 설치 여부·버전을 여기서 읽는다.
+ProductCode: NexaCoffee
+AppsAndFeaturesEntries:
+  - DisplayName: Nexa Coffee
+    Publisher: SosomLab
+    ProductCode: NexaCoffee
 ReleaseDate: "@DATE@"
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/SosomLab/nexa-coffee/releases/download/v@VERSION@/nexa-coffee-@VERSION@-windows-x64.zip
-    InstallerSha256: @SHA_WIN_X64@
-    NestedInstallerFiles:
-      - RelativeFilePath: nexa-coffee-x64.exe
-        PortableCommandAlias: nexa-coffee
+    InstallerUrl: https://github.com/SosomLab/nexa-coffee/releases/download/v@VERSION@/nexa-coffee-@VERSION@-windows-setup.exe
+    InstallerSha256: @SHA_WIN_SETUP@
   - Architecture: x86
-    InstallerUrl: https://github.com/SosomLab/nexa-coffee/releases/download/v@VERSION@/nexa-coffee-@VERSION@-windows-x86.zip
-    InstallerSha256: @SHA_WIN_X86@
-    NestedInstallerFiles:
-      - RelativeFilePath: nexa-coffee-x86.exe
-        PortableCommandAlias: nexa-coffee
+    InstallerUrl: https://github.com/SosomLab/nexa-coffee/releases/download/v@VERSION@/nexa-coffee-@VERSION@-windows-setup.exe
+    InstallerSha256: @SHA_WIN_SETUP@
 ManifestType: installer
 ManifestVersion: 1.12.0
