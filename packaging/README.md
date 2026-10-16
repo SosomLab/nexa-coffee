@@ -4,15 +4,15 @@
 
 | 채널 | 파일 | 워크플로 | 게이트 |
 | --- | --- | --- | --- |
-| GitHub Releases | `.github/workflows/release.yml` — `v*` 태그 → mac universal zip · Windows x64/x86 zip · Windows 설치본 `windows-setup.exe`(NSIS · 10-16~) · Linux x64 tar.gz + `SHA256SUMS.txt` | release | — |
+| GitHub Releases | `.github/workflows/release.yml` — `v*` 태그 → mac universal zip · Windows 설치본 `windows-setup.exe`(NSIS) · Windows 포터블 `windows-x64-portable.zip`/`windows-x86-portable.zip`(10-17~ · 그 전엔 `windows-x64.zip`/`x86.zip`) · Linux x64 tar.gz + `SHA256SUMS.txt` | release | — |
 | Homebrew(Cask + Linux Formula) | `homebrew/nexa-coffee.rb` · `homebrew/nexa-coffee-portable.rb` → `kiros33/homebrew-tap` | `homebrew.yml`(release가 호출) | 시크릿 `TAP_TOKEN` |
-| winget | `winget/*.yaml` → microsoft/winget-pkgs PR(`SosomLab.NexaCoffee` · 포터블 zip) | `publish-windows-packages.yml` | 변수 `WINGET_PUBLISH=true` + 시크릿 `WINGET_TOKEN` · 열린 PR 있으면 대기 · `channels`로 채널 선택 |
-| Chocolatey | `choco/` → `choco push`(`nexa-coffee` · 포터블 zip · `.gui` shim) | 〃 | 변수 `CHOCO_PUSH=true` + 시크릿 `CHOCO_API_KEY` · 직전 버전 미공개면 대기 |
+| winget | `winget/*.yaml` → `SosomLab.NexaCoffee` = **설치본**(nullsoft · `/S` · Scope user) · `winget-portable/*.yaml` → `SosomLab.NexaCoffee.Portable` = 포터블 zip — microsoft/winget-pkgs PR(10-17 분리 · DR-16) | `publish-windows-packages.yml` | 변수 `WINGET_PUBLISH=true` + 시크릿 `WINGET_TOKEN` · **ID별** 열린 PR(제목 `<ID> version`) 있으면 그 ID만 대기 · `channels`로 채널 선택 |
+| Chocolatey | `choco/` → `nexa-coffee` = **설치본**(`Install-ChocolateyPackage` · `/S` · 제거 스크립트) · `choco-portable/` → `nexa-coffee-portable` = 포터블 zip(`.gui` shim) — `choco push`(10-17 분리 · DR-16) | 〃 | 변수 `CHOCO_PUSH=true` + 시크릿 `CHOCO_API_KEY` · **패키지별** 직전 태그 3개 중 `PackageStatus=Submitted`가 있으면 그 패키지만 대기 |
 | macOS .app | `macos/Info.plist` + `macos/make-app.sh` — LSUIElement · ad-hoc 서명 · LSEnvironment(MallocSpaceEfficient) | release | — |
 | Linux tar.gz | `linux/nexa-coffee.desktop` + `install.sh`/`uninstall.sh`(~/.local) | release | — |
 | Linux APT · RPM(pkg.sosomlab.com) | `linux/build-pkgs.sh` — tar.gz 안 바이너리 그대로 `.deb`·`.rpm` 포장 → 릴리스에 덧붙임 → `SosomLab/linux-repo`(`apps/nexa-coffee.toml`)에 발행 신호 | `linux-packages.yml`(release가 호출 · 수동 = 기존 태그에 덧붙이기) | 시크릿 `LINUX_REPO_DISPATCH_TOKEN`(없으면 linux-repo 하루 1회 정기 실행) |
 
-설치 명령: `brew install --cask kiros33/tap/nexa-coffee` · `brew install kiros33/tap/nexa-coffee-portable`(Linux) · `sudo apt install nexa-coffee` / `sudo dnf install nexa-coffee`(pkg.sosomlab.com 등록 후) · `winget install SosomLab.NexaCoffee` · `choco install nexa-coffee`.
+설치 명령: `brew install --cask kiros33/tap/nexa-coffee` · `brew install kiros33/tap/nexa-coffee-portable`(Linux) · `sudo apt install nexa-coffee` / `sudo dnf install nexa-coffee`(pkg.sosomlab.com 등록 후) · `winget install SosomLab.NexaCoffee` · `choco install nexa-coffee`(설치본) · `winget install SosomLab.NexaCoffee.Portable` · `choco install nexa-coffee-portable`(포터블).
 
 로컬 점검: 릴리스와 같은 이름의 자산을 한 폴더에 두고 `./packaging/render-manifests.sh 0.1.1 assets out` → `ruby -c out/homebrew/Casks/nexa-coffee.rb`. 수동 재제출은 각 워크플로의 `workflow_dispatch`(tag 입력).
 

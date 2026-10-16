@@ -46,13 +46,24 @@ Linux는 libdbus 없이 D-Bus를 직접 말하며(musl 정적 · libc 하나), m
 [GitHub Releases](https://github.com/SosomLab/nexa-coffee/releases)에서 받는다 — `SHA256SUMS.txt`로 확인.
 ⚠️ v1은 **코드 서명이 없다**(macOS Gatekeeper · Windows SmartScreen 경고).
 
-| OS | 패키지 관리자 | 직접 받기 |
+| | 설치본 | 포터블 |
 | --- | --- | --- |
-| Windows | `winget install SosomLab.NexaCoffee` · `choco install nexa-coffee` | 설치본 `nexa-coffee-<v>-windows-setup.exe`(관리자 권한 불필요 · 마법사에서 "로그인 시 실행" 선택) 또는 포터블 `nexa-coffee-<v>-windows-x64.zip`(x86도 있음) → `nexa-coffee-x64.exe` 실행 · 로그인 시 자동 실행은 트레이 메뉴 "로그인 시 실행" |
-| macOS | `brew install --cask kiros33/tap/nexa-coffee` | `nexa-coffee-<v>-macos-universal.zip` → `xattr -dr com.apple.quarantine "Nexa Coffee.app"` 후 응용 프로그램 폴더로 · 로그인 시 자동 실행은 메뉴 막대 메뉴 "로그인 시 실행" |
-| Linux | APT/dnf 저장소 [pkg.sosomlab.com](https://pkg.sosomlab.com/) 등록 후 `sudo apt install nexa-coffee` / `sudo dnf install nexa-coffee` · `brew install kiros33/tap/nexa-coffee-portable` | `nexa-coffee_<v>_amd64.deb` · `nexa-coffee-<v>-1.x86_64.rpm` · `nexa-coffee-<v>-linux-x64.tar.gz` → `./install.sh`(~/.local) · 로그인 시 자동 실행은 트레이 메뉴 "로그인 시 실행"(또는 `./install.sh --autostart`) · 트레이 호스트 필요(KDE 기본 · GNOME은 AppIndicator 확장) · ⚠️ `apt remove`/`dnf remove`는 `~/.config/autostart/nexa-coffee.desktop`을 지우지 못한다 — 제거 전에 메뉴에서 끄거나 직접 지운다(남아도 무해) |
+| Windows | `winget install SosomLab.NexaCoffee` · `choco install nexa-coffee` | `winget install SosomLab.NexaCoffee.Portable` · `choco install nexa-coffee-portable` |
+| macOS | `brew install --cask kiros33/tap/nexa-coffee` | — |
+| Linux | [pkg.sosomlab.com](https://pkg.sosomlab.com/) 등록 후 `sudo apt install nexa-coffee` / `sudo dnf install nexa-coffee` | `brew install kiros33/tap/nexa-coffee-portable` · `.tar.gz` |
 
-winget·Chocolatey는 첫 제출 후 커뮤니티 검수(며칠)를 거쳐야 검색된다. 채널 구성은 [`packaging/`](packaging/README.md).
+직접 받기(Releases):
+
+| OS | 자산 | 비고 |
+| --- | --- | --- |
+| Windows | 설치본 `nexa-coffee-<v>-windows-setup.exe` · 포터블 `nexa-coffee-<v>-windows-x64-portable.zip`(x86은 `-windows-x86-portable.zip`) | 설치본은 관리자 권한 불필요 · 마법사에서 "로그인 시 실행" 선택 · 무인 `/S`(`/AUTOSTART=1` · choco는 `--params "'/AutoStart'"`). 포터블은 풀어서 `nexa-coffee-x64.exe`(x86은 `-x86.exe`) 실행 |
+| macOS | `nexa-coffee-<v>-macos-universal.zip` | `xattr -dr com.apple.quarantine "Nexa Coffee.app"` 후 응용 프로그램 폴더로 |
+| Linux | `nexa-coffee_<v>_amd64.deb` · `nexa-coffee-<v>-1.x86_64.rpm` · `nexa-coffee-<v>-linux-x64.tar.gz` | tar.gz는 `./install.sh`(~/.local · `--autostart`) · 트레이 호스트 필요(KDE 기본 · GNOME은 AppIndicator 확장) |
+
+로그인 시 자동 실행은 3-OS 모두 트레이(메뉴 막대) 메뉴 **"로그인 시 실행"**.
+⚠️ Linux `apt remove`/`dnf remove`는 `~/.config/autostart/nexa-coffee.desktop`을 지우지 못한다 — 제거 전에 메뉴에서 끄거나 직접 지운다(남아도 무해).
+
+winget·Chocolatey는 첫 제출 후 커뮤니티 검수(며칠)를 거쳐야 검색된다 — 설치본/포터블 분리는 v0.1.3 다음 릴리스부터(v0.1.3까지의 `SosomLab.NexaCoffee`·`nexa-coffee`는 포터블 zip). 채널 구성은 [`packaging/`](packaging/README.md).
 
 ## 빌드
 
