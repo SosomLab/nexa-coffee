@@ -1,5 +1,13 @@
 # STATUS — 지금 상태
 
+## 10-17 — v0.1.3 배포 (사용자 요청 "새 버전 릴리즈 및 패키지 게시" · Windows PC · 두 세션 협업)
+
+- **[v0.1.3](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.3) 배포** — 10-16 작업(로그인 시 실행 메뉴 · Windows 설치본 · 언어 "시스템")을 담은 첫 릴리스. release run 38924013370 전부 success.
+- **자산 8종** — **`windows-setup.exe` 171,636 B(신규 · 릴리스 자산 그대로 SHA256 대조·무인 설치·제거 실기 ✅)** · x64/x86 zip · macOS universal zip · Linux tar.gz · .deb · .rpm · `SHA256SUMS.txt`.
+- **채널** — brew 탭 0.1.3 ✅ · pkg.sosomlab.com APT 0.1.3 ✅(RPM 같은 publish) · choco 0.1.3 push ✅ → 모더레이션 대기 · winget 가드가 건너뜀(#436346 0.1.1 머지 대기).
+- **남음**: choco 승인 · winget 머지(T-6) · 사람 실기(설치 마법사 GUI · 3-OS 재로그인 · dnf 설치 T-20).
+- 상세: [journal/2026-10-17](journal/2026-10-17.md).
+
 ## 10-16 — "로그인 시 실행" 메뉴 토글 · Windows 설치본(NSIS) · 언어 "시스템" 항목 (사용자 요청 · Windows PC · 두 세션 협업)
 
 - **로그인 시 실행 ✅(DR-15 · T-5)** — 트레이 메뉴 체크 항목(3-OS). 진실 원천 = OS 상태(Win Run 값 `Nexa Coffee` · mac LaunchAgents plist · Linux `~/.config/autostart`) · 설정 파일 무변경.
