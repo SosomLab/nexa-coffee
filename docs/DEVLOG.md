@@ -1,6 +1,6 @@
 # DEVLOG — 날짜별 요약(최신 위)
 
-- **2026-10-16** — **"로그인 시 실행" 메뉴 토글(3-OS · DR-15)**: 진실 원천 = OS 상태(Run 값 · LaunchAgents plist · XDG autostart) · 설정 무변경 · 스모크 절 추가. **Windows 설치본(NSIS · DR-16)**: `windows-setup.exe` 하나(x64/x86) · 체크박스 기본 해제 · `/AUTOSTART=1` · release/ci 워크플로. Windows 실기 ✅(토글 · 설치·재설치·제거) · exe 33,280 B. 최신화: 새 커밋 없음 · linux-repo 등록 확인 권고 → T-21. 두 세션 협업(개발/문서). → [journal](journal/2026-10-16.md)
+- **2026-10-16** — **"로그인 시 실행" 메뉴 토글(3-OS · DR-15)**: 진실 원천 = OS 상태(Run 값 · LaunchAgents plist · XDG autostart) · 설정 무변경 · 스모크 절 추가. **Windows 설치본(NSIS · DR-16)**: `windows-setup.exe` 하나(x64/x86) · 체크박스 기본 해제 · `/AUTOSTART=1` · release/ci 워크플로. Windows 실기 ✅(토글 · 설치·재설치·제거) · exe 33,280 B. **언어 ▸ "시스템 (OS 언어)"**(DR-13 보강 · 고르면 `lang=` 제거 · 즉시 적용 · Win/mac OS 언어 변경 감지) — "언어 변환 안 됨"은 재현 안 됨(저장된 `lang=en`이 OS 언어 복귀를 막던 것으로 판단). 최신화: 새 커밋 없음 · linux-repo 등록 확인 권고 → T-21. 두 세션 협업(개발/문서). → [journal](journal/2026-10-16.md)
 
 - **2026-10-09** — **pkg.sosomlab.com(APT·RPM) 채널**: `build-pkgs.sh`(tar.gz 바이너리 → .deb·.rpm · 포장만) · `linux-packages.yml`(release.yml이 workflow_call — GITHUB_TOKEN 공개는 release 이벤트를 안 깨움) · linux-repo `apps/nexa-coffee.toml` · v0.1.2 덧붙임 → 색인 반영 ✅. **choco 0.1.2 승인** 확인. 로컬 main이 원격보다 뒤처져 rebase 후 push. → [journal](journal/2026-10-09.md)
 - **2026-09-29** — 배포 필요성 검토: v0.1.2 이후 문서만 바뀌어 새 버전 불필요. **choco 0.1.0 승인**(09-28) 확인 → **0.1.2 제출**(`channels=choco force=true` · 모더레이션 중). winget #436346 머지 대기. → [journal](journal/2026-09-29.md)

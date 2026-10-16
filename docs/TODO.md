@@ -6,7 +6,7 @@
 | T-2 | P0 | 중 | Windows 실기 — 빌드·트레이·툴팁·ko 로케일 ✅ 09-13 · `powercfg /requests`(DISPLAY·SYSTEM + 해제) ✅ · 메뉴 라디오/체크 ✅ · 열린 메뉴 1초 갱신(59:58→59:54) ✅ 09-17 · **남음**: 아이콘 DPI(100/150/200%) · TaskbarCreated — 둘 다 화면 설정·셸을 건드려야 해 자동화 안 함. 절차·합격 기준은 [18 실기 점검표](18-build-and-test.md#사람이-해야-하는-실기-점검windows) | ◐ |
 | T-3 | P0 | 중 | Linux 실기 — GNOME(AppIndicator) ✅ 09-13(등록 경쟁 수정) · **자동화 ✅ 09-26**(스모크 가짜 워처·logind): 워처 재등장 재등록(**v0.1.1 SIGSEGV 발견·수정** — T-19) · polkit 거부 시 `sleep:idle` 재시도 · 전부 거부돼도 타이머 유지 · Inhibit fd 해제 · **남음**: KDE Plasma(VM 없음) · 입력 창 실제 클릭(사람 · 다른 앱 자동 시험과 겹쳐 입력 주입 안 함) | ◐ |
 | T-10 | P1 | 소 | Linux 16px 픽스맵 프레임 — `ICON_SIZES` {16,22,44}(상주 +1 KB) · 16px 덤프에서 두 자리 숫자 선명 · 스모크가 GetAll/IconPixmap에서 16/22/44 확인 · "Register 응답 전 GetAll" 순서는 가짜 워처로 재현 ✅ 09-26. **남음**: GNOME 패널 실물 확인(설치본 교체 후 · 사용자) | ✅ 09-26 |
-| T-11 | P0 | 소 | i18n 실기 — **Windows ✅ 09-17**: 메뉴 CJK 글꼴(ko/ja/zh) · 언어 메뉴 라디오 · 입력 창 라벨 폭 네 언어 전부 잘림 없음(`キャンセル`·`取消` 포함). **남음**: macOS 실기(맥 필요) · `LANG_CHINESE` 번체/간체 구분 없음(간체만 — 알려진 한계) | ◐ |
+| T-11 | P0 | 소 | i18n 실기 — **Windows ✅ 09-17**: 메뉴 CJK 글꼴(ko/ja/zh) · 언어 메뉴 라디오 · 입력 창 라벨 폭 네 언어 전부 잘림 없음(`キャンセル`·`取消` 포함). **10-16**: 언어 ▸ "시스템 (OS 언어)" 항목(DR-13 보강 · `lang=` 제거 · 즉시 적용) — Windows 실기 ✅. **남음**: macOS 실기(맥 필요 · OS 언어 변경 즉시 반영 포함) · Linux는 OS 언어 변경이 재시작 전엔 안 보임(`LANG` · 알려진 한계) · `LANG_CHINESE` 번체/간체 구분 없음(간체만 — 알려진 한계) | ◐ |
 | T-13 | P1 | 소 | Windows 상주 메모리 — ① 메뉴·자식 종료 뒤 `SetProcessWorkingSetSize(-1,-1)` ② 클래스 아이콘 LoadIcon 제거(창 아이콘은 `cf_icon_idle`) — 09-13 10차 구현 · 14차 Windows 실기: 부모 모듈 37→25 · 코덱/TSF 없음 · WS 1.26 MB | ✅ 09-13 |
 | T-12 | P1 | 소 | 일본어·중국어 문구 원어민 검토 — About 설명 · logind 억제 사유 · "대화창 도구 없음" 알림 | ☐ |
 | T-4 | P1 | 소 | macOS 화면보호기 실측(30초 사용자 활동 선언으로 충분한지) — 부족하면 `IOPMAssertionCreateWithProperties` 검토 | ☐ |
