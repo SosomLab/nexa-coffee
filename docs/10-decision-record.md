@@ -19,6 +19,8 @@
 | DR-12 | 09-12 | 트레이 아이콘 크기: Windows `SM_CXSMICON`(Per-Monitor V2 동적) · macOS 18pt(1x/2x) · Linux 22/44 픽스맵 | 각 OS 관례 |
 | DR-13 | 09-13 | **i18n = 코어 문구 블록 4개(en/ko/ja/zh)** — 언어당 NUL로 구분한 문자열 하나를 id번째까지 걸어간다(포인터 테이블·재배치 없음). 언어는 메뉴 "언어 ▸"에서 고르며, 고른 뒤에만 `lang=`을 저장하고 아니면 OS 로케일 자동. ja/zh 툴팁은 "残り/剩余"가 앞 | 사용자 요청(언어 메뉴 + 메모리·용량 최소화) |
 | DR-14 | 09-13 | **창은 자식 프로세스에서**(3-OS 동일 구조) — 입력 창·About을 자기 자신 재실행(`--dialog`/`--about`)으로 띄우고 결과 "d h m"은 stdout 파이프. Linux는 zenity 자식과 같은 틀 | 실측: 창 1회 후 macOS 6→11 MB · Windows 1.3→11 MB가 프로세스 안에선 안 돌아옴(프레임워크 캐시). 자식이 끝나면 함께 사라진다 |
+| DR-15 | 10-16 | **로그인 시 실행 = 앱 메뉴 토글(3-OS) + Windows 설치본 옵션**(D-3 뒤집음). 메뉴는 코어 `app.c`의 CHECK 항목 1개(DR-6) · **진실 원천 = OS 상태**(설정 파일에 저장하지 않고 메뉴를 열 때마다 읽는다): Windows `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` 값 `Nexa Coffee`(값 존재 = 켜짐 · 켤 때마다 현재 exe 경로로 다시 씀 · NSIS 설치본의 체크박스(기본 해제)·제거 프로그램도 같은 값) · macOS `~/Library/LaunchAgents/com.sosomlab.nexa-coffee.plist`(RunAtLoad) · Linux `~/.config/autostart/nexa-coffee.desktop`(`install.sh --autostart`와 같은 파일 → `uninstall.sh`가 함께 지움). 끄기 = 값·파일 삭제 | 사용자 요청(10-16 · "설치파일에서 Start at login 옵션" + "트레이 메뉴에 추가"). OS 상태를 읽어야 설치본·`install.sh`·OS 설정에서 켜고 끈 것과 어긋나지 않는다 |
+| DR-16 | 10-16 | **Windows 설치본 = NSIS**(nexa-clip `installer.nsi` 이식) — 사용자 단위(HKCU · `%LOCALAPPDATA%\Programs\NexaCoffee` · 관리자 권한 없음) · 자산 **`nexa-coffee-<v>-windows-setup.exe` 하나**(x64·x86 exe를 담고 OS 비트에 맞는 것을 `nexa-coffee.exe`로 놓음) · "로그인 시 실행" 체크박스 **기본 해제** · 무인 설치 `/S`(+ `/AUTOSTART=1`) · 업그레이드·제거 때 실행 중 인스턴스는 창 클래스 `NexaCoffee`에 `WM_CLOSE`. 빌드는 release.yml ubuntu 잡의 apt `nsis`(Windows 러너 없음). 포터블 zip 2종 유지 · **winget/choco는 포터블 유지**(설치본 전환은 T-22에 남김) | 사용자 요청(10-16). 무인 설치가 사용자 모르게 로그인 실행을 켜면 안 된다 · 기존 채널을 흔들지 않는다 |
 
 ## 2. 열린 결정(D)
 
@@ -26,4 +28,4 @@
 | --- | --- | --- |
 | D-1 | macOS 화면보호기가 30초 사용자 활동 선언만으로 막히는가 | 실측 후 부족하면 간격 단축 또는 `kIOPMAssertionTypeNoDisplaySleep` 계열 추가 |
 | D-2 | Windows exe에 256px PNG 아이콘 프레임을 넣을지(+12 KB) | 넣지 않음(초경량 우선) — 사용자 확인 |
-| D-3 | 시작 프로그램 자동 등록 기능을 앱에 넣을지 | nexa-shortcut처럼 넣지 않고 안내만 |
+| ~~D-3~~ | ~~시작 프로그램 자동 등록 기능을 앱에 넣을지~~ | → **DR-15로 확정(10-16 · 넣는다)** |

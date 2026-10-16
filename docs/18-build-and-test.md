@@ -9,6 +9,7 @@
 | Linux(정적 · 배포용) | `make static` | `musl-tools` | `dist/nexa-coffee`(libc 하나 · 배포판 비종속) |
 | Windows(크로스) | `make win` | mingw-w64 | `dist/nexa-coffee-x64.exe` · `-x86.exe` |
 | Windows(MSVC) | `build.bat` | VS x64 Native Tools | `dist\nexa-coffee-x64.exe` |
+| Windows 설치본 | `makensis -INPUTCHARSET UTF8 packaging/windows/installer.nsi` — 릴리스는 `release.yml`이 `@VERSION@`·`@VIVERSION@` 치환 후 빌드. 로컬은 `build/nsis/`에 exe 2개·ico·LICENSE·치환한 nsi를 모은 뒤(`-INPUTCHARSET UTF8` 필수 — 파일에 BOM 없음) | NSIS 3(apt `nsis` · 10-16 로컬 3.13) | `nexa-coffee-<v>-windows-setup.exe`(x64·x86 exe 포함 · 약 92 KB) |
 
 플래그 원칙(nexa-shortcut 계승): `-Os` · `-fno-ident` · `-fno-asynchronous-unwind-tables` · `-fno-stack-protector` · 섹션 GC · strip.
 Windows는 `-nostdlib` + `-fno-builtin -fno-tree-loop-distribute-patterns`(코어의 바이트 루프가 memset 호출로 되접히는 것 방지) + 진입점 `start`.
@@ -33,17 +34,14 @@ Docker가 있으면 `scripts/linux-docker.sh`가 Linux 컨테이너에서 빌드
 ## 사람이 해야 하는 실기 점검(Windows)
 
 트레이 메뉴·입력 창·`powercfg`는 자동화했다(09-17 — 부모 창에 `WM_TRAYICON`을 post해 메뉴를 띄우고 팝업을 캡처).
-아래 **둘은 화면 설정이나 셸을 건드려야 해서 자동화하지 않는다.** 남은 T-2 항목이다.
+아래 ①②는 **화면 설정이나 셸을 건드려야 해서 자동화하지 않는다**(남은 T-2 항목). ③은 설치 마법사 GUI와 재로그인이 필요하다(T-22 · DR-15/16).
 
 ### 준비(공통)
 
 1. 실행 파일: 릴리스 자산의 `nexa-coffee-x64.exe`(또는 `build.bat` 산출물). 설치본이 아니어도 된다.
-2. 설정은 `%APPDATA%
-exa-coffee\config`에 있다. **먼저 복사해 두고 끝나면 되돌린다.**
+2. 설정은 `%APPDATA%\nexa-coffee\config`에 있다. **먼저 복사해 두고 끝나면 되돌린다.**
    ```
-   copy "%APPDATA%
-exa-coffee\config" "%TEMP%
-c-config.bak"
+   copy "%APPDATA%\nexa-coffee\config" "%TEMP%\nc-config.bak"
    ```
 3. **트레이 아이콘을 보이게 한다** — Windows 11은 기본으로 오버플로(`^`) 안에 숨긴다.
    설정 → 개인 설정 → 작업 표시줄 → **기타 시스템 트레이 아이콘** → `nexa-coffee` 토글 켜기.
@@ -87,11 +85,25 @@ c-config.bak"
 **실패하면 의심할 곳**: `wnd_proc`의 `if (msg == g_taskbar_created)` 분기 · `g_taskbar_created` 등록 시점 ·
 `tray_set(..., TRUE)`의 `NIM_ADD` 반환값(실패 시 `NIM_MODIFY` 재시도가 필요한지).
 
+### ③ 설치본 — 마법사 "로그인 시 실행" → 재로그인 (T-22)
+
+**왜**: 무인 설치(`/S` · `/AUTOSTART=1`)·제거·업그레이드와 트레이 메뉴 토글은 10-16에 자동으로 확인했다.
+마법사 화면의 **언어별 문구**와 **실제 로그인에서 트레이가 뜨는지**는 사람이 봐야 한다.
+
+| # | 절차 | 합격 기준 |
+| --- | --- | --- |
+| 1 | 릴리스 자산 `nexa-coffee-<v>-windows-setup.exe` 실행(관리자 권한 묻지 않아야 함) | 마법사 문구가 OS 언어(en/ko/ja/zh)로 · 구성 요소에 "로그인 시 실행"이 **해제된 채** 보인다 |
+| 2 | "로그인 시 실행"을 **체크**하고 설치 | `%LOCALAPPDATA%\Programs\NexaCoffee\nexa-coffee.exe` · 시작 메뉴 바로가기 · `reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v "Nexa Coffee"`가 그 경로 |
+| 3 | 트레이 메뉴를 연다 | "로그인 시 실행"에 **체크 표시** |
+| 4 | 로그아웃 → 다시 로그인 | 트레이 아이콘이 저절로 뜬다(설정의 자동 시작 시간도 그대로 적용) |
+| 5 | 트레이 메뉴에서 "로그인 시 실행"을 끈다 → 2의 `reg query` | 값이 없다 · 재로그인 시 뜨지 않는다 |
+| 6 | 설정 → 앱 → 설치된 앱 → Nexa Coffee 제거 | 폴더·바로가기·Run 값·제거 정보가 사라진다 · `%APPDATA%\nexa-coffee\config`는 남는다(설정 보존) |
+
+**실패하면 의심할 곳**: `packaging/windows/installer.nsi`(섹션 문구 · `.onInit`의 Run 값 확인 · 제거 섹션) · `src/plat/win.c`의 Run 값 읽기/쓰기(값 이름 `Nexa Coffee`는 두 파일이 같아야 한다).
+
 ### 마무리
 
-- 설정 되돌리기: `copy "%TEMP%
-c-config.bak" "%APPDATA%
-exa-coffee\config"`
+- 설정 되돌리기: `copy "%TEMP%\nc-config.bak" "%APPDATA%\nexa-coffee\config"`
 - 남은 프로세스 확인: `tasklist | findstr nexa-coffee` · `powercfg /requests`에 nexa 항목이 없어야 한다
 - 결과는 [TODO](TODO.md) T-2(필요하면 T-18)와 그날 [journal](journal/)에 **실측값과 함께** 적는다 —
   "확인함"이 아니라 "150%에서 16px 아이콘이 늘어나 흐릿했다"처럼.
@@ -101,7 +113,7 @@ exa-coffee\config"`
 
 ## CI(.github/workflows)
 
-- `ci.yml`: ubuntu(테스트 · musl 정적 · D-Bus 스모크 · mingw 크로스 · **크기 예산** Windows ≤ 64 KB / Linux ≤ 128 KB) · macos(테스트 · 유니버설 · .app · ≤ 256 KB) · windows(MSVC).
-- `release.yml`: `v*` 태그 → mac universal zip · Windows x64/x86 zip · Linux tar.gz + `SHA256SUMS.txt` → GitHub Release → `homebrew.yml`(탭) · `publish-windows-packages.yml`(winget PR · choco push). 태그 = `VERSION` 파일과 일치해야 한다.
+- `ci.yml`: ubuntu(테스트 · musl 정적 · D-Bus 스모크 · mingw 크로스 · makensis 컴파일 검증 · **크기 예산** Windows ≤ 64 KB / Linux ≤ 128 KB) · macos(테스트 · 유니버설 · .app · ≤ 256 KB) · windows(MSVC).
+- `release.yml`: `v*` 태그 → mac universal zip · Windows x64/x86 zip · Windows 설치본(setup.exe · NSIS) · Linux tar.gz + `SHA256SUMS.txt` → GitHub Release → `homebrew.yml`(탭) · `publish-windows-packages.yml`(winget PR · choco push). 태그 = `VERSION` 파일과 일치해야 한다.
 - 릴리스 절차: `VERSION` 갱신 → main green → `git tag vX.Y.Z && git push origin vX.Y.Z`(공개 행위 · 사용자 승인) → `gh run watch` → 탭 커밋 · winget PR · choco 피드 확인(검수 며칠). 재제출은 각 워크플로 `workflow_dispatch`.
 - GitHub 장애 시 수동 경로(09-13 실전): `gh run download <run> -n out-linux-windows -n out-macos` → `gh release create vX.Y.Z <자산> SHA256SUMS.txt` → `./packaging/render-manifests.sh X.Y.Z assets out` → 탭에 `out/homebrew/*` 커밋 · `komac submit out/winget/manifests/s/SosomLab/NexaCoffee/X.Y.Z --yes` · Windows PC에서 `choco pack`/`choco push`.

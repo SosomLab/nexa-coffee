@@ -1,5 +1,13 @@
 # STATUS — 지금 상태
 
+## 10-16 — "로그인 시 실행" 메뉴 토글(3-OS) · Windows 설치본(NSIS) (사용자 요청 · Windows PC · 두 세션 협업)
+
+- **DR-15** — 트레이 메뉴 "로그인 시 실행"(자동 시작 ▸ 아래 체크 항목). 진실 원천 = OS 상태(Win Run 값 `Nexa Coffee` · mac LaunchAgents plist · Linux `~/.config/autostart`) · 설정 파일 무변경. D-3("안내만")을 뒤집음.
+- **DR-16** — Windows 설치본 `nexa-coffee-<v>-windows-setup.exe`(NSIS · 사용자 단위 · 관리자 권한 없음 · x64/x86 한 파일 · "로그인 시 실행" 기본 해제 · `/S` `/AUTOSTART=1`). release.yml(ubuntu · apt nsis) · ci.yml 컴파일 검증. winget/choco는 포터블 유지.
+- **Windows 실기 ✅** — 메뉴 토글(Run 값 생성·삭제) · 설치본 설치·재설치·제거(실행 중 인스턴스 자동 종료). exe 33,280 B(+2.5 KB) · setup.exe 92,670 B.
+- **남음**: Linux·macOS 빌드·스모크(CI) · 사람 실기(마법사 GUI 문구·재로그인 3-OS — [18 ③](18-build-and-test.md#사람이-해야-하는-실기-점검windows)) · 결정 대기(winget/choco 설치본 전환 T-22 · T-21 linux-repo 등록 확인).
+- 상세: [journal/2026-10-16](journal/2026-10-16.md).
+
 ## 10-09 — Linux APT·RPM 저장소(pkg.sosomlab.com) 채널 · choco 0.1.2 승인 (사용자 요청 · Mac)
 
 - **pkg.sosomlab.com ✅** — nexa-sql 방식 이식: `packaging/linux/build-pkgs.sh`(릴리스 tar.gz 바이너리 → .deb·.rpm) · `linux-packages.yml`(release.yml이 호출 · 수동 = 기존 태그 덧붙이기) · SosomLab/linux-repo `apps/nexa-coffee.toml`. v0.1.2에 덧붙여 APT·RPM 색인 반영 확인. 다음 태그부터 자동.
