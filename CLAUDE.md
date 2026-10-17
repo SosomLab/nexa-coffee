@@ -65,7 +65,7 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux(tar.gz 설�
 
 ## 5. 다음 단계
 
-0. **채널 마무리(T-6)** — 검수 대기: winget #436346(0.1.1)·#454127(Portable 0.1.4) · choco `nexa-coffee` 0.1.3·`nexa-coffee-portable` 0.1.4. 기존 ID가 풀리면 `publish-windows-packages` dispatch(`tag=v0.1.4`)로 설치본 제출. ⚠️ 설치본 실기 전엔 사용자 설치본(`%LOCALAPPDATA%\Programs\NexaCoffee`) 유무를 먼저 확인(10-17 사고). 남은 사람 손: pkg.sosomlab.com apt/dnf 설치 실기(T-20).
+0. **채널 마무리(T-6)** — 검수 대기: winget #436346(0.1.1)·#454127(Portable 0.1.4) · choco `nexa-coffee` 0.1.3·`nexa-coffee-portable` 0.1.4. 기존 ID가 풀리면 `publish-windows-packages` dispatch(`tag=v0.1.4`)로 설치본 제출 — choco 사이트 `nexa-coffee` 제목 "(Portable)"도 이 설치본 0.1.4가 승인돼야 "Nexa Coffee"로 바뀐다(버전별 nuspec 제목). ⚠️ 설치본 실기 전엔 사용자 설치본(`%LOCALAPPDATA%\Programs\NexaCoffee`) 유무를 먼저 확인(10-17 사고). 남은 사람 손: pkg.sosomlab.com apt/dnf 설치 실기(T-20).
 1. **실기 확인(사람)** — Windows: [18 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows) ③ 설치본(마법사 언어별 문구 · 체크 → 재로그인 트레이) · ① 배율(T-18) · ② TaskbarCreated. macOS·Linux: 메뉴 "로그인 시 실행" 토글 + 재로그인 · Linux GNOME 16px · T-19 트레이 복귀.
 2. macOS — 언어 메뉴(시스템 항목 포함) 실기(T-11) · 화면보호기 실측(T-4). Linux — KDE Plasma · 입력 창 실제 클릭(T-3).
 3. 결정 대기 — linux-repo 등록 확인 단계(T-21) · 툴팁 종료 시각(T-8) · cask DSL(T-15). ja/zh 원어민 검토(T-12).

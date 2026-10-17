@@ -7,7 +7,8 @@
 - **채널(패키지별 대기 판정이 의도대로 동작)** — winget: `SosomLab.NexaCoffee`는 #436346(0.1.1) 대기로 건너뜀 · **`SosomLab.NexaCoffee.Portable` 첫 PR [#454127](https://github.com/microsoft/winget-pkgs/pull/454127)** ✅ · choco: `nexa-coffee`는 0.1.3 모더레이션 대기로 건너뜀 · **`nexa-coffee-portable` 0.1.4 첫 push ✅(Submitted)** · brew 탭 0.1.4 ✅ · pkg.sosomlab.com APT 0.1.4 ✅.
 - **사고·복구**: setup 실기가 이 PC에 사용자가 깔아 둔 설치본(로그인 시 실행 켜짐 · 실행 중)을 제거했다 → 즉시 0.1.4 `/S /AUTOSTART=1` 재설치·실행으로 복원(설정 파일은 제거가 남기는 구조라 보존). 다음부터 실기 전 `%LOCALAPPDATA%\Programs\NexaCoffee` 존재를 먼저 확인한다.
 - **남음**: winget #436346·#454127 · choco 0.1.3·nexa-coffee-portable 검수(T-6) · 사람 실기(T-20 · 18 ③).
-- 상세: [journal/2026-10-17](journal/2026-10-17.md#3차--v014-배포--설치본포터블-분리-첫-적용).
+- **choco 제목(10-17 4차)**: 사이트의 `nexa-coffee`가 "Nexa Coffee (Portable)"로 보이는 건 승인된 0.1.2(포터블 시절 nuspec) 때문 — 저장소는 이미 "Nexa Coffee". 0.1.3 승인 뒤 `tag=v0.1.4 channels=choco` 제출 → 승인 시 바뀐다.
+- 상세: [journal/2026-10-17](journal/2026-10-17.md#3차--v014-배포--설치본포터블-분리-첫-적용) · 4차(제목).
 
 ## 10-17 — v0.1.3 배포 (사용자 요청 "새 버전 릴리즈 및 패키지 게시" · Windows PC · 두 세션 협업)
 
