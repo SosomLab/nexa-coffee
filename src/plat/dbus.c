@@ -127,9 +127,11 @@ void db_reply_error(DbConn *c, const DbRead *req, const char *name, const char *
     db_send(c, &m);
 }
 
-/* ── 읽기 ── */
+/* ── 읽기 ── 와이어의 길이·시그니처는 신뢰하지 않는다(docs/19 V-7~V-9). 검사 실패 = pos를 end+1로 놓아 이후 읽기가 전부 실패·메시지 폐기 */
+#define DB_MAX_MSG   (1u << 27) /* 명세 최대 메시지 크기 */
+#define DB_MAX_DEPTH 64         /* 명세 최대 중첩(variant·구조체·배열) */
 static void ralign(DbRead *r, u32 a) { while (r->pos % a) r->pos++; }
-static int rneed(DbRead *r, u32 n) { if (r->pos + n > r->end) { r->pos = r->end + 1; return 0; } return 1; }
+static int rneed(DbRead *r, u32 n) { if (r->pos > r->end || n > r->end - r->pos) { r->pos = r->end + 1; return 0; } return 1; } /* pos+n 랩어라운드 없이 */
 int  db_r_ok(const DbRead *r) { return r->pos <= r->end; }
 u8   db_r_byte(DbRead *r) { if (!rneed(r, 1)) return 0; return r->buf[r->pos++]; }
 u32  db_r_u32(DbRead *r) { u32 v; ralign(r, 4); if (!rneed(r, 4)) return 0; memcpy(&v, r->buf + r->pos, 4); r->pos += 4; return v; }
@@ -138,8 +140,9 @@ const char *db_r_str(DbRead *r)
 {
     u32 n = db_r_u32(r);
     const char *s;
-    if (!rneed(r, n + 1)) return "";
+    if (n == 0xFFFFFFFFu || !rneed(r, n + 1)) return ""; /* n+1 랩어라운드 */
     s = (const char *)r->buf + r->pos;
+    if (s[n] != 0) { r->pos = r->end + 1; return ""; } /* 명세: NUL 종단 필수 — 없으면 strcmp가 메시지 밖을 읽는다 */
     r->pos += n + 1;
     return s;
 }
@@ -149,6 +152,7 @@ const char *db_r_sig(DbRead *r)
     const char *s;
     if (!rneed(r, n + 1u)) return "";
     s = (const char *)r->buf + r->pos;
+    if (s[n] != 0) { r->pos = r->end + 1; return ""; }
     r->pos += n + 1u;
     return s;
 }
@@ -184,19 +188,20 @@ static const char *sig_end(const char *s)
     } while (depth > 0 || *(s - 1) == 'a');
     return s;
 }
-int db_r_skip(DbRead *r, const char **sig)
+static int skip(DbRead *r, const char **sig, int depth)
 {
     const char *s = *sig;
     char t = *s;
     if (!t) return 0;
+    if (depth > DB_MAX_DEPTH) { r->pos = r->end + 1; return 0; } /* 와이어가 고른 중첩 깊이로 스택을 넘치게 하지 못하게 */
     switch (t) {
     case 'y': db_r_byte(r); s++; break;
-    case 'n': case 'q': ralign(r, 2); r->pos += 2; s++; break;
+    case 'n': case 'q': ralign(r, 2); if (!rneed(r, 2)) return 0; r->pos += 2; s++; break;
     case 'b': case 'i': case 'u': case 'h': db_r_u32(r); s++; break;
-    case 'x': case 't': case 'd': ralign(r, 8); r->pos += 8; s++; break;
+    case 'x': case 't': case 'd': ralign(r, 8); if (!rneed(r, 8)) return 0; r->pos += 8; s++; break;
     case 's': case 'o': db_r_str(r); s++; break;
     case 'g': db_r_sig(r); s++; break;
-    case 'v': { const char *vs = db_r_variant(r); db_r_skip(r, &vs); s++; break; }
+    case 'v': { const char *vs = db_r_variant(r); if (!skip(r, &vs, depth + 1)) return 0; s++; break; }
     case 'a': {
         const char *es = s + 1, *ee = sig_end(es);
         u32 end = db_r_arr_open(r, sig_align(*es));
@@ -205,7 +210,7 @@ int db_r_skip(DbRead *r, const char **sig)
     case '(': case '{': {
         s++;
         db_r_struct(r);
-        while (*s && *s != ')' && *s != '}') if (!db_r_skip(r, &s)) return 0;
+        while (*s && *s != ')' && *s != '}') if (!skip(r, &s, depth + 1)) return 0;
         if (*s) s++;
         break;
     }
@@ -214,6 +219,7 @@ int db_r_skip(DbRead *r, const char **sig)
     *sig = s;
     return db_r_ok(r);
 }
+int db_r_skip(DbRead *r, const char **sig) { return skip(r, sig, 0); }
 
 int db_parse(DbRead *r, const u8 *buf, u32 len, u32 *total)
 {
@@ -223,6 +229,7 @@ int db_parse(DbRead *r, const u8 *buf, u32 len, u32 *total)
     if (buf[0] != 'l') return -1;      /* 빅엔디언 송신자는 지원 안 함 */
     memcpy(&body_len, buf + 4, 4);
     memcpy(&fields_len, buf + 12, 4);
+    if (body_len > DB_MAX_MSG || fields_len > DB_MAX_MSG) { *total = 0; return -1; } /* 길이 합이 u32를 넘지 못하게(V-9) */
     hdr_len = (16 + fields_len + 7) & ~7u;
     *total = hdr_len + body_len;
     if (len < *total) return 0;

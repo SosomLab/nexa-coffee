@@ -84,7 +84,7 @@ static i64 now_ms(void)
     if (fd < 0) return;
     ssize_t n = read(fd, buf, sizeof buf - 1);
     close(fd);
-    if (n > 0) cf_conf_parse(&app, buf, (u32)n);
+    if (n > 0) { buf[n] = 0; cf_conf_parse(&app, buf, (u32)n); } /* docs/19 V-1 */
 }
 - (void)confSave
 {
@@ -471,6 +471,8 @@ static NSString *S(int lang, int id) { return [NSString stringWithUTF8String:cf_
 }
 @end
 
+/* 명령줄 정수 — atoi는 범위 밖에서 UB · strtol은 포화. 범위는 int로 자른다(docs/19 V-6) */
+static int arg_int(const char *s) { long v = strtol(s, NULL, 10); return v > 0x7fffffff ? 0x7fffffff : v < -0x7fffffff ? -0x7fffffff : (int)v; }
 static int child_main(int argc, char **argv)
 {
     @autoreleasepool {
@@ -479,10 +481,10 @@ static int child_main(int argc, char **argv)
         [nsapp finishLaunching];
         UiChild *ui = [UiChild new];
         if (!strcmp(argv[1], "--dialog") && argc >= 7) {
-            int v[3] = { atoi(argv[3]), atoi(argv[4]), atoi(argv[5]) };
-            return [ui runDialog:(!strcmp(argv[2], "auto") ? CF_DLG_AUTO : CF_DLG_CUSTOM) lang:atoi(argv[6]) values:v];
+            int v[3] = { arg_int(argv[3]), arg_int(argv[4]), arg_int(argv[5]) };
+            return [ui runDialog:(!strcmp(argv[2], "auto") ? CF_DLG_AUTO : CF_DLG_CUSTOM) lang:arg_int(argv[6]) values:v];
         }
-        if (!strcmp(argv[1], "--about") && argc >= 3) { [ui runAbout:atoi(argv[2])]; return 0; }
+        if (!strcmp(argv[1], "--about") && argc >= 3) { [ui runAbout:arg_int(argv[2])]; return 0; }
     }
     return 2;
 }

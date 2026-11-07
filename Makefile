@@ -15,7 +15,7 @@ VERSION ?= $(shell cat VERSION)
 CFLAGS_MIN := -Os -fno-ident -fno-asynchronous-unwind-tables -fno-stack-protector -ffunction-sections -fdata-sections
 WARN := -Wall -Wextra -Wno-unused-parameter
 
-.PHONY: all win app static test clean icons
+.PHONY: all win app static test test-san clean icons
 
 all: dist/nexa-coffee
 
@@ -81,6 +81,15 @@ test: | build build/icons
 	./build/test_core
 	cc -std=c99 -Wall -Wextra -O1 -o build/icon_dump test/icon_dump.c $(CORE)
 	./build/icon_dump build/icons
+	cc -std=gnu99 -Wall -Wextra -O1 -o build/test_dbus test/test_dbus.c src/plat/dbus.c src/core/util.c
+	./build/test_dbus
+
+# 보안 시험(docs/19) — 같은 테스트를 ASan+UBSan으로. 경계 밖 읽기·정수 오버플로·미초기화를 런타임에 잡는다. push 전 · CI ubuntu.
+SAN = -g -O1 -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer
+test-san: | build build/icons
+	cc -std=c99 $(SAN) -Wall -Wextra -o build/test_core_san test/test_core.c $(CORE) && ./build/test_core_san
+	cc -std=gnu99 $(SAN) -Wall -Wextra -o build/test_dbus_san test/test_dbus.c src/plat/dbus.c src/core/util.c && ./build/test_dbus_san
+	cc -std=c99 $(SAN) -Wall -Wextra -o build/icon_dump_san test/icon_dump.c $(CORE) && ./build/icon_dump_san build/icons
 
 # 스모크용 가짜 D-Bus 상대(워처 · logind) — scripts/linux-smoke.sh가 빌드해 쓴다. 배포물 아님.
 build/fake_peer: test/fake_peer.c src/plat/dbus.c src/plat/dbus.h src/core/coffee.h | build

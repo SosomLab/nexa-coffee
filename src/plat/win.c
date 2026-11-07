@@ -83,7 +83,7 @@ static void conf_load(void)
     DWORD n = 0;
     HANDLE h = CreateFileW(g_conf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
     if (h == INVALID_HANDLE_VALUE) return;
-    if (ReadFile(h, buf, sizeof buf - 1, &n, NULL) && n > 0) cf_conf_parse(&g_app, buf, n);
+    if (ReadFile(h, buf, sizeof buf - 1, &n, NULL) && n > 0) { buf[n] = 0; cf_conf_parse(&g_app, buf, n); } /* docs/19 V-1 */
     CloseHandle(h);
 }
 static void conf_save(void)
@@ -453,7 +453,7 @@ static i64 wint(const WCHAR **pp)
     const WCHAR *p = wskip(*pp);
     i64 v = 0; int neg = 0;
     if (*p == L'-') { neg = 1; p++; }
-    while (*p >= L'0' && *p <= L'9') { v = v * 10 + (*p - L'0'); p++; }
+    while (*p >= L'0' && *p <= L'9') { if (v < 1000000000000000000LL) v = v * 10 + (*p - L'0'); p++; } /* 포화 — 자릿수 초과 UB 없음(docs/19 V-6) */
     *pp = p;
     return neg ? -v : v;
 }

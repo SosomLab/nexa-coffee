@@ -28,7 +28,8 @@ u32   cf_itoa(i64 v, char *out, u32 cap);
 /* 문자열 이어붙이기(NUL 보장). 반환 = 새 길이. */
 u32   cf_strcat(char *dst, u32 cap, const char *src);
 /* 앞부분 10진수 파싱. *end = 다음 위치. 숫자 없으면 0 반환·*end=s. */
-i64   cf_atoi(const char *s, const char **end);
+i64   cf_atoi(const char *s, const char **end);               /* NUL 종단 · 포화(1e18) */
+i64   cf_atoi_n(const char *s, const char *end, const char **e); /* [s,end) 경계 안에서만 · 길이가 있는 입력용(docs/19) */
 
 /* ───────────────────────── timer.c ───────────────────────── */
 enum { CF_UNIT_SEC = 0, CF_UNIT_MIN, CF_UNIT_HOUR, CF_UNIT_DAY, CF_UNIT_INF };

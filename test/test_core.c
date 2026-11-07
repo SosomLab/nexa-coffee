@@ -245,8 +245,42 @@ static void t_icon(void)
     cf_icon_idle(a, 4, c); cf_icon_idle(a, 65, c);
 }
 
+/* 보안 경계(docs/19) — V-1 설정 버퍼 경계 · V-2 자릿수 포화 · V-3 INT64_MIN · 범위 밖 인덱스. `make test-san`에서는 ASan이 경계 밖 읽기를 잡는다 */
+static void t_hardening(void)
+{
+    CfApp a; char b[32]; const char *e;
+    /* V-1: NUL 없이 정확히 len 바이트인 힙 버퍼 — 파서가 len 밖을 읽으면 ASan 보고 */
+    { const char src[] = "auto=1,2,3"; u32 n = (u32)strlen(src); char *h = malloc(n); memcpy(h, src, n);
+      cf_app_init(&a, CF_LANG_EN); cf_conf_parse(&a, h, n); CHECK(a.auto_d == 1 && a.auto_h == 2 && a.auto_m == 3); free(h); }
+    { const char src[] = "custom=5,6,7\nlang=ko"; u32 n = (u32)strlen(src); char *h = malloc(n); memcpy(h, src, n);
+      cf_app_init(&a, CF_LANG_EN); cf_conf_parse(&a, h, n); CHECK(a.cust_d == 5 && a.cust_h == 6 && a.cust_m == 7 && a.lang == CF_LANG_KO); free(h); }
+    /* 줄 끝이 곧 버퍼 끝이어도 다음 줄 숫자를 이어 읽지 않는다 */
+    cf_app_init(&a, CF_LANG_EN); cf_conf_parse(&a, "auto=1,2\ncustom=9", 17); CHECK(a.auto_h == 2 && a.auto_m == 0 && a.cust_d == 9);
+    cf_app_init(&a, CF_LANG_EN); cf_conf_parse(&a, "auto=", 5); CHECK(a.auto_d == 0 && a.auto_h == 0);
+    cf_app_init(&a, CF_LANG_EN); cf_conf_parse(&a, "auto=1,", 7); CHECK(a.auto_d == 1 && a.auto_h == 0);
+    /* V-2: 자릿수 초과 → 포화(UB 없음) · 끝 포인터는 숫자 끝 */
+    CHECK(cf_atoi("99999999999999999999999999", &e) == 1000000000000000000LL && *e == 0);
+    CHECK(cf_atoi("-99999999999999999999999999", &e) == -1000000000000000000LL);
+    { const char *s = "12345"; CHECK(cf_atoi_n(s, s + 3, &e) == 123 && e == s + 3); }
+    { const char *s = "-"; CHECK(cf_atoi_n(s, s + 1, &e) == 0 && e == s); CHECK(cf_atoi_n(s, s, &e) == 0 && e == s); }
+    { i64 d, h, m; CHECK(cf_parse_dhm("99999999999999999999 99999999999999999999 -5", &d, &h, &m) == 3);
+      cf_app_init(&a, CF_LANG_EN);
+      CHECK(cf_dialog_submit(&a, CF_DLG_CUSTOM, d, h, m) == CF_ACT_START && a.cust_d == CF_MAX_DAYS && a.cust_h == 23 && a.cust_m == 0); }
+    /* V-3: INT64_MIN 부정 */
+    CHECK(cf_itoa((i64)(-9223372036854775807LL - 1), b, sizeof b) == 20 && !strcmp(b, "-9223372036854775808"));
+    /* 범위 밖 언어·메뉴 ID — 표 밖을 읽지 않는다 */
+    cf_app_init(&a, 12345); CHECK(a.lang == CF_LANG_EN && a.os_lang == CF_LANG_EN);
+    cf_app_init(&a, -1);    CHECK(a.lang == CF_LANG_EN);
+    CHECK(cf_str(-1, CF_STR_APP)[0] != 0 && cf_str(99, CF_STR_QUIT)[0] != 0 && cf_str(0, 9999)[0] == 0);
+    { CfMenuItem it; CHECK(!cf_menu_item(&a, 123456, &it)); CHECK(!cf_menu_item(&a, -7, &it)); }
+    { int ids[CF_MENU_MAX_CHILDREN]; CHECK(cf_menu_children(&a, 777, ids, CF_MENU_MAX_CHILDREN) == 0); CHECK(cf_menu_children(&a, CF_ID_ROOT, ids, 3) == 3); }
+    CHECK(cf_app_click(&a, 1 << 30) == CF_ACT_NONE && cf_app_click(&a, -5) == CF_ACT_NONE);
+    CHECK(cf_about(77, b, sizeof b) > 0); /* cap 32 → 잘림 · 경계 안 */
+}
+
 int main(void)
 {
+    t_hardening();
     t_util(); t_timer(); t_app(); t_icon();
     if (fails) { printf("%d failure(s)\n", fails); return 1; }
     printf("test_core: all green\n");

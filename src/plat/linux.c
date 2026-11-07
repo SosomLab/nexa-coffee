@@ -94,7 +94,7 @@ static void conf_load(void)
     if (fd < 0) return;
     n = read(fd, buf, sizeof buf - 1);
     close(fd);
-    if (n > 0) cf_conf_parse(&app, buf, (u32)n);
+    if (n > 0) { buf[n] = 0; cf_conf_parse(&app, buf, (u32)n); } /* 파서는 len으로 경계를 지키지만 NUL도 둔다(docs/19 V-1) */
 }
 static void conf_save(void)
 {

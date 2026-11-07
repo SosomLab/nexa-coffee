@@ -105,6 +105,7 @@ const char *cf_str(int lang, int id)
 void cf_app_init(CfApp *a, int lang)
 {
     cf_memset(a, 0, sizeof *a);
+    if ((unsigned)lang >= CF_LANG_COUNT) lang = CF_LANG_EN; /* 명령줄 인자 등 범위 밖 값(docs/19) */
     a->lang = a->os_lang = lang;
     a->sel = CF_SEL_OFF;
     a->cust_h = 1;
@@ -314,11 +315,12 @@ static int starts(const char *p, const char *end, const char *key, const char **
     *rest = p;
     return 1;
 }
-static void parse_dhm(const char *v, int *d, int *h, int *m)
+/* "d,h,m" — [v, end) 밖은 읽지 않는다(V-1: 설정 버퍼는 NUL 종단을 보장하지 않는다 · 다음 줄 숫자를 이어 읽지 않는다) */
+static void parse_dhm(const char *v, const char *end, int *d, int *h, int *m)
 {
     const char *e;
-    i64 dd = cf_atoi(v, &e), hh = 0, mm = 0;
-    if (*e == ',') { hh = cf_atoi(e + 1, &e); if (*e == ',') mm = cf_atoi(e + 1, &e); }
+    i64 dd = cf_atoi_n(v, end, &e), hh = 0, mm = 0;
+    if (e < end && *e == ',') { hh = cf_atoi_n(e + 1, end, &e); if (e < end && *e == ',') mm = cf_atoi_n(e + 1, end, &e); }
     *d = clampi(dd, 0, CF_MAX_DAYS); *h = clampi(hh, 0, 23); *m = clampi(mm, 0, 59);
 }
 
@@ -328,8 +330,8 @@ void cf_conf_parse(CfApp *a, const char *buf, u32 len)
     while (p < end) {
         const char *nl = p;
         while (nl < end && *nl != '\n') nl++;
-        if (starts(p, nl, "auto=", &v))        parse_dhm(v, &a->auto_d, &a->auto_h, &a->auto_m);
-        else if (starts(p, nl, "custom=", &v)) parse_dhm(v, &a->cust_d, &a->cust_h, &a->cust_m);
+        if (starts(p, nl, "auto=", &v))        parse_dhm(v, nl, &a->auto_d, &a->auto_h, &a->auto_m);
+        else if (starts(p, nl, "custom=", &v)) parse_dhm(v, nl, &a->cust_d, &a->cust_h, &a->cust_m);
         else if (starts(p, nl, "lang=", &v) && nl - v >= 2) { a->lang = cf_lang_of(v); a->lang_set = 1; }
         p = nl + 1;
     }
