@@ -27,7 +27,7 @@ report() { # $1=경로 $2=오래됨(1/0)
 echo "① 스크립트 고정물 ($T · ${AGE_H}h 넘은 것만 정리)"
 for pat in $PATTERNS; do
     find "$T" -maxdepth 1 -name "$pat" -mmin +$((AGE_H * 60)) 2>/dev/null | while read -r p; do
-        report "$p" 1; [ $TRIM = 1 ] && rm -rf "$p" && echo "           → 삭제"
+        report "$p" 1; if [ $TRIM = 1 ]; then rm -rf "$p" && echo "           → 삭제"; fi # `[ ] &&`로 끝내면 TRIM=0일 때 while 상태 1 → set -e 종료(협업 11-07)
     done
     find "$T" -maxdepth 1 -name "$pat" ! -mmin +$((AGE_H * 60)) 2>/dev/null | while read -r p; do report "$p" 0; done
 done
@@ -36,7 +36,7 @@ echo "② Claude 세션 스크래치 (${AGE_D}일 넘은 세션만 정리)"
 for root in /private/tmp/claude-*/-Users-*-nexa-coffee /tmp/claude-*/-Users-*-nexa-coffee; do
     [ -d "$root" ] || continue
     find "$root" -mindepth 1 -maxdepth 1 -type d -mtime +"$AGE_D" 2>/dev/null | while read -r p; do
-        report "$p" 1; [ $TRIM = 1 ] && rm -rf "$p" && echo "           → 삭제"
+        report "$p" 1; if [ $TRIM = 1 ]; then rm -rf "$p" && echo "           → 삭제"; fi # `[ ] &&`로 끝내면 TRIM=0일 때 while 상태 1 → set -e 종료(협업 11-07)
     done
     find "$root" -mindepth 1 -maxdepth 1 -type d ! -mtime +"$AGE_D" 2>/dev/null | while read -r p; do report "$p" 0; done
 done
