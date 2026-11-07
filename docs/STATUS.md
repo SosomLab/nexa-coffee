@@ -4,9 +4,9 @@
 
 - **[v0.1.5](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.5) 배포** — macOS 잠긴 화면 30초 깨움 수정(T-23 · DR-17) · 입력 처리 보안 수정 10건(T-24 · docs/19). PR #3 CI 42373465828 pass(새 ASan+UBSan 단계 포함) → main ff → 태그 → release run 42373565671 전부 success.
 - **자산 8종** — `windows-setup.exe` 192,339 B · x64/x86 portable zip · macOS zip 104,764 B · Linux tar.gz · .deb · .rpm · SHA256SUMS.
-- **채널** — brew 탭 0.1.5 ✅(cask · portable formula) · pkg.sosomlab.com APT 0.1.5 ✅ · choco `nexa-coffee`·`nexa-coffee-portable` 0.1.5 push ✅(0.1.3 · portable 0.1.4 승인 확인 → T-6 choco 종결) · winget 설치본 건너뜀(#436346 대기) · Portable 0.1.5 PR #474187.
+- **채널** — brew 탭 0.1.5 ✅(cask · portable formula) · pkg.sosomlab.com APT 0.1.5 ✅(RPM 색인 미확인) · choco `nexa-coffee`·`nexa-coffee-portable` 0.1.5 push ✅(0.1.3 · portable 0.1.4 승인 확인 → T-6 choco 종결) · winget 설치본 건너뜀(#436346 대기) · Portable 0.1.5 PR #474187.
 - **winget 가드 결함 수정 `e75c44c`** — Portable #454127(0.1.4)이 OPEN인데 0.1.5 PR이 열렸다. 갱신 PR 제목이 ID로 시작해 패턴(선행 공백)에 안 걸렸다 → `(^| )<ID> version `로 수정. 두 PR 공존은 무해.
-- **남음**: T-23 맥 실기(docs/18 ④) · winget/choco 검수 · RPM 색인 확인.
+- **남음**: T-23 맥 실기(docs/18 ④) · winget/choco 검수 · RPM 색인 미확인(repodata 경로 · T-20 dnf 실기로 대신) · 원격 브랜치 `fix/mac-wake-when-locked` 삭제(사용자 판단).
 - 상세: [journal 3차](journal/2026-11-07.md#3차--v015-릴리스-착수-사용자-결정-11-07).
 
 ## 11-07 (2차) — C 코드 보안 점검·수정 · 임시 파일 정리 규칙 (사용자 요청 · 두 세션 협업)
