@@ -51,7 +51,7 @@
 ```
 src/core/   coffee.h · util.c · timer.c · font.c · draw.c · icon_idle.c · icon_active.c · app.c   ← 플랫폼 비종속
 src/plat/   win.c(Win32 · CRT 없음) · mac.m(AppKit+IOKit) · linux.c(SNI·dbusmenu·억제) · dbus.c/h(미니 D-Bus)
-test/       test_core.c(단위) · icon_dump.c(PAM 덤프)     scripts/  linux-smoke.sh(D-Bus 계약) · dbus-test.conf · linux-docker.sh
+test/       test_core.c(단위) · test_dbus.c(수신 파서 보안·퍼징) · icon_dump.c(PAM 덤프)     scripts/  linux-smoke.sh(D-Bus 계약) · dbus-test.conf · linux-docker.sh · tmp-clean.sh(임시 파일 정리)
 packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux(tar.gz 설치 스크립트 · build-pkgs.sh = deb/rpm) · windows(NSIS installer.nsi) · homebrew · winget · choco
 ```
 
@@ -62,6 +62,9 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux(tar.gz 설�
 - 🔴 push 전: `make test` · `make win` · `sh scripts/linux-smoke.sh`(brew dbus) · macOS `make app` 실행 확인. Linux PC에는 mingw/musl이 없어 `make win`·`make app`은 CI(`gh run watch`)로 대신한다. 크기 예산(CI): Windows ≤ 64KB · Linux 정적 ≤ 128KB · macOS 유니버설 ≤ 256KB.
 - 코어에 libc 호출·float·malloc을 넣지 않는다(Windows 링크가 깨진다). 플랫폼 파일만 OS API를 만진다.
 - 아이콘을 바꾸면 `make test` 후 `build/icons/*.pam`을 눈으로 확인(magick으로 PNG 변환) — 16px 두 자리 숫자 선명도 기준.
+- 🔒 **보안([docs/19](docs/19-security-hardening.md) · 사용자 11-07)**: 외부 입력(설정 파일 · 자식 stdout · 명령줄 · D-Bus 와이어 · 환경 변수)은 **길이 경계로 파싱**(`cf_atoi_n(s, end, &e)` · NUL 종단 가정 금지) · 정수는 **포화 + clamp**(`atoi` · 부호 있는 `v*10` 누적 금지) · 표 인덱스는 `(unsigned)x < COUNT` · 와이어 길이는 `n > end - pos`(랩어라운드 금지) + NUL 검증 · 재귀는 깊이 상한. **push 전 `make test-san`**(ASan+UBSan · CI ubuntu도 돈다). 결함은 docs/19 §4에 `V-n` 행 + **수정 전 코드에서 실패하는 시험**을 먼저.
+- 🧹 **임시 파일(사용자 11-07)**: 프로젝트 밖 임시 폴더/파일은 접두사 **`nexa-coffee-*`** + 만든 쪽이 `trap`으로 삭제. **회차 마감 때 `sh scripts/tmp-clean.sh --trim`**(스크립트 고정물 24h · Claude 세션 스크래치 7일 나이 가드 · 접두사 화이트리스트). 새 접두사는 스크립트 `PATTERNS`와 [docs/18 "임시 파일 정리"](docs/18-build-and-test.md#임시-파일-정리사용자-11-07)에 함께. 실기 백업(`%TEMP%\nc-config.bak`)은 마무리 단계에서 사람이.
+- 🌐 **크로스 플랫폼(nexa-dir3 docs/15 §2-3 이식 · 11-07)**: OS API·`#ifdef`는 `src/plat`에만(코어 0) · 미지원은 **조용히 넘기지 않고** 알림/문서(Linux "대화창 도구 없음" 알림처럼) · 시험·스모크 인스턴스는 **사용자 포커스·실제 세션 버스·실제 설정을 건드리지 않음**(전용 버스 · HOME 격리 · mac Accessory 정책) · 한 OS에서 고친 결함은 **다른 두 OS의 같은 자리**를 함께 확인하고 journal에 "해당 없음" 근거를 적는다(11-07: 주기 활동 선언은 mac만) · 개발 PC에 없는 툴체인(musl·mingw·맥)은 **CI 3-OS 결과로 판정**한 뒤 push 판정 · 실기 전 사용자 설치본 유무 확인(10-17 사고).
 
 ## 5. 다음 단계
 

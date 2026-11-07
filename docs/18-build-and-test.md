@@ -21,6 +21,7 @@ x86은 64비트 나눗셈 헬퍼 때문에 `-lgcc`를 정적으로 붙인다.
 | --- | --- | --- |
 | 코어 단위 | `make test` | util · 표시 규칙 · 다음 변화 시각 · 메뉴 트리/클릭 · 설정 왕복 · 툴팁 · 아이콘 결정성/경계 |
 | 아이콘 육안 | `make test` → `build/icons/*.pam` | `magick x.pam -background '#1e1e1e' -flatten -filter point -resize 800% x.png` |
+| **보안 시험**([docs/19](19-security-hardening.md)) | `make test-san` | 위 코어 시험 + **test_dbus**(수신 파서: 조작한 길이 · NUL 누락 · 200겹 variant · 무작위 변형 3만 회)를 **ASan + UBSan**으로 — 경계 밖 읽기 · 정수 오버플로 · 미초기화. push 전 · CI ubuntu |
 | Linux D-Bus 계약 | `sh scripts/linux-smoke.sh dist/nexa-coffee` | 전용 세션·시스템 버스 위에서 SNI 속성(16/22/44 픽스맵) · dbusmenu 레이아웃/속성 · Event 클릭 → 작업/설정 · **가짜 워처**(늦게 등장 · 재시작 · Register 응답 전 GetAll) · **가짜 logind**(Inhibit fd 수신·해제 · 덮개 거부 시 `sleep:idle` 재시도 · 전부 거부돼도 동작) · 실행 시 자동 시작 · 종료 (약 1.5초) |
 | Linux 설치 스크립트 | `sh scripts/test-install.sh dist/nexa-coffee` | 임시 prefix·XDG에서 `install.sh`/`uninstall.sh` — Exec 절대 경로 · 옛 아이콘 캐시 갱신(다른 앱 항목 유지 · 도구 없으면 hicolor 시각 갱신) · `--autostart` 항목(재설치 중복 없음) · 다른 설치를 가리키는 자동 실행 항목 보존 · 제거 |
 | macOS 실기 | `make app && open "dist/Nexa Coffee.app"` — **확인 뒤 `make clean`**(dist 번들이 설치본과 함께 Launchpad에 보인다 · 09-13) | 메뉴바 아이콘 · `pmset -g assertions \| grep Coffee` · `ps -o rss` · 창 확인은 `NEXA_COFFEE_SHOW=custom\|auto\|about dist/nexa-coffee` |
@@ -122,6 +123,10 @@ Docker가 있으면 `scripts/linux-docker.sh`가 Linux 컨테이너에서 빌드
 
 ## 메모리 실측(macOS)
 `footprint --pid <pid>`의 `phys_footprint`가 기준(RSS는 공유 캐시 포함). 실험 절차는 journal 09-13 2차. 아이콘·리소스 크기는 `ls -la res/ packaging/branding/`.
+
+## 임시 파일 정리(사용자 11-07)
+
+프로젝트 밖에 만드는 임시 폴더/파일은 **접두사 `nexa-coffee-*`** 를 쓰고 만든 쪽이 `trap`으로 지운다(`linux-smoke.sh` `nexa-coffee-smoke.*` · `test-install.sh` `nexa-coffee-install.*` · `build-pkgs.sh`는 무작위 `mktemp -d` + trap). 그래도 남는 것(kill -9 · 끊긴 세션)은 **회차 마감 때** `sh scripts/tmp-clean.sh`(보고) → `--trim`(정리)으로 거둔다 — 스크립트 고정물은 24시간(`NC_TMP_AGE_H`) · Claude 세션 스크래치(`/private/tmp/claude-*/-Users-*-nexa-coffee/<세션>`)는 7일(`NC_SCRATCH_AGE_D`) 넘은 것만, 접두사 화이트리스트라 다른 프로젝트 파일은 건드리지 않는다. 프로젝트 안 `build/` `dist/`는 `make clean`. Windows 실기 백업 `%TEMP%\nc-config.bak`은 위 "마무리" 단계에서 사람이 지운다. 새 접두사를 쓰면 `tmp-clean.sh`의 `PATTERNS`와 이 절에 함께 올린다.
 
 ## CI(.github/workflows)
 
