@@ -7,6 +7,11 @@
  * - 절전 방지 = PreventUserIdleSystemSleep + PreventUserIdleDisplaySleep 어설션 +
  *   30초마다 IOPMAssertionDeclareUserActivity(화면보호기 유휴 타이머 재설정).
  *   ⚠️ 덮개 닫힘 절전은 OS 강제 절전이라 어설션으로 막을 수 없다(root `pmset disablesleep` 영역).
+ *   ⚠️ 사용자 활동 선언은 **화면이 잠겼거나 꺼져 있으면 건너뛴다**(DR-17 · 11-07). 이 API는 꺼진 화면을 켜므로
+ *   잠금 뒤 화면이 꺼진 상태에서 30초마다 화면이 켜지고 잠금 화면(loginwindow)이 다시 그려져 창이 수천 개 쌓였다
+ *   (사용자 실측 11-05 880회/2,488창 · 11-07 1,282회/3,799창 → WindowServer CPU 80~100% · 마우스 지연).
+ *   판정 = CGDisplayIsAsleep(주 화면) ‖ CGSessionCopyCurrentDictionary의 CGSSessionScreenIsLocked(잠기지 않으면 키 없음)
+ *   ‖ kCGSessionOnConsoleKey = false(다른 사용자 세션이 콘솔). 어설션 둘은 그대로 두어 절전 방지 목적은 유지한다.
  * - 작업 종료 시: 어설션 해제 · 타이머 무효화 · 동작 아이콘 해제 · malloc_zone_pressure_relief.
  * - 입력 창(일·시·분 + 시작/저장)·About은 **자식 프로세스**에서 띄운다(T-14 · 09-13 실측: 창 1회 후 AppKit
  *   텍스트 시스템 캐시 +5 MB가 프로세스 안에서는 안 돌아옴). 자기 자신을 `--dialog`/`--about`로 NSTask 실행,
@@ -52,6 +57,7 @@ static i64 now_ms(void)
     i64 deadline;        /* 0 = 무제한 */
     i64 total;
     IOPMAssertionID assertSys, assertDisp;
+    IOPMAssertionID activityId; /* DeclareUserActivity가 준 id — 넘겨 주면 새로 만들지 않고 갱신(DR-17) */
     char confPath[1024];
     int lockFd;
     NSTask *child;            /* 열려 있는 입력 창/About 자식 프로세스(없으면 nil) */
@@ -171,13 +177,27 @@ static NSBitmapImageRep *repFromRGBA(const u8 *rgba, int px, CGFloat pt)
     } else {
         if (assertSys)  { IOPMAssertionRelease(assertSys);  assertSys = 0; }
         if (assertDisp) { IOPMAssertionRelease(assertDisp); assertDisp = 0; }
+        if (activityId) { IOPMAssertionRelease(activityId); activityId = 0; }
         [activity invalidate]; activity = nil;
     }
 }
+/* 화면이 잠겼거나 꺼져 있거나 이 세션이 콘솔을 쥐고 있지 않으면 YES(DR-17). 세션 사전을 못 얻으면 안전하게 YES. */
+static BOOL screenLockedOrDark(void)
+{
+    if (CGDisplayIsAsleep(CGMainDisplayID())) return YES;
+    CFDictionaryRef d = CGSessionCopyCurrentDictionary();
+    if (!d) return YES;
+    CFBooleanRef locked = CFDictionaryGetValue(d, CFSTR("CGSSessionScreenIsLocked"));
+    CFBooleanRef console = CFDictionaryGetValue(d, kCGSessionOnConsoleKey);
+    BOOL r = (locked && CFBooleanGetValue(locked)) || (console && !CFBooleanGetValue(console));
+    CFRelease(d);
+    return r;
+}
 - (void)declareActivity
 {
-    IOPMAssertionID id = 0;
-    IOPMAssertionDeclareUserActivity(CFSTR("Nexa Coffee"), kIOPMUserActiveLocal, &id);
+    if (screenLockedOrDark()) return; /* 잠금 화면을 30초마다 깨우지 않는다(DR-17 · 11-07) */
+    if (IOPMAssertionDeclareUserActivity(CFSTR("Nexa Coffee"), kIOPMUserActiveLocal, &activityId) != kIOReturnSuccess)
+        activityId = 0; /* 실패하면 다음엔 새로 받는다 */
 }
 
 /* ── 작업 ── */

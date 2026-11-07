@@ -108,6 +108,18 @@ Docker가 있으면 `scripts/linux-docker.sh`가 Linux 컨테이너에서 빌드
 - 결과는 [TODO](TODO.md) T-2(필요하면 T-18)와 그날 [journal](journal/)에 **실측값과 함께** 적는다 —
   "확인함"이 아니라 "150%에서 16px 아이콘이 늘어나 흐릿했다"처럼.
 
+## 사람이 해야 하는 실기 점검(macOS)
+
+### ④ 잠금 중 화면 깨움 없음 (T-23 · DR-17)
+
+1. `make app && open "dist/Nexa Coffee.app"` → 메뉴에서 작업 시작(무제한) · `pmset -g assertions | grep Coffee`에 PreventUserIdleSystemSleep·PreventUserIdleDisplaySleep 둘.
+2. ⌃⌘Q로 화면 잠금 → 화면이 꺼질 때까지 둔다(잠금 화면 유휴 또는 ⌃⇧⏏) → **5분 이상** 방치.
+3. 잠금 해제 → `pmset -g log | grep -c "Display is turned on"`을 잠금 전후로 비교 — **증가 0**(수정 전엔 30초마다 1). `pmset -g log | grep -i "UserIsActive"`에 nexa-coffee가 잠금 구간에 없음.
+4. `pmset -g assertions | grep -i useractive` — 작업 중 UserIsActive가 1개를 넘어 쌓이지 않는다(id 재사용).
+5. 잠금 해제 상태로 화면보호기 대기 시간(시스템 설정)보다 오래 둔다 → 화면보호기·화면 끄기 없음(D-1 겸).
+6. 외장 모니터만 쓰는 클램셸이면 2~3을 한 번 더(주 화면 = 외장 판정).
+7. 끝나면 작업 종료 → 어설션 0 → `make clean`.
+
 ## 메모리 실측(macOS)
 `footprint --pid <pid>`의 `phys_footprint`가 기준(RSS는 공유 캐시 포함). 실험 절차는 journal 09-13 2차. 아이콘·리소스 크기는 `ls -la res/ packaging/branding/`.
 

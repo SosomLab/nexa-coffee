@@ -38,7 +38,7 @@ Linux는 libdbus 없이 D-Bus를 직접 말하며(musl 정적 · libc 하나), m
 | OS | 수단 | 덮개 닫힘 |
 | --- | --- | --- |
 | Windows | `SetThreadExecutionState(ES_SYSTEM_REQUIRED \| ES_DISPLAY_REQUIRED)` | ✖ 전원 정책(`powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 0` · 관리자) |
-| macOS | IOKit `PreventUserIdleSystemSleep` + `PreventUserIdleDisplaySleep` 어설션 + 30초마다 사용자 활동 선언 | ✖ OS 강제 절전(`sudo pmset -a disablesleep 1`) |
+| macOS | IOKit `PreventUserIdleSystemSleep` + `PreventUserIdleDisplaySleep` 어설션 + 30초마다 사용자 활동 선언(화면이 잠겼거나 꺼져 있으면 건너뜀 — 잠금 화면을 깨우지 않는다) | ✖ OS 강제 절전(`sudo pmset -a disablesleep 1`) |
 | Linux | `org.freedesktop.ScreenSaver.Inhibit` + logind `Inhibit("sleep:idle:handle-lid-switch", block)` | ✅ logind가 막는다(polkit 기본 허용) |
 
 ## 설치
