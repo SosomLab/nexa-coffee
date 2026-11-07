@@ -1,5 +1,6 @@
 # DEVLOG — 날짜별 요약(최신 위)
 
+- **2026-11-07** — **macOS 잠긴 화면 30초 깨움 수정(T-23 · DR-17)** — 사용자 보고(11-07 1,282회 켜짐 · loginwindow 창 3,799개 · WindowServer CPU 80~100% · 마우스 지연). 원인 = 30초 `IOPMAssertionDeclareUserActivity`가 꺼진 화면을 켬. 화면 잠김·꺼짐·콘솔 아님이면 선언을 건너뛰고 활동 어설션 id 재사용(`e27dcd4` · 브랜치 `fix/mac-wake-when-locked`). Windows·Linux는 보유형이라 해당 없음. 실기·0.1.5 배포 남음. 두 세션 협업. → [journal](journal/2026-11-07.md)
 - **2026-10-17 (3차)** — 저장소 최신화(변경 없음 · 검수 4건 대기) · choco `nexa-coffee` 제목이 "(Portable)"로 보이는 원인 = 승인된 0.1.2가 포터블 nuspec · 설치본 0.1.4 승인 시 해소(제출은 0.1.3 승인 뒤).
 - **2026-10-17 (2차)** — **v0.1.4 배포 · Windows 설치본/포터블 분리 첫 적용**(`bc9b349` 분리 · `38bccce` 문서 · `37eb96e` VERSION → 태그 → release run 38929404261 전부 success). 자산 `-portable.zip` 이름 변경 · winget `SosomLab.NexaCoffee.Portable` 첫 PR #454127 · choco `nexa-coffee-portable` 첫 push · 기존 ID는 직전 제출 대기로 건너뜀(패키지별 판정 ✅). setup 실기가 사용자 설치본을 지워 즉시 복원.
 - **2026-10-17** — **v0.1.3 배포**(`e0c37c8` VERSION + 노트 → 태그 → release run 38924013370 전부 success). 자산 8종(신규 `windows-setup.exe` 171,636 B) · brew 탭 0.1.3 · pkg.sosomlab.com 0.1.3 · choco 0.1.3 push(모더레이션 대기) · winget 건너뜀(#436346 대기). → [journal](journal/2026-10-17.md)

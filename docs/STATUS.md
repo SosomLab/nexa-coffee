@@ -1,5 +1,13 @@
 # STATUS — 지금 상태
 
+## 11-07 — macOS 잠긴 화면 30초 깨움 · loginwindow 창 누적 수정 (사용자 보고 11-05·11-07 · 두 세션 협업)
+
+- **증상**: 작업 중 맥을 잠그면 꺼진 화면이 30초마다 켜지고 잠금 화면 창이 쌓인다(11-07 1,282회 · 3,799창) → WindowServer CPU 80~100% · 마우스 지연.
+- **원인**: `mac.m` `declareActivity`의 `IOPMAssertionDeclareUserActivity`가 꺼진 화면을 켠다. 어설션 둘은 무관.
+- **수정 `e27dcd4`**(브랜치 `fix/mac-wake-when-locked` · push 안 함): 화면 잠김·꺼짐·콘솔 아님이면 선언을 건너뜀 · 활동 어설션 id 재사용(DR-17 · T-23). Windows·Linux는 해당 없음.
+- **남음**: 사람 실기(T-23 · docs/18 macOS ④) · main 병합 · 0.1.5 배포(사용자 결정 · 노트 초안 [`releases/v0.1.5.md`](releases/v0.1.5.md)).
+- 상세: [journal/2026-11-07](journal/2026-11-07.md).
+
 ## 10-17 (2차) — v0.1.4 배포 · Windows 설치본/포터블 채널 분리 첫 적용 (사용자 요청 "새 버전 릴리즈 및 패키지 게시")
 
 - **[v0.1.4](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.4) 배포** — 앱 코드는 0.1.3과 같고 Windows 배포 구성만 바뀌었다(DR-16 10-17 보강). PR #2 CI → main ff → `37eb96e` VERSION + 노트 → main CI → 태그 → release run 38929404261 전부 success.
