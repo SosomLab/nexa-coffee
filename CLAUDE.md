@@ -14,7 +14,8 @@
 
 - 조직: SosomLab · 개발자: Sangyong Bae · kiros33@gmail.com · 저장소: <https://github.com/SosomLab/nexa-coffee>
 - 라이선스: **MIT**(누구나 무료 — nexa-shortcut과 동일. beep/clip/dir2의 PolyForm NC와 **다르다**).
-- 현 단계: **v0.1.4 배포됨(10-17)** — Windows 배포를 **설치본/포터블로 분리**한 첫 릴리스(앱 코드는 0.1.3과 같음 · DR-16). 자산 `windows-setup.exe` · `windows-{x64,x86}-portable.zip` · brew 0.1.4 ✓ · pkg.sosomlab.com 0.1.4 ✓ · 새 winget `SosomLab.NexaCoffee.Portable` [PR #454127](https://github.com/microsoft/winget-pkgs/pull/454127) · 새 choco `nexa-coffee-portable` 0.1.4 제출 · 기존 `SosomLab.NexaCoffee`([#436346](https://github.com/microsoft/winget-pkgs/pull/436346) 0.1.1)·`nexa-coffee`(0.1.3 검수)는 대기라 건너뜀.
+- 현 단계: **v0.1.5 릴리스(11-07)** — ① **macOS 잠금 중 30초마다 화면 깨움 → loginwindow 창 수천 개 누적·마우스 지연 수정**(DR-17 · T-23 · 사용자 보고 11-05·11-07 · `mac.m screenLockedOrDark`) ② **보안 결함 10건 수정 + 관리 원장 [docs/19](docs/19-security-hardening.md)**(T-24 · 설정 파서 경계 밖 읽기 · 정수 포화 · D-Bus 수신 파서 랩어라운드/NUL/재귀/길이 상한 · `make test-san` ASan+UBSan · test_dbus 퍼징 · CI 단계) ③ 임시 파일 정리 `scripts/tmp-clean.sh`(T-25) · CLAUDE.md §4 규칙 3건(보안·임시 파일·크로스 플랫폼 — nexa-dir3 이식). 두 세션(개발 `개발` · 협업 `협업`) 분담은 nexa-dir3 10-25 합의 기준. 채널은 release.yml → brew · pkg.sosomlab.com · winget/choco(가드)로 이어진다. 남은 사람 손: 맥 실기 [18 ④](docs/18-build-and-test.md#사람이-해야-하는-실기-점검macos).
+  - 0.1.4(10-17) = Windows 배포를 **설치본/포터블로 분리**한 첫 릴리스(앱 코드는 0.1.3과 같음 · DR-16). 자산 `windows-setup.exe` · `windows-{x64,x86}-portable.zip` · brew 0.1.4 ✓ · pkg.sosomlab.com 0.1.4 ✓ · 새 winget `SosomLab.NexaCoffee.Portable` [PR #454127](https://github.com/microsoft/winget-pkgs/pull/454127) · 새 choco `nexa-coffee-portable` 0.1.4 제출 · 기존 `SosomLab.NexaCoffee`([#436346](https://github.com/microsoft/winget-pkgs/pull/436346) 0.1.1)·`nexa-coffee`(0.1.3 검수)는 대기라 건너뜀.
   - 0.1.3(10-17) = 트레이 메뉴 **"로그인 시 실행"**(3-OS · DR-15 · 진실 원천 = OS 상태) · **Windows 설치본**(NSIS · DR-16 · "로그인 시 실행" 체크박스 기본 해제 · `/S` · `/AUTOSTART=1`) · 언어 ▸ **"시스템 (OS 언어)"**(DR-13 보강). 두 세션(개발·협업) 분담으로 진행(journal 10-16).
   - 0.1.2(09-26) = **T-19**(Linux 늦게 뜬 트레이 워처 SIGSEGV) 수정 · 16px · Windows 배율 · install.sh. choco 0.1.2 승인 ✓(10-09).
   - **Windows 실기 사실상 완료**(09-13·09-17): 트레이·툴팁·메뉴 라디오·열린 메뉴 1초 갱신·`powercfg`·i18n(CJK·언어 메뉴·입력 창 라벨 폭)·T-13 메모리·**DR-14 파이프 끝단**. 남은 둘(아이콘 DPI·TaskbarCreated)은 화면 배율·셸을 건드려야 해 [18 실기 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows)로 넘겼다.
@@ -44,6 +45,7 @@
 | DR-8 | 덮개 닫힘은 Windows·macOS에선 관리자 정책 영역 — 앱이 손대지 않고 문서에 명시. Linux만 logind로 막는다 |
 | DR-13 | i18n = 코어 문구 블록(언어당 NUL 구분 문자열 1개 · 포인터 테이블 없음). "언어 ▸" 메뉴에서 고른 뒤에만 `lang=` 저장, 아니면 OS 로케일 자동. **10-16 보강**: 서브메뉴 맨 위 "시스템 (OS 언어)"(id 29) — 고르면 `lang=` 제거 · OS 언어 변경을 Win/mac은 즉시 반영(Linux는 시작 시 고정) |
 | DR-15 | **로그인 시 실행** = 앱 메뉴 체크 토글(3-OS) + Windows 설치본 옵션. 설정에 저장하지 않고 **OS 상태**를 읽는다 — Win HKCU Run 값 `Nexa Coffee` · mac `~/Library/LaunchAgents/com.sosomlab.nexa-coffee.plist` · Linux `~/.config/autostart/nexa-coffee.desktop`(install.sh --autostart와 같은 파일) |
+| DR-17 | **macOS 사용자 활동 선언은 화면이 잠겼거나 꺼져 있으면 건너뛴다**(`CGDisplayIsAsleep` ‖ `CGSSessionScreenIsLocked` ‖ 콘솔 아님 · 사전 없음도 건너뜀) — `IOPMAssertionDeclareUserActivity`는 꺼진 화면을 켜므로 잠금 뒤 30초마다 loginwindow가 다시 그려져 창이 쌓였다. 어설션 둘은 유지 · 활동 어설션 id 재사용 · Win/Linux는 주기 호출이 없어 해당 없음 |
 | DR-16 | **Windows 설치본 = NSIS**(`packaging/windows/installer.nsi` · nexa-clip 이식) — 사용자 단위(HKCU · `%LOCALAPPDATA%\Programs\NexaCoffee`) · x64/x86 한 파일 · 실행 중 인스턴스는 WM_CLOSE로 종료. **10-17 분리**: winget `SosomLab.NexaCoffee`·choco `nexa-coffee` = 설치본 / `SosomLab.NexaCoffee.Portable`·`nexa-coffee-portable` = 포터블 zip(`-portable.zip`) · 검수 대기 판정은 패키지별 |
 
 ## 3. 구조
@@ -68,7 +70,8 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux(tar.gz 설�
 
 ## 5. 다음 단계
 
-0. **채널 마무리(T-6)** — 검수 대기: winget #436346(0.1.1)·#454127(Portable 0.1.4) · choco `nexa-coffee` 0.1.3·`nexa-coffee-portable` 0.1.4. 기존 ID가 풀리면 `publish-windows-packages` dispatch(`tag=v0.1.4`)로 설치본 제출 — choco 사이트 `nexa-coffee` 제목 "(Portable)"도 이 설치본 0.1.4가 승인돼야 "Nexa Coffee"로 바뀐다(버전별 nuspec 제목). ⚠️ 설치본 실기 전엔 사용자 설치본(`%LOCALAPPDATA%\Programs\NexaCoffee`) 유무를 먼저 확인(10-17 사고). 남은 사람 손: pkg.sosomlab.com apt/dnf 설치 실기(T-20).
+0. **v0.1.5 사후(11-07)** — release run·자산 8종·채널(brew 0.1.5 · pkg.sosomlab.com 0.1.5 · winget/choco는 검수 대기면 가드가 건너뜀) 확인 → journal/STATUS 결과 기록 · **맥 실기 [18 ④](docs/18-build-and-test.md#사람이-해야-하는-실기-점검macos)**(잠금 → 화면 꺼진 뒤 `pmset -g log` "Display is turned on" 증가 0 · UserIsActive 누적 없음) · T-24 남음(Windows 런타임 시험 = MSVC `/fsanitize=address` 검토 · Windows PC) · 회차 마감 `sh scripts/tmp-clean.sh --trim`.
+0-1. **채널 마무리(T-6)** — 검수 대기: winget #436346(0.1.1)·#454127(Portable 0.1.4) · choco `nexa-coffee` 0.1.3·`nexa-coffee-portable` 0.1.4. 기존 ID가 풀리면 `publish-windows-packages` dispatch(`tag=v0.1.4`)로 설치본 제출 — choco 사이트 `nexa-coffee` 제목 "(Portable)"도 이 설치본 0.1.4가 승인돼야 "Nexa Coffee"로 바뀐다(버전별 nuspec 제목). ⚠️ 설치본 실기 전엔 사용자 설치본(`%LOCALAPPDATA%\Programs\NexaCoffee`) 유무를 먼저 확인(10-17 사고). 남은 사람 손: pkg.sosomlab.com apt/dnf 설치 실기(T-20).
 1. **실기 확인(사람)** — Windows: [18 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows) ③ 설치본(마법사 언어별 문구 · 체크 → 재로그인 트레이) · ① 배율(T-18) · ② TaskbarCreated. macOS·Linux: 메뉴 "로그인 시 실행" 토글 + 재로그인 · Linux GNOME 16px · T-19 트레이 복귀.
 2. macOS — 언어 메뉴(시스템 항목 포함) 실기(T-11) · 화면보호기 실측(T-4). Linux — KDE Plasma · 입력 창 실제 클릭(T-3).
 3. 결정 대기 — linux-repo 등록 확인 단계(T-21) · 툴팁 종료 시각(T-8) · cask DSL(T-15). ja/zh 원어민 검토(T-12).
