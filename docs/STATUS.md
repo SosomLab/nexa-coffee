@@ -5,7 +5,8 @@
 - **보안 `b42986c`**: 외부 입력 경계 결함 10건 수정 — 높음 3(설정 파서 경계 밖 읽기 · D-Bus 랩어라운드 · NUL 미검증) · 중 3(정수 오버플로 · variant 재귀 · 메시지 길이 상한 = 피어가 앱을 멈출 수 있었음) · 낮음 4. 관리 원장 [docs/19](19-security-hardening.md) · `make test-san` · `test_dbus` 퍼징 · CI 단계(T-24).
 - **규칙 `52bd205`**: `scripts/tmp-clean.sh`(보고/`--trim`) · CLAUDE.md §4 보안·임시 파일·크로스 플랫폼(T-25). nexa-dir3 GAP-042(winit)·T-137(맥 포커스)은 해당 없음.
 - **게이트**: test · test-san · win(x64 32,256 B · x86 34,816 B) · app(172,904 B) ✓ · linux-smoke는 CI.
-- **남음**: `tmp-clean.sh` 보고 모드 조기 종료 버그 수정(개발 세션) · Windows 런타임 보안 시험(T-24) · T-23 실기 · push · 0.1.5 배포(사용자 결정).
+- **정리 스크립트 후속**: 보고 모드 조기 종료(`47d235e`) · macOS `/tmp` 링크 중복 보고(`34f4be6`) 수정 ✅.
+- **남음**: Windows 런타임 보안 시험(T-24) · T-23 실기 · push · 0.1.5 배포(사용자 결정).
 
 ## 11-07 — macOS 잠긴 화면 30초 깨움 · loginwindow 창 누적 수정 (사용자 보고 11-05·11-07 · 두 세션 협업)
 
