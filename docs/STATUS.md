@@ -1,10 +1,13 @@
 # STATUS — 지금 상태
 
-## 11-07 (3차) — v0.1.5 릴리스 착수 (사용자 결정 "새 버전 릴리즈 · 배포 가능하면 게시")
+## 11-07 (3차) — v0.1.5 배포 (사용자 결정 "새 버전 릴리즈 · 배포 가능하면 게시")
 
-- **담긴 것**: macOS 잠긴 화면 30초 깨움 수정(T-23 · DR-17) · 입력 처리 보안 수정 10건(T-24 · docs/19). 노트 [`releases/v0.1.5.md`](releases/v0.1.5.md).
-- **진행**: VERSION 0.1.5 → PR → main 병합 → 태그 → release run → 채널 확인(개발 세션). 결과는 [journal 3차](journal/2026-11-07.md#3차--v015-릴리스-착수-사용자-결정-11-07)에 채운다.
-- **남음**: T-23 맥 실기(배포 뒤에도 필요) · winget/choco 검수(T-6).
+- **[v0.1.5](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.5) 배포** — macOS 잠긴 화면 30초 깨움 수정(T-23 · DR-17) · 입력 처리 보안 수정 10건(T-24 · docs/19). PR #3 CI 42373465828 pass(새 ASan+UBSan 단계 포함) → main ff → 태그 → release run 42373565671 전부 success.
+- **자산 8종** — `windows-setup.exe` 192,339 B · x64/x86 portable zip · macOS zip 104,764 B · Linux tar.gz · .deb · .rpm · SHA256SUMS.
+- **채널** — brew 탭 0.1.5 ✅(cask · portable formula) · pkg.sosomlab.com APT 0.1.5 ✅ · choco `nexa-coffee`·`nexa-coffee-portable` 0.1.5 push ✅(0.1.3 · portable 0.1.4 승인 확인 → T-6 choco 종결) · winget 설치본 건너뜀(#436346 대기) · Portable 0.1.5 PR #474187.
+- ⚠️ **winget 가드 결함 의심** — Portable #454127(0.1.4)이 OPEN인데 0.1.5 PR을 만들었다(제목 패턴 선행 공백 의심 · 개발 세션 확인 중 · 두 PR 공존은 무해).
+- **남음**: T-23 맥 실기(docs/18 ④) · winget 가드 수정 · winget/choco 검수 · RPM 색인 확인.
+- 상세: [journal 3차](journal/2026-11-07.md#3차--v015-릴리스-착수-사용자-결정-11-07).
 
 ## 11-07 (2차) — C 코드 보안 점검·수정 · 임시 파일 정리 규칙 (사용자 요청 · 두 세션 협업)
 
