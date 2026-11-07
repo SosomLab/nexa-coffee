@@ -35,6 +35,7 @@ done
 echo "② Claude 세션 스크래치 (${AGE_D}일 넘은 세션만 정리)"
 for root in /private/tmp/claude-*/-Users-*-nexa-coffee /tmp/claude-*/-Users-*-nexa-coffee; do
     [ -d "$root" ] || continue
+    case $root in /tmp/*) [ -L /tmp ] && continue ;; esac # macOS: /tmp → /private/tmp 심볼릭 링크라 같은 폴더가 두 번 나옴
     find "$root" -mindepth 1 -maxdepth 1 -type d -mtime +"$AGE_D" 2>/dev/null | while read -r p; do
         report "$p" 1; if [ $TRIM = 1 ]; then rm -rf "$p" && echo "           → 삭제"; fi # `[ ] &&`로 끝내면 TRIM=0일 때 while 상태 1 → set -e 종료(협업 11-07)
     done
