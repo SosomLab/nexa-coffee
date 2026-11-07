@@ -70,7 +70,7 @@ packaging/  branding(SVG SSOT = tools/gen-icon.py) · macos · linux(tar.gz 설�
 
 ## 5. 다음 단계
 
-0. **v0.1.5 사후(11-07)** — 배포·채널 확인 ✅ → 남은 것: winget 3 PR(#436346 · #454127 · #474187) 머지 · choco 0.1.5 두 패키지 검수 · **맥 실기 [18 ④](docs/18-build-and-test.md#사람이-해야-하는-실기-점검macos)**(잠금 → 화면 꺼진 뒤 `pmset -g log` "Display is turned on" 증가 0 · UserIsActive 누적 없음) · T-24 남음(Windows 런타임 시험 = MSVC `/fsanitize=address` 검토 · Windows PC) · 회차 마감 `sh scripts/tmp-clean.sh --trim`.
+0. **v0.1.5 사후(11-07)** — 배포·채널 확인 ✅(RPM 색인은 repodata 경로를 못 찾아 직접 미확인 · T-20 dnf 실기로 대신) → 남은 것: winget 3 PR(#436346 · #454127 · #474187) 머지 · choco 0.1.5 두 패키지 검수 · 원격 브랜치 `fix/mac-wake-when-locked` 삭제(권한 분류에 막혀 보류 · 사용자 판단) · **맥 실기 [18 ④](docs/18-build-and-test.md#사람이-해야-하는-실기-점검macos)**(잠금 → 화면 꺼진 뒤 `pmset -g log` "Display is turned on" 증가 0 · UserIsActive 누적 없음) · T-24 남음(Windows 런타임 시험 = MSVC `/fsanitize=address` 검토 · Windows PC) · 회차 마감 `sh scripts/tmp-clean.sh --trim`.
 0-1. **채널 마무리(T-6)** — 검수 대기: winget #436346(0.1.1)·#454127(Portable 0.1.4) · choco `nexa-coffee` 0.1.3·`nexa-coffee-portable` 0.1.4. 기존 ID가 풀리면 `publish-windows-packages` dispatch(`tag=v0.1.4`)로 설치본 제출 — choco 사이트 `nexa-coffee` 제목 "(Portable)"도 이 설치본 0.1.4가 승인돼야 "Nexa Coffee"로 바뀐다(버전별 nuspec 제목). ⚠️ 설치본 실기 전엔 사용자 설치본(`%LOCALAPPDATA%\Programs\NexaCoffee`) 유무를 먼저 확인(10-17 사고). 남은 사람 손: pkg.sosomlab.com apt/dnf 설치 실기(T-20).
 1. **실기 확인(사람)** — Windows: [18 점검표](docs/18-build-and-test.md#사람이-해야-하는-실기-점검windows) ③ 설치본(마법사 언어별 문구 · 체크 → 재로그인 트레이) · ① 배율(T-18) · ② TaskbarCreated. macOS·Linux: 메뉴 "로그인 시 실행" 토글 + 재로그인 · Linux GNOME 16px · T-19 트레이 복귀.
 2. macOS — 언어 메뉴(시스템 항목 포함) 실기(T-11) · 화면보호기 실측(T-4). Linux — KDE Plasma · 입력 창 실제 클릭(T-3).
