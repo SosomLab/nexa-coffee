@@ -195,8 +195,11 @@ jobs:
           curl.exe -L -o wingetcreate.exe https://aka.ms/wingetcreate/latest
           me=$(GH_TOKEN="$WINGET_TOKEN" gh api user -q .login)
           # 열린 우리 PR 제목들("New package: SosomLab.NexaCoffee version 0.1.1" 꼴) — 패키지별 대기 판정에 쓴다
+          # ⚠️ --search 를 쓰지 않는다(11-19): GitHub 검색은 "SosomLab.NexaCoffee"로 "SosomLab.NexaCoffee.Portable …" 제목을
+          #    찾지 못해 Portable 줄이 목록에 아예 안 들어왔다 → 대기 중(#454127·#474187)인데 0.1.6 PR #483350이 또 열림
+          #    (11-07 #474187 중복도 같은 원인 — e75c44c의 정규식 수정만으로는 안 고쳐졌다). 우리 열린 PR을 전부 받아 아래 정규식으로만 거른다.
           titles=$(GH_TOKEN="$WINGET_TOKEN" gh pr list -R microsoft/winget-pkgs --state open --author "$me" \
-                     --search "SosomLab.NexaCoffee" --json number,title -q '.[] | "#\(.number) \(.title)"' || true)
+                     --limit 200 --json number,title -q '.[] | "#\(.number) \(.title)"' || true)
           for d in $(find out/winget -name '*.installer.yaml' -exec dirname {} \; | sort); do
             id=$(sed -n 's/^PackageIdentifier: *//p' "$d"/*.installer.yaml | head -1 | tr -d '\r')
             # "(줄 처음 또는 공백)<ID> version " 으로 찾는다 — "SosomLab.NexaCoffee version"은 ".Portable version" 제목과 겹치지 않는다.
