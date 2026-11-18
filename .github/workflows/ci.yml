@@ -77,5 +77,8 @@ jobs:
       - name: MSVC 네이티브 빌드(CRT 미링크)
         shell: cmd
         run: build.bat
+      - name: 런타임 보안 시험(MSVC ASan · T-24)
+        shell: cmd
+        run: test-san.bat
       - uses: actions/upload-artifact@v6
         with: { name: windows-msvc, path: dist/nexa-coffee-x64.exe }
