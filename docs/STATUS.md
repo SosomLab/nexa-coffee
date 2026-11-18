@@ -1,10 +1,20 @@
 # STATUS — 지금 상태
 
+## 11-18 — 채널 점검 · winget #474187 · choco 설치본 VT 경고 · Windows ASan 시험 (두 세션 분담 시작)
+
+- **저장소**: 원격과 동일(`1c65e41`) · main CI green. 이후 개발 세션 `5e764d1`(push 안 함 — `test-san.bat` + CI windows-msvc ASan 단계 · T-24).
+- **winget**: `SosomLab.NexaCoffee` **#436346 머지 ✅ 11-16**(`winget show` = 0.1.1 포터블 매니페스트 · 설치본 제출 dispatch는 아직) · Portable #454127(0.1.4) 모더레이터 대기 · **#474187(0.1.5) Installation Validation 실패 + stale**(매니페스트·SHA256·zip 구성은 정상 · 원인 미확인 · 로그 비공개).
+- **choco**: `nexa-coffee-portable` **0.1.5 승인 ✅** · `nexa-coffee` 0.1.5 제출 ✅ → **VirusTotal 탐지 10건 초과로 "유지관리자 조치 대기"**(setup.exe 또는 nupkg · 어느 쪽인지 미확인). 설치본 winget 제출 전에 VT 결과 확인 권고.
+- **Windows 런타임 보안 시험(T-24 1단계)**: `test-san.bat`(MSVC `/fsanitize=address` · test_core + icon_dump) 이 PC 통과 · CI는 push 뒤. 남음: `win.c` 파서 하니스(2단계).
+- **이 PC 툴체인**: MSVC 14.44 + ASan · SDK 10.0.26100 ✓ / mingw · make · NSIS · docker · WSL 없음 → `make win`·`make test-san`은 CI로.
+- **남음(사용자 결정)**: #474187 대응(재검증 `@wingetbot run` / 닫히게 두고 재제출) · choco 설치본 VT 대응 · 설치본 winget dispatch 시점.
+- 상세: [journal/2026-11-18](journal/2026-11-18.md).
+
 ## 11-07 (3차) — v0.1.5 배포 (사용자 결정 "새 버전 릴리즈 · 배포 가능하면 게시")
 
 - **[v0.1.5](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.5) 배포** — macOS 잠긴 화면 30초 깨움 수정(T-23 · DR-17) · 입력 처리 보안 수정 10건(T-24 · docs/19). PR #3 CI 42373465828 pass(새 ASan+UBSan 단계 포함) → main ff → 태그 → release run 42373565671 전부 success.
 - **자산 8종** — `windows-setup.exe` 192,339 B · x64/x86 portable zip · macOS zip 104,764 B · Linux tar.gz · .deb · .rpm · SHA256SUMS.
-- **채널** — brew 탭 0.1.5 ✅(cask · portable formula) · pkg.sosomlab.com APT 0.1.5 ✅(RPM 색인 미확인) · choco `nexa-coffee`·`nexa-coffee-portable` 0.1.5 push ✅(0.1.3 · portable 0.1.4 승인 확인 → T-6 choco 종결) · winget 설치본 건너뜀(#436346 대기) · Portable 0.1.5 PR #474187.
+- **채널** — brew 탭 0.1.5 ✅(cask · portable formula) · pkg.sosomlab.com APT 0.1.5 ✅(RPM 색인 미확인) · choco `nexa-coffee`·`nexa-coffee-portable` 0.1.5 push ✅(0.1.3 · portable 0.1.4 승인 확인 → T-6 choco 종결 — **11-18 정정**: portable 0.1.5 승인 · 설치본 0.1.5는 VT 경고로 유지관리자 조치 대기) · winget 설치본 건너뜀(#436346 대기) · Portable 0.1.5 PR #474187.
 - **winget 가드 결함 수정 `e75c44c`** — Portable #454127(0.1.4)이 OPEN인데 0.1.5 PR이 열렸다. 갱신 PR 제목이 ID로 시작해 패턴(선행 공백)에 안 걸렸다 → `(^| )<ID> version `로 수정. 두 PR 공존은 무해.
 - **남음**: T-23 맥 실기(docs/18 ④) · winget/choco 검수 · RPM 색인 미확인(repodata 경로 · T-20 dnf 실기로 대신) · 원격 브랜치 `fix/mac-wake-when-locked` 삭제(사용자 판단).
 - 상세: [journal 3차](journal/2026-11-07.md#3차--v015-릴리스-착수-사용자-결정-11-07).

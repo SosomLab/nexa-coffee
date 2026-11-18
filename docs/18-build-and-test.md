@@ -22,6 +22,7 @@ x86은 64비트 나눗셈 헬퍼 때문에 `-lgcc`를 정적으로 붙인다.
 | 코어 단위 | `make test` | util · 표시 규칙 · 다음 변화 시각 · 메뉴 트리/클릭 · 설정 왕복 · 툴팁 · 아이콘 결정성/경계 |
 | 아이콘 육안 | `make test` → `build/icons/*.pam` | `magick x.pam -background '#1e1e1e' -flatten -filter point -resize 800% x.png` |
 | **보안 시험**([docs/19](19-security-hardening.md)) | `make test-san` | 위 코어 시험 + **test_dbus**(수신 파서: 조작한 길이 · NUL 누락 · 200겹 variant · 무작위 변형 3만 회)를 **ASan + UBSan**으로 — 경계 밖 읽기 · 정수 오버플로 · 미초기화. push 전 · CI ubuntu |
+| **보안 시험(Windows)** | `test-san.bat`(cmd · cl이 PATH에 없으면 vswhere+vcvars64로 찾음) | 코어 시험 + icon_dump를 **MSVC ASan**(`/fsanitize=address`)으로 — LLP64·다른 컴파일러의 정수 승격까지. UBSan·test_dbus 없음(MSVC 미지원 · POSIX). CI windows-msvc |
 | Linux D-Bus 계약 | `sh scripts/linux-smoke.sh dist/nexa-coffee` | 전용 세션·시스템 버스 위에서 SNI 속성(16/22/44 픽스맵) · dbusmenu 레이아웃/속성 · Event 클릭 → 작업/설정 · **가짜 워처**(늦게 등장 · 재시작 · Register 응답 전 GetAll) · **가짜 logind**(Inhibit fd 수신·해제 · 덮개 거부 시 `sleep:idle` 재시도 · 전부 거부돼도 동작) · 실행 시 자동 시작 · 종료 (약 1.5초) |
 | Linux 설치 스크립트 | `sh scripts/test-install.sh dist/nexa-coffee` | 임시 prefix·XDG에서 `install.sh`/`uninstall.sh` — Exec 절대 경로 · 옛 아이콘 캐시 갱신(다른 앱 항목 유지 · 도구 없으면 hicolor 시각 갱신) · `--autostart` 항목(재설치 중복 없음) · 다른 설치를 가리키는 자동 실행 항목 보존 · 제거 |
 | macOS 실기 | `make app && open "dist/Nexa Coffee.app"` — **확인 뒤 `make clean`**(dist 번들이 설치본과 함께 Launchpad에 보인다 · 09-13) | 메뉴바 아이콘 · `pmset -g assertions \| grep Coffee` · `ps -o rss` · 창 확인은 `NEXA_COFFEE_SHOW=custom\|auto\|about dist/nexa-coffee` |

@@ -65,6 +65,6 @@
 
 ## 5. 열린 항목
 
-- Windows 쪽 런타임 시험이 없다(CI는 MSVC/mingw **빌드**만 · `child_done`·`wint`는 코드 검토). → ASan은 MSVC도 지원(`/fsanitize=address`) — Windows PC 회차에 `build.bat` 시험 빌드 추가 검토(T-24).
+- Windows 런타임 시험 — **코어는 `test-san.bat`로 ASan 시험 ✅ 11-18**(MSVC `/fsanitize=address` · test_core + icon_dump · CI windows-msvc 단계 · `5e764d1`). MSVC는 UBSan이 없어 ASan만 · `test_dbus`는 POSIX라 대상 아님. **`win.c` 파서(`child_done`·`wint`)는 2단계 남음**(별도 하니스 설계 · 지금은 코드 검토만 · T-24).
 - `fill()`은 수신 버퍼를 메시지 총길이까지 키운다(상한 2²⁷ = 128 MB · 피어가 보낸 만큼만) — 메모리 압박 공격은 세션 버스 데몬의 자체 상한(기본 128 MB)과 같아 추가 상한은 두지 않음.
 - 정기 재점검: 입력 경계가 늘 때(§1) · 릴리스 전 §3 정적 분석.
