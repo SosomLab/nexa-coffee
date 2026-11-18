@@ -53,15 +53,22 @@ jobs:
   # 아티팩트 windows-setup 을 받아 백신 검사를 해 볼 수 있다(docs/19).
   windows-setup:
     needs: linux
-    runs-on: windows-latest
+    # windows-2022 = 공식 NSIS 3.10 선탑재. windows-latest(2025)는 NSIS가 빠졌고 러너에서 choco 피드 조회가 거부되기도 한다(nexa-beep 선례).
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v7
         with: { name: linux-and-windows, path: dist }
-      - name: NSIS(러너에 없으면 설치)
+      - name: NSIS 확인(없으면 choco 폴백)
         shell: bash
         run: |
-          [ -x "/c/Program Files (x86)/NSIS/makensis.exe" ] || command -v makensis >/dev/null 2>&1 || choco install nsis -y --no-progress
+          MK="/c/Program Files (x86)/NSIS/makensis.exe"
+          for i in 1 2 3 4; do
+            [ -x "$MK" ] && break
+            choco install nsis -y --no-progress || true
+            [ -x "$MK" ] || { echo "makensis 없음 — choco 재시도($i/4) 30s 뒤"; sleep 30; }
+          done
+          [ -x "$MK" ] || { echo "::error::NSIS 미설치 — makensis.exe 없음"; exit 1; }
       - name: Windows 설치본(공식 NSIS)
         shell: bash
         run: sh packaging/windows/build-setup.sh "$(cat VERSION)" dist out

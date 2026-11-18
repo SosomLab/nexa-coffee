@@ -62,16 +62,23 @@ jobs:
   # Ubuntu apt NSIS(3.10 Debian 빌드)로 만든 0.1.5 설치본이 Defender·VirusTotal 오탐에 걸렸다(build-setup.sh 머리말 · docs/19).
   windows-setup:
     needs: [meta, linux-windows]
-    runs-on: windows-latest
+    # windows-2022 = 공식 NSIS 3.10 선탑재. windows-latest(2025)는 NSIS가 빠졌고 러너에서 choco 피드 조회가 거부되기도 한다(nexa-beep 선례).
+    runs-on: windows-2022
     env: { VERSION: "${{ needs.meta.outputs.version }}" }
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v7
         with: { name: win-exe, path: dist }
-      - name: NSIS(러너에 없으면 설치)
+      - name: NSIS 확인(없으면 choco 폴백)
         shell: bash
         run: |
-          [ -x "/c/Program Files (x86)/NSIS/makensis.exe" ] || command -v makensis >/dev/null 2>&1 || choco install nsis -y --no-progress
+          MK="/c/Program Files (x86)/NSIS/makensis.exe"
+          for i in 1 2 3 4; do
+            [ -x "$MK" ] && break
+            choco install nsis -y --no-progress || true
+            [ -x "$MK" ] || { echo "makensis 없음 — choco 재시도($i/4) 30s 뒤"; sleep 30; }
+          done
+          [ -x "$MK" ] || { echo "::error::NSIS 미설치 — makensis.exe 없음"; exit 1; }
       - name: Windows 설치본(공식 NSIS)
         shell: bash
         run: sh packaging/windows/build-setup.sh "$VERSION" dist out
