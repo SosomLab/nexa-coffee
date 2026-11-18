@@ -29,6 +29,8 @@
 | choco | 같은 버전을 그대로 다시 push한다. `publish-windows-packages` 를 **`channels=choco force=true`** 로 dispatch(`force` 없이는 "직전 제출 검수 대기"로 건너뛰고, `channels` 없이는 winget PR이 중복으로 또 열린다). 검수 상태·모더레이터 코멘트는 **공개 API가 없고** 패키지 페이지 HTML에만 있다 — API 키로 할 수 있는 건 push뿐이다. |
 | winget | PR은 **버전 단위**다. 지적이 매니페스트 문제면 그 PR 브랜치를 고쳐 push하고, 바이너리를 바꿔야 하면 **새 버전을 내고 옛 PR은 닫는다**. |
 
+⚠️ **winget 대기 판정에 `gh pr list --search`를 쓰지 않는다(11-18)** — GitHub 검색은 `"SosomLab.NexaCoffee"`로 `SosomLab.NexaCoffee.Portable …` 제목을 돌려주지 않는다. 그래서 Portable 대기 PR이 목록에서 빠졌고 0.1.5 #474187 · 0.1.6 #483350이 중복으로 열렸다. → 우리 열린 PR 전부(`--limit 200`)를 받아 정규식 `(^| )<ID> version `으로만 거른다(`a0bb37e`). 작성자 `@wingetbot run`은 권한이 없다("Commenter does not have sufficient privileges").
+
 ⚠️ **winget 자동 제출에는 PAT `workflow` 스코프가 필요하다** — `wingetcreate submit`은 포크 master가 upstream과 어긋나면 거부하는데(릴리스 사이에 수천 커밋 벌어진다), upstream 커밋이 `.github/workflows/`를 건드려 동기화에 그 스코프가 든다.
 없을 때의 우회(09-17 0.1.1에 쓴 방법 — `manifests/…`만 건드리므로 `repo` 스코프면 된다):
 
