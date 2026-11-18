@@ -24,20 +24,14 @@ jobs:
         run: sh scripts/test-install.sh dist/nexa-coffee
       - name: Windows 크로스 빌드(mingw · CRT 미링크)
         run: make win
-      - name: Windows 설치본 스크립트 컴파일(NSIS · release.yml과 같은 치환)
-        run: |
-          set -e
-          mkdir -p build/nsis
-          cp dist/nexa-coffee-x64.exe dist/nexa-coffee-x86.exe packaging/branding/nexa-coffee.ico LICENSE build/nsis/
-          v=$(cat VERSION)
-          sed -e "s/@VERSION@/$v/g" -e "s/@VIVERSION@/$v.0/g" packaging/windows/installer.nsi > build/nsis/installer.nsi
-          makensis -V2 -INPUTCHARSET UTF8 build/nsis/installer.nsi
-          ls -la "build/nsis/nexa-coffee-$v-windows-setup.exe"
+      # 스크립트 문법 검증 + 아래 매니페스트 렌더링 입력용. 배포하는 설치본은 windows-setup 잡(공식 NSIS)이 만든다.
+      - name: Windows 설치본 스크립트 컴파일(NSIS · release.yml과 같은 build-setup.sh)
+        run: sh packaging/windows/build-setup.sh "$(cat VERSION)" dist build/nsis-out
       - name: 패키지 매니페스트 렌더링(설치본·포터블 winget/choco · brew — 릴리스 자산 이름 그대로)
         run: |
           set -e
           v=$(cat VERSION); a=build/assets; rm -rf "$a" build/manifests; mkdir -p "$a"
-          cp "build/nsis/nexa-coffee-$v-windows-setup.exe" "$a/"
+          cp "build/nsis-out/nexa-coffee-$v-windows-setup.exe" "$a/"
           for f in windows-x64-portable.zip windows-x86-portable.zip macos-universal.zip linux-x64.tar.gz; do echo "$f" > "$a/nexa-coffee-$v-$f"; done
           bash packaging/render-manifests.sh "$v" "$a" build/manifests
           for p in SosomLab/NexaCoffee/$v/SosomLab.NexaCoffee SosomLab/NexaCoffee/Portable/$v/SosomLab.NexaCoffee.Portable; do
@@ -54,6 +48,25 @@ jobs:
           s=$(stat -c%s dist/nexa-coffee); [ "$s" -le 131072 ] || { echo "::error::linux static = $s bytes > 128KB"; exit 1; }
       - uses: actions/upload-artifact@v6
         with: { name: linux-and-windows, path: dist/* }
+
+  # 배포와 같은 경로로 설치본을 만든다(Windows 러너 + 공식 NSIS · 11-18 Defender/VT 오탐 대응 · build-setup.sh 머리말).
+  # 아티팩트 windows-setup 을 받아 백신 검사를 해 볼 수 있다(docs/19).
+  windows-setup:
+    needs: linux
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v7
+        with: { name: linux-and-windows, path: dist }
+      - name: NSIS(러너에 없으면 설치)
+        shell: bash
+        run: |
+          [ -x "/c/Program Files (x86)/NSIS/makensis.exe" ] || command -v makensis >/dev/null 2>&1 || choco install nsis -y --no-progress
+      - name: Windows 설치본(공식 NSIS)
+        shell: bash
+        run: sh packaging/windows/build-setup.sh "$(cat VERSION)" dist out
+      - uses: actions/upload-artifact@v6
+        with: { name: windows-setup, path: out/* }
 
   macos:
     runs-on: macos-latest

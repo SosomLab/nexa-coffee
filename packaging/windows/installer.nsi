@@ -46,6 +46,10 @@ VIAddVersionKey "FileDescription" "Nexa Coffee Setup - tray timer that keeps the
 VIAddVersionKey "FileVersion"     "${VERSION}"
 VIAddVersionKey "ProductVersion"  "${VERSION}"
 VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 SosomLab. MIT License."
+; 11-18: 메타데이터 보강(nexa-clip 수준) — 0.1.0 x86 오탐이 PE 버전 리소스로 풀린 전례(T-16). 주 대응은 공식 NSIS 빌드(build-setup.sh).
+VIAddVersionKey "InternalName"     "nexa-coffee-setup"
+VIAddVersionKey "OriginalFilename" "nexa-coffee-${VERSION}-windows-setup.exe"
+VIAddVersionKey "Comments"         "https://github.com/SosomLab/nexa-coffee"
 
 !define MUI_ICON   "nexa-coffee.ico"
 !define MUI_UNICON "nexa-coffee.ico"

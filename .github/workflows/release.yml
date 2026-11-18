@@ -33,7 +33,7 @@ jobs:
     env: { VERSION: "${{ needs.meta.outputs.version }}" }
     steps:
       - uses: actions/checkout@v5
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq musl-tools dbus gcc-mingw-w64 zip nsis
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq musl-tools dbus gcc-mingw-w64 zip
       - run: make test && make static && sh scripts/linux-smoke.sh dist/nexa-coffee && make win
       - name: 포장
         run: |
@@ -47,18 +47,36 @@ jobs:
           # winget SosomLab.NexaCoffee.Portable(NestedInstallerFiles) · choco nexa-coffee-portable(unzip)이 루트 기준으로 본다.
           zip -9 -j "out/nexa-coffee-$VERSION-windows-x64-portable.zip" dist/nexa-coffee-x64.exe LICENSE
           zip -9 -j "out/nexa-coffee-$VERSION-windows-x86-portable.zip" dist/nexa-coffee-x86.exe LICENSE
-      - name: Windows 설치본(NSIS · x64/x86 exe를 담은 setup.exe 하나)
-        run: |
-          set -e
-          mkdir -p build/nsis
-          cp dist/nexa-coffee-x64.exe dist/nexa-coffee-x86.exe packaging/branding/nexa-coffee.ico LICENSE build/nsis/
-          # VIProductVersion은 숫자 넷만 — 개발 빌드(0.0.0-dev.<sha>)도 VERSION 파일의 세 자리로 만든다
-          sed -e "s/@VERSION@/$VERSION/g" -e "s/@VIVERSION@/$(cat VERSION).0/g" packaging/windows/installer.nsi > build/nsis/installer.nsi
-          makensis -V2 -INPUTCHARSET UTF8 build/nsis/installer.nsi
-          mv "build/nsis/nexa-coffee-$VERSION-windows-setup.exe" out/
           ls -la out/
       - uses: actions/upload-artifact@v6
         with: { name: out-linux-windows, path: out/* }
+      # 설치본 재료 — windows-setup 잡이 받는다. 이름이 out-* 가 아니라 publish 가 릴리스 자산으로 올리지 않는다.
+      - uses: actions/upload-artifact@v6
+        with:
+          name: win-exe
+          path: |
+            dist/nexa-coffee-x64.exe
+            dist/nexa-coffee-x86.exe
+
+  # Windows 설치본(NSIS · x64/x86 exe를 담은 setup.exe 하나) — **Windows 러너 + 공식 NSIS**(11-18).
+  # Ubuntu apt NSIS(3.10 Debian 빌드)로 만든 0.1.5 설치본이 Defender·VirusTotal 오탐에 걸렸다(build-setup.sh 머리말 · docs/19).
+  windows-setup:
+    needs: [meta, linux-windows]
+    runs-on: windows-latest
+    env: { VERSION: "${{ needs.meta.outputs.version }}" }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v7
+        with: { name: win-exe, path: dist }
+      - name: NSIS(러너에 없으면 설치)
+        shell: bash
+        run: |
+          [ -x "/c/Program Files (x86)/NSIS/makensis.exe" ] || command -v makensis >/dev/null 2>&1 || choco install nsis -y --no-progress
+      - name: Windows 설치본(공식 NSIS)
+        shell: bash
+        run: sh packaging/windows/build-setup.sh "$VERSION" dist out
+      - uses: actions/upload-artifact@v6
+        with: { name: out-windows-setup, path: out/* }
 
   macos:
     needs: meta
@@ -74,11 +92,11 @@ jobs:
         with: { name: out-macos, path: out/* }
 
   publish:
-    needs: [meta, linux-windows, macos]
+    needs: [meta, linux-windows, windows-setup, macos]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v7
-        with: { path: out, merge-multiple: true }
+        with: { pattern: "out-*", path: out, merge-multiple: true }
       - run: cd out && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
       # 릴리스 본문 = docs/releases/<태그>.md(있으면) + 공통 안내. PR 없이 main에 바로 커밋하는 저장소라
       # generate_release_notes만으로는 비교 링크 한 줄뿐이다 — 무엇이 바뀌었는지는 사람이 쓴 노트로 남긴다.
