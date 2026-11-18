@@ -1,6 +1,8 @@
 # DEVLOG — 날짜별 요약(최신 위)
 
-- **2026-11-18 (2차)** — **v0.1.6 배포**(Windows 설치본 공식 NSIS · T-26) — release run 44322293020(macOS 호스티드 러너 미배정 취소 → 실패 잡만 재실행 끝에 success) · 자산 재검사 Defender 위협 없음 · brew 0.1.6 · pkg 신호 · choco portable 0.1.6 · 설치본 강제 제출 ✅(run 44332493640) · winget 설치본 #483349(일관성 경고) · Portable #483350. **winget 가드 결함 원인 확인**: `--search "SosomLab.NexaCoffee"`가 `.Portable` 제목을 못 찾음 → `a0bb37e` 수정(push 전). → [journal](journal/2026-11-18.md#9-v016-배포-결과)
+- **2026-11-19** — 진행사항 최신화(협업 최종 점검): STATUS에 v0.1.6 기준 "지금 상태" 요약 · TODO T-24 CI 통과 반영 · **T-27 러너 버전 고정 검토**(결정 대기) 신설 · `a0bb37e`·`e1820aa` push 반영(CI 44333606108 전부 success). → [journal](journal/2026-11-19.md)
+
+- **2026-11-18 (2차)** — **v0.1.6 배포**(Windows 설치본 공식 NSIS · T-26) — release run 44322293020(macOS 호스티드 러너 미배정 취소 → 실패 잡만 재실행 끝에 success) · 자산 재검사 Defender 위협 없음 · brew 0.1.6 · pkg 신호 · choco portable 0.1.6 · 설치본 강제 제출 ✅(run 44332493640) · winget 설치본 #483349(일관성 경고) · Portable #483350. **winget 가드 결함 원인 확인**: `--search "SosomLab.NexaCoffee"`가 `.Portable` 제목을 못 찾음 → `a0bb37e` 수정(11-18 push ✅). 사용자 결정: #474187 닫음 · #483349 설명 코멘트. → [journal](journal/2026-11-18.md#9-v016-배포-결과)
 
 - **2026-11-18** — 채널 점검(두 세션 분담 시작 · 개발 9760ed · 협업 45fb69): winget #436346 **머지 ✅ 11-16** · Portable #474187 Installation Validation 실패(매니페스트·해시 정상 · 원인 미확인) · choco portable 0.1.5 승인 · **설치본 0.1.5 VirusTotal 탐지 10건 초과 → 유지관리자 조치 대기**(11-07 "choco 종결" 정정). **T-24 Windows 1단계**: `test-san.bat`(MSVC ASan) + CI 단계(`5e764d1` · CI 통과). **설치본 오탐(T-26)**: 0.1.5 setup.exe Defender `Suschil!rfn` — 원인 = 릴리스 러너 apt NSIS 3.10(Debian 스텁 · 유력) → Windows 러너(windows-2022) + 공식 NSIS로 전환(`9078944`·`8d048aa`) · 새 산출물 Defender 위협 없음. #474187 `@wingetbot run` 권한 거부 → Needs-Attention. 사용자 결정: choco 0.1.5 설치본은 0.1.6으로 대체 → **v0.1.6 릴리스 준비**(노트 `releases/v0.1.6.md`). → [journal](journal/2026-11-18.md)
 

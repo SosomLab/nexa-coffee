@@ -1,13 +1,24 @@
 # STATUS — 지금 상태
 
+## 11-19 — 진행사항 최신화 · 지금 상태 요약
+
+- **배포 버전 v0.1.6**(11-18) · main CI green(e1820aa run 44333606108 전부 success · macos·linux·windows-msvc·windows-setup).
+- **채널**
+  - brew: 0.1.6 ✅
+  - pkg.sosomlab.com: 0.1.6 발행 신호 ✅
+  - choco: `nexa-coffee`·`nexa-coffee-portable` 0.1.6 자동 검수 대기(승인 최신은 설치본 0.1.3 · 포터블 0.1.5)
+  - winget 설치본 `SosomLab.NexaCoffee`: #483349(0.1.6 · 일관성 경고 + 설명 코멘트) · 공개 0.1.1
+  - winget Portable: #454127(0.1.4) · #483350(0.1.6) 열림 · #474187 닫음
+- **다음** — choco 0.1.6 스캔·승인 · winget 검수(외부 대기) · 러너 버전 고정 검토(T-27 · 결정 대기) · T-24 2단계(`win.c` 파서 하니스) · 사람 실기(T-23 맥 잠금 · T-2/T-18 Windows 배율 등).
+
 ## 11-18 (2차) — v0.1.6 배포 (사용자 승인 "지금 릴리스 진행")
 
 - **[v0.1.6](https://github.com/SosomLab/nexa-coffee/releases/tag/v0.1.6) 배포** — Windows 설치본을 공식 NSIS로 빌드(백신 오탐 수정 · T-26) · 앱은 0.1.5와 같음. release run 44322293020 — macOS 호스티드 러너 미배정으로 macos·homebrew 잡이 취소돼 실패 잡만 재실행 끝에 전부 success.
 - **자산 재검사** — setup.exe 102,904 B · SHA256SUMS 일치 · **Defender 위협 없음** · 포터블 exe 2개도 위협 없음.
 - **채널** — brew 0.1.6 ✅ · pkg.sosomlab.com 신호 ✅ · choco portable 0.1.6 push ✅ · **choco 설치본 0.1.6 강제 제출 ✅**(dispatch run 44332493640 · 두 패키지 검수 대기) · winget 설치본 **#483349**(Manifest-Metadata-Consistency — 공개 0.1.1이 포터블이라 생긴 차이) · Portable **#483350**.
-- **결함** — winget 가드의 `gh pr list --search "SosomLab.NexaCoffee"`가 `.Portable` 제목을 못 찾아 Portable 대기 판정이 계속 실패(#474187·#483350 중복 원인 · 재현 확인) → **`a0bb37e` 수정**(`--search` 제거 · 정규식만 · 로컬 커밋 · push 전).
+- **결함** — winget 가드의 `gh pr list --search "SosomLab.NexaCoffee"`가 `.Portable` 제목을 못 찾아 Portable 대기 판정이 계속 실패(#474187·#483350 중복 원인 · 재현 확인) → **`a0bb37e` 수정**(`--search` 제거 · 정규식만 · `e1820aa`와 함께 push ✅).
 - **사용자 결정 반영** — push(`e1820aa`) · winget #474187 닫음(→ #483350) · #483349에 "설치본으로 전환 = 의도된 변경" 설명 코멘트 · #454127·#483350 유지 · choco 0.1.6 두 패키지 자동 검수 대기 · 회차 마감 tmp-clean ✓.
-- **(이전 남음)** — `a0bb37e` push(사용자) · Portable PR 3건 정리(사용자) · #483349 일관성 경고 대응 · choco 설치본 0.1.6 VT 스캔 결과.
+- **남음** — choco 설치본 0.1.6 VT 스캔 결과 · winget #483349·#483350·#454127 검수.
 - 상세: [journal 11-18 §9](journal/2026-11-18.md#9-v016-배포-결과).
 
 ## 11-18 — 채널 점검 · winget #474187 · choco 설치본 VT 경고 · Windows ASan 시험 (두 세션 분담 시작)
