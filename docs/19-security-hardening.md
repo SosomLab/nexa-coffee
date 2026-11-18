@@ -68,3 +68,4 @@
 - Windows 런타임 시험 — **코어는 `test-san.bat`로 ASan 시험 ✅ 11-18**(MSVC `/fsanitize=address` · test_core + icon_dump · CI windows-msvc 단계 · `5e764d1`). MSVC는 UBSan이 없어 ASan만 · `test_dbus`는 POSIX라 대상 아님. **`win.c` 파서(`child_done`·`wint`)는 2단계 남음**(별도 하니스 설계 · 지금은 코드 검토만 · T-24).
 - `fill()`은 수신 버퍼를 메시지 총길이까지 키운다(상한 2²⁷ = 128 MB · 피어가 보낸 만큼만) — 메모리 압박 공격은 세션 버스 데몬의 자체 상한(기본 128 MB)과 같아 추가 상한은 두지 않음.
 - 정기 재점검: 입력 경계가 늘 때(§1) · 릴리스 전 §3 정적 분석.
+- **배포 오탐(코드 결함 아님 · V-n 아님 · 11-18)**: 0.1.5 `windows-setup.exe`가 Defender `Trojan:Win32/Suschil!rfn` · choco VT 탐지 10건 초과 — `installer.nsi`는 0.1.4와 같고 빌드 러너의 apt NSIS(3.10 Debian 빌드 스텁)만 달랐다. → 설치본은 **Windows 러너(windows-2022) + 공식 NSIS**로 빌드(`packaging/windows/build-setup.sh` · `9078944`·`8d048aa`) · CI 산출물 Defender 위협 없음. 릴리스 전 설치본은 Defender 검사(`MpCmdRun -Scan -ScanType 3 -File … -DisableRemediation`). 전례: T-16(0.1.0 x86 · PE 버전 리소스). 상세 [journal 11-18](journal/2026-11-18.md#7-설치본-오탐-원인-조사--빌드-경로-변경).

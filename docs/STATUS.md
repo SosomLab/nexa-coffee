@@ -7,7 +7,8 @@
 - **choco**: `nexa-coffee-portable` **0.1.5 승인 ✅** · `nexa-coffee` 0.1.5 제출 ✅ → **VirusTotal 탐지 10건 초과로 "유지관리자 조치 대기"**(setup.exe 또는 nupkg · 어느 쪽인지 미확인). 설치본 winget 제출 전에 VT 결과 확인 권고.
 - **Windows 런타임 보안 시험(T-24 1단계)**: `test-san.bat`(MSVC `/fsanitize=address` · test_core + icon_dump) 이 PC 통과 · CI는 push 뒤. 남음: `win.c` 파서 하니스(2단계).
 - **이 PC 툴체인**: MSVC 14.44 + ASan · SDK 10.0.26100 ✓ / mingw · make · NSIS · docker · WSL 없음 → `make win`·`make test-san`은 CI로.
-- **남음(사용자 결정)**: #474187 대응(재검증 `@wingetbot run` / 닫히게 두고 재제출) · choco 설치본 VT 대응 · 설치본 winget dispatch 시점.
+- **후속**: push(`fb25e62` CI 전부 success · ASan 단계 통과) · #474187 `@wingetbot run` 권한 거부 → Needs-Attention · **설치본 오탐 원인 = apt NSIS(Debian 빌드 스텁) 유력 → Windows 러너(windows-2022) + 공식 NSIS로 전환**(`9078944`·`8d048aa`) · CI 산출물 102,820 B Defender 위협 없음 · v0.1.5 릴리스 본문에 오탐 안내.
+- **사용자 결정**: choco 0.1.5 설치본은 응답 없이 0.1.6으로 대체 · winget 설치본 제출은 0.1.6 뒤. **남음**: 0.1.6 릴리스 · #474187 모더레이터 · #454127.
 - 상세: [journal/2026-11-18](journal/2026-11-18.md).
 
 ## 11-07 (3차) — v0.1.5 배포 (사용자 결정 "새 버전 릴리즈 · 배포 가능하면 게시")

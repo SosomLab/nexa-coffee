@@ -9,7 +9,7 @@
 | Linux(정적 · 배포용) | `make static` | `musl-tools` | `dist/nexa-coffee`(libc 하나 · 배포판 비종속) |
 | Windows(크로스) | `make win` | mingw-w64 | `dist/nexa-coffee-x64.exe` · `-x86.exe` |
 | Windows(MSVC) | `build.bat` | VS x64 Native Tools | `dist\nexa-coffee-x64.exe` |
-| Windows 설치본 | `makensis -INPUTCHARSET UTF8 packaging/windows/installer.nsi` — 릴리스는 `release.yml`이 `@VERSION@`·`@VIVERSION@` 치환 후 빌드. 로컬은 `build/nsis/`에 exe 2개·ico·LICENSE·치환한 nsi를 모은 뒤(`-INPUTCHARSET UTF8` 필수 — 파일에 BOM 없음) | NSIS 3(apt `nsis` · 10-16 로컬 3.13) | `nexa-coffee-<v>-windows-setup.exe`(x64·x86 exe 포함 · 약 92 KB) |
+| Windows 설치본 | `sh packaging/windows/build-setup.sh <버전> dist out` — `dist/`에 `nexa-coffee-x64.exe`·`-x86.exe`(make win 산출물)가 있어야 한다. 스크립트가 `build/nsis/`에 exe 2개·ico·LICENSE·`@VERSION@`/`@VIVERSION@` 치환한 nsi를 모아 `makensis -V2 -INPUTCHARSET UTF8`(BOM 없음)로 빌드 → `out/`. makensis는 PATH 또는 `C:\Program Files (x86)\NSIS`에서 찾는다. ⚠️ **배포본은 Windows 러너(windows-2022) + 공식 NSIS**(release.yml·ci.yml `windows-setup` 잡) — apt NSIS(Debian 빌드)로 만든 0.1.5는 백신 오탐([docs/19 §5](19-security-hardening.md#5-열린-항목) · 11-18). ubuntu의 makensis는 스크립트 컴파일 검증용 | 공식 NSIS 3(windows-2022 선탑재 · 없으면 choco `nsis`) · 검증용 apt `nsis` | `nexa-coffee-<v>-windows-setup.exe`(x64·x86 exe 포함 · 공식 NSIS 약 100 KB) |
 
 플래그 원칙(nexa-shortcut 계승): `-Os` · `-fno-ident` · `-fno-asynchronous-unwind-tables` · `-fno-stack-protector` · 섹션 GC · strip.
 Windows는 `-nostdlib` + `-fno-builtin -fno-tree-loop-distribute-patterns`(코어의 바이트 루프가 memset 호출로 되접히는 것 방지) + 진입점 `start`.
@@ -22,6 +22,7 @@ x86은 64비트 나눗셈 헬퍼 때문에 `-lgcc`를 정적으로 붙인다.
 | 코어 단위 | `make test` | util · 표시 규칙 · 다음 변화 시각 · 메뉴 트리/클릭 · 설정 왕복 · 툴팁 · 아이콘 결정성/경계 |
 | 아이콘 육안 | `make test` → `build/icons/*.pam` | `magick x.pam -background '#1e1e1e' -flatten -filter point -resize 800% x.png` |
 | **보안 시험**([docs/19](19-security-hardening.md)) | `make test-san` | 위 코어 시험 + **test_dbus**(수신 파서: 조작한 길이 · NUL 누락 · 200겹 variant · 무작위 변형 3만 회)를 **ASan + UBSan**으로 — 경계 밖 읽기 · 정수 오버플로 · 미초기화. push 전 · CI ubuntu |
+| **설치본 백신 검사(릴리스 전 · Windows PC)** | `gh run download <ci run> -n windows-setup -D <임시 폴더 nexa-coffee-*>` → `MpCmdRun -Scan -ScanType 3 -File <setup.exe> -DisableRemediation`(설치·실행하지 않음) | "found no threats" + 시그니처 버전 기록. 탐지되면 태그 보류 → [docs/19 §5](19-security-hardening.md#5-열린-항목) 배포 오탐(11-18 · 0.1.5 apt NSIS 스텁) |
 | **보안 시험(Windows)** | `test-san.bat`(cmd · cl이 PATH에 없으면 vswhere+vcvars64로 찾음) | 코어 시험 + icon_dump를 **MSVC ASan**(`/fsanitize=address`)으로 — LLP64·다른 컴파일러의 정수 승격까지. UBSan·test_dbus 없음(MSVC 미지원 · POSIX). CI windows-msvc |
 | Linux D-Bus 계약 | `sh scripts/linux-smoke.sh dist/nexa-coffee` | 전용 세션·시스템 버스 위에서 SNI 속성(16/22/44 픽스맵) · dbusmenu 레이아웃/속성 · Event 클릭 → 작업/설정 · **가짜 워처**(늦게 등장 · 재시작 · Register 응답 전 GetAll) · **가짜 logind**(Inhibit fd 수신·해제 · 덮개 거부 시 `sleep:idle` 재시도 · 전부 거부돼도 동작) · 실행 시 자동 시작 · 종료 (약 1.5초) |
 | Linux 설치 스크립트 | `sh scripts/test-install.sh dist/nexa-coffee` | 임시 prefix·XDG에서 `install.sh`/`uninstall.sh` — Exec 절대 경로 · 옛 아이콘 캐시 갱신(다른 앱 항목 유지 · 도구 없으면 hicolor 시각 갱신) · `--autostart` 항목(재설치 중복 없음) · 다른 설치를 가리키는 자동 실행 항목 보존 · 제거 |
@@ -131,7 +132,7 @@ Docker가 있으면 `scripts/linux-docker.sh`가 Linux 컨테이너에서 빌드
 
 ## CI(.github/workflows)
 
-- `ci.yml`: ubuntu(테스트 · musl 정적 · D-Bus 스모크 · mingw 크로스 · makensis 컴파일 검증 · **크기 예산** Windows ≤ 64 KB / Linux ≤ 128 KB) · macos(테스트 · 유니버설 · .app · ≤ 256 KB) · windows(MSVC).
-- `release.yml`: `v*` 태그 → mac universal zip · Windows 설치본(setup.exe · NSIS) · Windows 포터블 `windows-x64-portable.zip`/`x86-portable.zip` · Linux tar.gz + `SHA256SUMS.txt` → GitHub Release → `homebrew.yml`(탭) · `publish-windows-packages.yml`(winget PR · choco push — 설치본 `SosomLab.NexaCoffee`/`nexa-coffee` + 포터블 `SosomLab.NexaCoffee.Portable`/`nexa-coffee-portable`). 태그 = `VERSION` 파일과 일치해야 한다.
+- `ci.yml`: ubuntu(테스트 · musl 정적 · D-Bus 스모크 · mingw 크로스 · makensis 컴파일 검증 · **크기 예산** Windows ≤ 64 KB / Linux ≤ 128 KB) · macos(테스트 · 유니버설 · .app · ≤ 256 KB) · windows(MSVC · `test-san.bat` ASan) · **windows-setup**(windows-2022 · 공식 NSIS로 배포와 같은 경로의 설치본 → 아티팩트 `windows-setup` · 11-18).
+- `release.yml`: `v*` 태그 → mac universal zip · Windows 설치본(setup.exe · `windows-setup` 잡 = windows-2022 + 공식 NSIS · linux-windows가 만든 exe를 `win-exe` 아티팩트로 받음 · 11-18) · Windows 포터블 `windows-x64-portable.zip`/`x86-portable.zip` · Linux tar.gz + `SHA256SUMS.txt` → GitHub Release → `homebrew.yml`(탭) · `publish-windows-packages.yml`(winget PR · choco push — 설치본 `SosomLab.NexaCoffee`/`nexa-coffee` + 포터블 `SosomLab.NexaCoffee.Portable`/`nexa-coffee-portable`). 태그 = `VERSION` 파일과 일치해야 한다.
 - 릴리스 절차: `VERSION` 갱신 → main green → `git tag vX.Y.Z && git push origin vX.Y.Z`(공개 행위 · 사용자 승인) → `gh run watch` → 탭 커밋 · winget PR · choco 피드 확인(검수 며칠). 재제출은 각 워크플로 `workflow_dispatch`.
 - GitHub 장애 시 수동 경로(09-13 실전): `gh run download <run> -n out-linux-windows -n out-macos` → `gh release create vX.Y.Z <자산> SHA256SUMS.txt` → `./packaging/render-manifests.sh X.Y.Z assets out` → 탭에 `out/homebrew/*` 커밋 · `komac submit out/winget/manifests/s/SosomLab/NexaCoffee/X.Y.Z --yes` · Windows PC에서 `choco pack`/`choco push`.

@@ -40,4 +40,7 @@ gh pr create --repo microsoft/winget-pkgs --base master --head <me>:<ID>-<버전
 
 ⚠️ **Windows 백신 오탐** — 09-17 실측: Defender가 **x86 zip만** `Trojan:Win32/Tecabans.STV!cl`(클라우드 ML)로 격리해 winget 설치 검증이 실패했다(x64는 통과 · 로컬 `MpCmdRun` 스캔은 깨끗). 재현:
 `winget settings --enable LocalManifestFiles` 후 `winget install --manifest <폴더> --architecture x86` → Defender 이벤트 로그 ID 1116/1117. 완화책으로 PE 버전 리소스를 넣었고(`res/nexa-coffee.rc` · 숫자는 VERSION 단일 출처), 그래도 잡히면 [WDSI 오탐 신고](https://www.microsoft.com/en-us/wdsi/filesubmission). 근본 해결은 코드 서명.
+**11-18 사례(설치본)**: 0.1.5 `windows-setup.exe`를 Defender가 `Trojan:Win32/Suschil!rfn`으로 격리하고, choco 스캔은 VirusTotal 탐지 10건 초과로 반려했다. `installer.nsi`는 0.1.4와 같았고, 달라진 것은 릴리스 러너(ubuntu-26.04)의 apt NSIS 3.10(Debian 빌드 스텁)뿐이었다.
+→ 설치본은 **Windows 러너(windows-2022) + 공식 NSIS**로 빌드한다(`packaging/windows/build-setup.sh` · release·ci `windows-setup` 잡). 새 산출물(102,820 B)은 Defender 위협 없음.
+→ 릴리스 전에는 CI 아티팩트 `windows-setup`을 `MpCmdRun -Scan -ScanType 3 -File <exe> -DisableRemediation`으로 검사한다. 상세: [docs/19 §5](../docs/19-security-hardening.md#5-열린-항목).
 브랜딩 자산은 [`branding/`](branding/README.md). ⚠️ v1은 코드 서명·공증이 없다(Cask가 설치 시 quarantine을 뗀다 · SmartScreen 경고).
